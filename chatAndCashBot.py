@@ -141,6 +141,7 @@ async def send_message():
     data = await request.get_json()
     sender = await client.get_me()
     sender_id = sender.id
+    # TODO: multiple chats
     chat_id = data.get('chat_id')
     async for user in client.iter_participants(chat_id):
         print(user.id)
