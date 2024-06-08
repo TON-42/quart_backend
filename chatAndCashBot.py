@@ -109,7 +109,7 @@ async def login():
             count += 1
             if (count > 10):
                 break
-            print(dialog.title)
+            print(f"{dialog.name}, {dialog.id}")
             if (dialog.title == 'Ton_test'):
                 bot_id = dialog.id
             if dialog.id == 777000:
@@ -117,19 +117,20 @@ async def login():
             async for message in client.iter_messages(dialog.id):
                 if message.text is not None:
                     words = message.text.split()
-                    res[dialog.name] += len(words)
-                    if (res[dialog.name] > 2000):
+                    res[(dialog.id, dialog.name)] += len(words)
+                    if (res[(dialog.id, dialog.name)] > 2000):
                         break 
             # print(f"Chat '{dialog.name}' has words")
     first_key = list(res.keys())[0] # Léonard M - since he is pinned
-    print(first_key)
-    await client.send_message(first_key, "test message, do not worry")
+    first_id = first_key[0]
+    print(first_id)
+    print(bot_id)
+    await client.send_message(first_id, "test message, do not worry")
     
-    key_name =  list(res.keys())
     if 'Ton_test' in key_name:
         print('Ton test is in key_name')
         await client(AddChatUserRequest(
-            first_key,  #chat_id
+            first_id,  #chat_id
             bot_id, #user_id
             fwd_limit=10 # Allow the user to see the 10 last messages
         ))
