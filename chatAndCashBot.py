@@ -24,41 +24,42 @@ from telethon.errors import SessionPasswordNeededError
 from collections import defaultdict
 
 # New imports for database
-from shared_models.models import init_db, SessionLocal, User
-from sqlalchemy.orm import Session
+# from shared_models.models import init_db, SessionLocal, User
+# from sqlalchemy.orm import Session
 
 # Print the current working directory
-print(f"Current Working Directory: {os.getcwd()}")
+# print(f"Current Working Directory: {os.getcwd()}")
 
 
 # Load environment variables from .env file if present
 # Load the .env file explicitly
-env_path = os.path.join(os.path.dirname(__file__), ".env")
-load_dotenv(dotenv_path=env_path)
+# env_path = os.path.join(os.path.dirname(__file__), ".env")
+# load_dotenv(dotenv_path=env_path)
 # load_dotenv(dotenv_path=".env")
 
 # Print the content of the .env file
-env_contents = dotenv_values(env_path)
-print("Loaded .env contents:")
-for key, value in env_contents.items():
-    print(f"{key}: {value}")
+# env_contents = dotenv_values(env_path)
+# print("Loaded .env contents:")
+# for key, value in env_contents.items():
+#     print(f"{key}: {value}")
 
-# Manually set environment variables
-os.environ["API_ID"] = env_contents["API_ID"]
-os.environ["API_HASH"] = env_contents["API_HASH"]
-os.environ["BOT_TOKEN"] = env_contents["BOT_TOKEN"]
+# # Manually set environment variables
+# os.environ["API_ID"] = env_contents["API_ID"]
+# os.environ["API_HASH"] = env_contents["API_HASH"]
+# os.environ["BOT_TOKEN"] = env_contents["BOT_TOKEN"]
 
 # Print the content of the .env file
-print("Content of the .env file:")
-with open(env_path, "r") as file:
-    print(file.read())
-
+# print("Content of the .env file:")
+# with open(env_path, "r") as file:
+#     print(file.read())
+load_dotenv()
 API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")
 TOKEN = os.getenv("BOT_TOKEN")
-print(f"Loaded API_ID: {API_ID}")
-print(f"Loaded API_HASH: {API_HASH}")
-print(f"Loaded TOKEN: {TOKEN}")
+# TOKEN = os.getenv("BOT_TOKEN")
+# print(f"Loaded API_ID: {API_ID}")
+# print(f"Loaded API_HASH: {API_HASH}")
+# print(f"Loaded TOKEN: {TOKEN}")
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -71,7 +72,6 @@ user_clients = {}
 
 polls = {}
 
-TOKEN = os.getenv("BOT_TOKEN")
 if not TOKEN:
     logger.error("BOT_TOKEN environment variable not set")
     exit(1)
@@ -79,9 +79,9 @@ bot: Bot = Bot(token=TOKEN)
 
 
 # Initialize database before serving
-@app.before_serving
-async def startup():
-    init_db()
+# @app.before_serving
+# async def startup():
+#     init_db()
 
 
 async def start(update: Update, context):
@@ -237,38 +237,38 @@ async def send_code():
     return "ok", 200
 
 
-# New endpoints for database testing
-@app.route("/users", methods=["POST"])
-async def create_user():
-    data = await request.get_json()
-    name = data["name"]
-    email = data["email"]
-    db: Session = SessionLocal()
-    new_user = User(name=name, email=email)
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return jsonify({"id": new_user.id, "name": new_user.name, "email": new_user.email})
+# # New endpoints for database testing
+# @app.route("/users", methods=["POST"])
+# async def create_user():
+#     data = await request.get_json()
+#     name = data["name"]
+#     email = data["email"]
+#     db: Session = SessionLocal()
+#     new_user = User(name=name, email=email)
+#     db.add(new_user)
+#     db.commit()
+#     db.refresh(new_user)
+#     return jsonify({"id": new_user.id, "name": new_user.name, "email": new_user.email})
 
 
-@app.route("/users", methods=["GET"])
-async def read_users():
-    db: Session = SessionLocal()
-    users = db.query(User).all()
-    return jsonify(
-        [{"id": user.id, "name": user.name, "email": user.email} for user in users]
-    )
+# @app.route("/users", methods=["GET"])
+# async def read_users():
+#     db: Session = SessionLocal()
+#     users = db.query(User).all()
+#     return jsonify(
+#         [{"id": user.id, "name": user.name, "email": user.email} for user in users]
+#     )
 
 
-@app.route("/test-data", methods=["POST"])
-async def add_test_data():
-    db: Session = SessionLocal()
-    user1 = User(name="Test User 1", email="test1@example.com")
-    user2 = User(name="Test User 2", email="test2@example.com")
-    db.add(user1)
-    db.add(user2)
-    db.commit()
-    return jsonify({"message": "Test data added"}), 200
+# @app.route("/test-data", methods=["POST"])
+# async def add_test_data():
+#     db: Session = SessionLocal()
+#     user1 = User(name="Test User 1", email="test1@example.com")
+#     user2 = User(name="Test User 2", email="test2@example.com")
+#     db.add(user1)
+#     db.add(user2)
+#     db.commit()
+#     return jsonify({"message": "Test data added"}), 200
 
 
 dispatcher = Dispatcher(bot, None, use_context=True)
