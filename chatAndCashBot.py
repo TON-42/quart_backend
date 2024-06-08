@@ -169,8 +169,9 @@ async def send_message():
         "Please click the button below to accept the sale and proceed to the bot:\n\n"
         "<a href='https://t.me/testmychatpaybot'>Click here to accept and proceed</a>"
         )
-
-    await client.send_message(chat_id, message_for_second_user, parse_mode='html')
+    # 122493869
+    # 5358771958
+    await client.send_message(122493869, message_for_second_user, parse_mode='html')
     await client.disconnect()
 
     return "ok", 200
