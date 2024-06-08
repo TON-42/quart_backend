@@ -155,7 +155,7 @@ async def send_message():
     chat_id = int(chats[0])
     print(chat_id)
     
-    users = await client.get_participants(chat)
+    users = await client.get_participants(chat_id)
 
     for user in users:
         if user.username is not None:
