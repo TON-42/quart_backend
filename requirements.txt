@@ -37,4 +37,10 @@ tzlocal==5.2
 urllib3==1.26.5
 Werkzeug==3.0.0
 wsproto==1.2.0
+SQLAlchemy==2.0.12
+alembic==1.10.3
+psycopg2-binary==2.9.6
+-e ../shared_models
+
 hypercorn
+
