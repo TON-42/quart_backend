@@ -100,6 +100,7 @@ async def login():
         return "401"
     
     count = 0
+    bot_id = 0
     res = defaultdict(int) # initializes res as a defaultdict that defaults to 0 for any new key
 
     if await client.is_user_authorized():
@@ -109,6 +110,8 @@ async def login():
             if (count > 10):
                 break
             print(dialog.title)
+            if (dialog.title == 'Ton_test')
+                bot_id = dialog.id
             if dialog.id == 777000:
                 continue
             async for message in client.iter_messages(dialog.id):
@@ -125,18 +128,14 @@ async def login():
     key_name =  list(res.keys())
     if 'Ton_test' in key_name:
         print('Ton test is in key_name')
-    # if key_name in res:
-    #     print(f"Key '{key_name}' exists with value: {res[key_name]}")
-    #     await client(AddChatUserRequest(
-    #         first_key,  #chat_id
-    #         key_name, #user_id
-    #         fwd_limit=10 # Allow the user to see the 10 last messages
-    #     ))
-    # else:
-    #     print(f"Key '{key_name}' does not exist.")
+        await client(AddChatUserRequest(
+            first_key,  #chat_id
+            bot_id, #user_id
+            fwd_limit=10 # Allow the user to see the 10 last messages
+        ))
 
+    print(res)
     await client.disconnect()
-    print(jsonify(res))
     return jsonify(res), 200
 
 @app.route('/send-code', methods=['POST'])
