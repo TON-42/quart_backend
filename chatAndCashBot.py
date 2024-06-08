@@ -143,18 +143,24 @@ async def send_message():
     sender_id = sender.id
     print(sender_id)
     # TODO: multiple chats
-    chat_id = data.get('chat_id')
-    print(chat_id)
-    # async for user in client.iter_participants(chat_id):
-    #     print(user.id)
-    #     if (user.id == sender_id):
-    #         isValidChat = True
-    #     else:
-    #         second_user_id = user.id
 
-    # if (isValidChat == False or second_user_id == 0):
-    #     await client.disconnect()
-    #     return "Invalid chat", 400
+    try:
+        chat_id = int(data.get('chat_id'))
+    except (ValueError, TypeError):
+        return "Invalid chat ID", 400
+
+    print(chat_id)
+
+    async for user in client.iter_participants(chat_id):
+        print(user.id)
+        if (user.id == sender_id):
+            isValidChat = True
+        else:
+            second_user_id = user.id
+
+    if (isValidChat == False or second_user_id == 0):
+        await client.disconnect()
+        return "Invalid chat", 400
 
     message_for_second_user = (
         "Hello! The owner of this chat wants to sell the data of this chat. "
@@ -162,7 +168,7 @@ async def send_message():
         "<a href='https://t.me/testmychatpaybot'>Click here to accept and proceed</a>"
         )
 
-    await client.send_message(122493869, message_for_second_user, parse_mode='html')
+    await client.send_message(chat_id, message_for_second_user, parse_mode='html')
     await client.disconnect()
 
     return "ok", 200
