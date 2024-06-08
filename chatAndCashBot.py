@@ -162,9 +162,9 @@ async def send_message():
             second_user_id = user.id
             second_user_name = user.username
 
-    if (isValidChat == False or second_user_id == 0):
-        await client.disconnect()
-        return "Invalid chat", 400
+    # if (isValidChat == False or second_user_id == 0):
+    #     await client.disconnect()
+    #     return "Invalid chat", 400
 
     message_for_second_user = (
         "Hello! The owner of this chat wants to sell the data of this chat. "
@@ -173,6 +173,7 @@ async def send_message():
         )
     # 122493869
     # 5358771958
+
     await client.send_message(chat_id, message_for_second_user, parse_mode='html')
     await client.disconnect()
 
