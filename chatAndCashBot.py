@@ -196,7 +196,7 @@ async def login():
 @app.route("/send-message", methods=["POST"])
 async def send_message():
     data = await request.get_json()
-    phone_number = "+37120417581"
+    phone_number = data.get("phone_number")
     sender = await user_clients[phone_number].get_me()
     sender_id = sender.id
     print(sender_id)
