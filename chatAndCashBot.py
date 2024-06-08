@@ -1,20 +1,64 @@
 from quart import Quart, jsonify, request
 from quart_cors import cors
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup, Update, Bot
-from telegram.ext import Dispatcher, CommandHandler, ChatMemberHandler, PollHandler, ContextTypes
+from telegram import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+    Update,
+    Bot,
+)
+from telegram.ext import (
+    Dispatcher,
+    CommandHandler,
+    ChatMemberHandler,
+    PollHandler,
+    ContextTypes,
+)
 from telethon import TelegramClient, events
 from telethon.tl.functions.messages import AddChatUserRequest
-from dotenv import load_dotenv
+from dotenv import load_dotenv, dotenv_values
 import os
 import logging
 from telethon.errors import SessionPasswordNeededError
 from collections import defaultdict
 
+# New imports for database
+from shared_models.models import init_db, SessionLocal, User
+from sqlalchemy.orm import Session
+
+# Print the current working directory
+print(f"Current Working Directory: {os.getcwd()}")
+
 
 # Load environment variables from .env file if present
-load_dotenv()
+# Load the .env file explicitly
+env_path = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(dotenv_path=env_path)
+# load_dotenv(dotenv_path=".env")
+
+# Print the content of the .env file
+env_contents = dotenv_values(env_path)
+print("Loaded .env contents:")
+for key, value in env_contents.items():
+    print(f"{key}: {value}")
+
+# Manually set environment variables
+os.environ["API_ID"] = env_contents["API_ID"]
+os.environ["API_HASH"] = env_contents["API_HASH"]
+os.environ["BOT_TOKEN"] = env_contents["BOT_TOKEN"]
+
+# Print the content of the .env file
+print("Content of the .env file:")
+with open(env_path, "r") as file:
+    print(file.read())
+
 API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")
+TOKEN = os.getenv("BOT_TOKEN")
+print(f"Loaded API_ID: {API_ID}")
+print(f"Loaded API_HASH: {API_HASH}")
+print(f"Loaded TOKEN: {TOKEN}")
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -34,43 +78,50 @@ if not TOKEN:
 bot: Bot = Bot(token=TOKEN)
 
 
+# Initialize database before serving
+@app.before_serving
+async def startup():
+    init_db()
+
+
 async def start(update: Update, context):
     print("start command received")
     update.message.reply_text("ajsjdsafhjdf!")
+
 
 def vote(update: Update, context):
     chat_member = update.my_chat_member
 
     # Check if the bot was added to the group
-    if chat_member.new_chat_member.status == 'member':
+    if chat_member.new_chat_member.status == "member":
         context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text="just arrived, whatsup"
+            chat_id=update.effective_chat.id, text="just arrived, whatsup"
         )
         message = context.bot.send_poll(
             chat_id=update.effective_chat.id,
             question="Do you argee to sell your part of this chat",
-            options=["I argee", "I do not argee"]
+            options=["I argee", "I do not argee"],
         )
         polls[message.poll.id] = (update.effective_chat.id, message.message_id)
-        
+
+
 def poll_monitor(update: Update, context: ContextTypes):
     poll = update.poll
     options = poll.options
-    
+
     chat_id, message_id = polls.get(poll.id, (None, None))
     if chat_id is not None:
         if options[0].voter_count == 1 and options[1].voter_count == 0:
             context.bot.stop_poll(chat_id, message_id)
             context.bot.send_message(
                 chat_id=chat_id,
-                text="Every member in the group argeed to sell their chat history in this group"
+                text="Every member in the group argeed to sell their chat history in this group",
             )
         if options[1].voter_count > 0:
             context.bot.stop_poll(chat_id, message_id)
             context.bot.send_message(
                 chat_id=chat_id,
-                text="Atleast one member declined, please consider later!"
+                text="Atleast one member declined, please consider later!",
             )
 
 
@@ -79,47 +130,51 @@ async def health():
     app.logger.info("Health check endpoint called")
     return "ok", 200
 
-@app.route('/hello', methods=['GET'])
+
+@app.route("/hello", methods=["GET"])
 async def hello_world():
     print("hello endpoint!!")
     return jsonify({"message": "Hello, World!"})
 
-@app.route('/login', methods=['POST'])
+
+@app.route("/login", methods=["POST"])
 async def login():
     print("login??????")
     data = await request.get_json()
-    auth_code = data.get('code')
+    auth_code = data.get("code")
     print("auth code:")
     print(auth_code)
-    phone_number = data.get('phone_number')
+    phone_number = data.get("phone_number")
     print(phone_number)
 
     try:
         await client.sign_in(phone_number, auth_code)
     except SessionPasswordNeededError:
         return "401"
-    
+
     count = 0
     bot_id = 0
-    res = defaultdict(int) # initializes res as a defaultdict that defaults to 0 for any new key
+    res = defaultdict(
+        int
+    )  # initializes res as a defaultdict that defaults to 0 for any new key
 
     if await client.is_user_authorized():
         dialogs = await client.get_dialogs()
         for dialog in dialogs:
-            if (dialog.id < 0 or dialog.id == 777000):
+            if dialog.id < 0 or dialog.id == 777000:
                 continue
             count += 1
-            if (count > 10):
+            if count > 10:
                 break
             print(f"{dialog.name}, {dialog.id}")
-            if (dialog.title == 'Ton_test'):
+            if dialog.title == "Ton_test":
                 bot_id = dialog.id
             async for message in client.iter_messages(dialog.id):
                 if message.text is not None:
                     words = message.text.split()
                     res[(dialog.id, dialog.name)] += len(words)
-                    if (res[(dialog.id, dialog.name)] > 2000):
-                        break 
+                    if res[(dialog.id, dialog.name)] > 2000:
+                        break
 
     res_json_serializable = {str(key): value for key, value in res.items()}
 
@@ -134,7 +189,8 @@ async def login():
     #     fwd_limit=10 # Allow the user to see the 10 last messages
     # ))
 
-@app.route('/send-message', methods=['POST'])
+
+@app.route("/send-message", methods=["POST"])
 async def send_message():
     isValidChat = False
     second_user_id = 0
@@ -145,7 +201,7 @@ async def send_message():
     # TODO: multiple chats
 
     try:
-        chat_id = int(data.get('chat_id'))
+        chat_id = int(data.get("chat_id"))
     except (ValueError, TypeError):
         return "Invalid chat ID", 400
 
@@ -153,12 +209,12 @@ async def send_message():
 
     async for user in client.iter_participants(chat_id):
         print(user.id)
-        if (user.id == sender_id):
+        if user.id == sender_id:
             isValidChat = True
         else:
             second_user_id = user.id
 
-    if (isValidChat == False or second_user_id == 0):
+    if isValidChat == False or second_user_id == 0:
         await client.disconnect()
         return "Invalid chat", 400
 
@@ -166,29 +222,64 @@ async def send_message():
         "Hello! The owner of this chat wants to sell the data of this chat. "
         "Please click the button below to accept the sale and proceed to the bot:\n\n"
         "<a href='https://t.me/testmychatpaybot'>Click here to accept and proceed</a>"
-        )
+    )
 
-    await client.send_message(chat_id, message_for_second_user, parse_mode='html')
+    await client.send_message(chat_id, message_for_second_user, parse_mode="html")
     await client.disconnect()
 
     return "ok", 200
-    
 
-@app.route('/send-code', methods=['POST'])
+
+@app.route("/send-code", methods=["POST"])
 async def send_code():
     print("send-code!!!!!!!!!!!!!")
     data = await request.get_json()
-    phone_number = data.get('phone_number')
+    phone_number = data.get("phone_number")
     print(phone_number)
     await client.connect()
     await client.send_code_request(phone_number)
     return "ok", 200
 
 
+# New endpoints for database testing
+@app.route("/users", methods=["POST"])
+async def create_user():
+    data = await request.get_json()
+    name = data["name"]
+    email = data["email"]
+    db: Session = SessionLocal()
+    new_user = User(name=name, email=email)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return jsonify({"id": new_user.id, "name": new_user.name, "email": new_user.email})
+
+
+@app.route("/users", methods=["GET"])
+async def read_users():
+    db: Session = SessionLocal()
+    users = db.query(User).all()
+    return jsonify(
+        [{"id": user.id, "name": user.name, "email": user.email} for user in users]
+    )
+
+
+@app.route("/test-data", methods=["POST"])
+async def add_test_data():
+    db: Session = SessionLocal()
+    user1 = User(name="Test User 1", email="test1@example.com")
+    user2 = User(name="Test User 2", email="test2@example.com")
+    db.add(user1)
+    db.add(user2)
+    db.commit()
+    return jsonify({"message": "Test data added"}), 200
+
+
 dispatcher = Dispatcher(bot, None, use_context=True)
 dispatcher.add_handler(CommandHandler("start", start))
 dispatcher.add_handler(ChatMemberHandler(vote, ChatMemberHandler.MY_CHAT_MEMBER))
 dispatcher.add_handler(PollHandler(poll_monitor))
+
 
 @app.route("/webhook", methods=["POST"])
 async def webhook():
@@ -204,13 +295,13 @@ async def webhook():
         # dispatcher.process_update(update)
     return "ok"
 
+
 if __name__ == "__main__":
     app.run(port=8080)
 
     # Process or return retrieved dialogs (e.g., list of chat titles)
     # except (PhoneNumberInvalidError, AuthCodeInvalidError) as e:
     #     return {"error": str(e)}, "400"  # Return specific error message
-    
 
     # client = TelegramClient(f'session_{phone_number}', api_id, api_hash)
     # session_dict[phone_number] = client

@@ -34,13 +34,6 @@ This repository contains a Quart backend application integrated with SQLAlchemy 
 
    Create a `.env` file in the root directory and add the following:
 
-   ```env
-   API_ID=your_telegram_api_id
-   API_HASH=your_telegram_api_hash
-   BOT_TOKEN=your_telegram_bot_token
-   DATABASE_URL=postgresql://user:password@localhost/dbname
-   ```
-
 5. Initialize the database:
 
    ```sh
