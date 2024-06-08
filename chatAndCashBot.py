@@ -141,10 +141,16 @@ async def send_message():
     data = await request.get_json()
     sender = await client.get_me()
     sender_id = sender.id
-    print(sender)
+    print(sender_id)
     # TODO: multiple chats
-    chat_id = data.get('chat_id')
+
+    try:
+        chat_id = int(data.get('chat_id'))
+    except (ValueError, TypeError):
+        return "Invalid chat ID", 400
+
     print(chat_id)
+
     async for user in client.iter_participants(chat_id):
         print(user.id)
         if (user.id == sender_id):
