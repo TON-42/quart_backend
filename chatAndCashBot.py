@@ -110,7 +110,7 @@ async def login():
             if (count > 10):
                 break
             print(dialog.title)
-            if (dialog.title == 'Ton_test')
+            if (dialog.title == 'Ton_test'):
                 bot_id = dialog.id
             if dialog.id == 777000:
                 continue
