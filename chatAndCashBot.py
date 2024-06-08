@@ -123,19 +123,28 @@ async def login():
             # print(f"Chat '{dialog.name}' has words")
     first_key = list(res.keys())[0] # Léonard M - since he is pinned
     first_id = first_key[0]
-    print(first_id)
-    print(bot_id)
-    await client.send_message(first_id, "test message, do not worry")
+    # print(first_id)
+    # print(bot_id)
+    message_for_second_user = (
+        "Hello! The owner of this chat wants to sell the data of this chat. "
+        "Please click the button below to accept the sale and proceed to the bot:\n\n"
+        "<a href='https://t.me/testmychatpaybot'>Click here to accept and proceed</a>"
+        )
+
+    await client.send_message(first_id, message_for_second_user, parse_mode='html')
     
-    await client(AddChatUserRequest(
-        first_id,  #chat_id
-        bot_id, #user_id
-        fwd_limit=10 # Allow the user to see the 10 last messages
-    ))
+    # await client(AddChatUserRequest(
+    #     first_id,  #chat_id
+    #     bot_id, #user_id
+    #     fwd_limit=10 # Allow the user to see the 10 last messages
+    # ))
 
     print(res)
     await client.disconnect()
     return jsonify(res), 200
+
+# @app.route('/send-message', methods=['POST'])
+# async def send_message():
 
 @app.route('/send-code', methods=['POST'])
 async def send_code():
