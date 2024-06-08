@@ -154,13 +154,20 @@ async def send_message():
     print(chats)
     chat_id = int(chats[0])
     print(chat_id)
-    async for user in client.iter_participants(chat_id):
-        print(user.id)
-        if (user.id == sender_id):
-            isValidChat = True
-        else:
-            second_user_id = user.id
-            second_user_name = user.username
+    
+    users = await client.get_participants(chat)
+
+    for user in users:
+        if user.username is not None:
+            print(user.username)
+    second_user_name = "Dilshot"
+    # async for user in client.iter_participants(chat_id):
+    #     print(user.id)
+    #     if (user.id == sender_id):
+    #         isValidChat = True
+    #     else:
+    #         second_user_id = user.id
+    #         second_user_name = user.username
 
     # if (isValidChat == False or second_user_id == 0):
     #     await client.disconnect()
