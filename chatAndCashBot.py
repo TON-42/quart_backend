@@ -160,7 +160,7 @@ async def send_message():
             isValidChat = True
         else:
             second_user_id = user.id
-            second_user_name = user.name
+            second_user_name = user.username
 
     if (isValidChat == False or second_user_id == 0):
         await client.disconnect()
@@ -176,7 +176,7 @@ async def send_message():
     await client.send_message(chat_id, message_for_second_user, parse_mode='html')
     await client.disconnect()
 
-    return jsonify(second_user_name), 200
+    return jsonify({"userB": second_user_name if second_user_name else None}), 200 
     
 
 @app.route('/send-code', methods=['POST'])
