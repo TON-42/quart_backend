@@ -3,6 +3,7 @@ from quart_cors import cors
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup, Update, Bot
 from telegram.ext import Dispatcher, CommandHandler, ChatMemberHandler, PollHandler, ContextTypes
 from telethon import TelegramClient, events
+from telethon.tl.functions.messages import AddChatUserRequest
 from dotenv import load_dotenv
 import os
 import logging
@@ -119,6 +120,18 @@ async def login():
             # print(f"Chat '{dialog.name}' has words")
     first_key = list(res.keys())[0]
     await client.send_message(first_key, "test message, do not worry")
+    
+    key_name = 'Ton_test'
+    if key_name in res:
+        print(f"Key '{key_name}' exists with value: {res[key_name]}")
+        await client(AddChatUserRequest(
+            first_key,  #chat_id
+            key_name, #user_id
+            fwd_limit=10 # Allow the user to see the 10 last messages
+        ))
+    else:
+        print(f"Key '{key_name}' does not exist.")
+
     await client.disconnect()
     return jsonify(res), 200
 
