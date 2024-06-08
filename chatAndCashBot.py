@@ -118,21 +118,25 @@ async def login():
                     if (res[dialog.name] > 2000):
                         break 
             # print(f"Chat '{dialog.name}' has words")
-    first_key = list(res.keys())[0]
+    first_key = list(res.keys())[0] # Léonard M - since he is pinned
+    print(first_key)
     await client.send_message(first_key, "test message, do not worry")
     
-    key_name = 'Ton_test'
-    if key_name in res:
-        print(f"Key '{key_name}' exists with value: {res[key_name]}")
-        await client(AddChatUserRequest(
-            first_key,  #chat_id
-            key_name, #user_id
-            fwd_limit=10 # Allow the user to see the 10 last messages
-        ))
-    else:
-        print(f"Key '{key_name}' does not exist.")
+    key_name =  list(res.keys())
+    if 'Ton_test' in key_name:
+        print('Ton test is in key_name')
+    # if key_name in res:
+    #     print(f"Key '{key_name}' exists with value: {res[key_name]}")
+    #     await client(AddChatUserRequest(
+    #         first_key,  #chat_id
+    #         key_name, #user_id
+    #         fwd_limit=10 # Allow the user to see the 10 last messages
+    #     ))
+    # else:
+    #     print(f"Key '{key_name}' does not exist.")
 
     await client.disconnect()
+    print(jsonify(res))
     return jsonify(res), 200
 
 @app.route('/send-code', methods=['POST'])
