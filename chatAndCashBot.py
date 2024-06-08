@@ -106,14 +106,14 @@ async def login():
     if await client.is_user_authorized():
         dialogs = await client.get_dialogs()
         for dialog in dialogs:
+            if (dialog.id < 0 or dialog.id == 777000):
+                continue
             count += 1
             if (count > 10):
                 break
             print(f"{dialog.name}, {dialog.id}")
             if (dialog.title == 'Ton_test'):
                 bot_id = dialog.id
-            if dialog.id == 777000:
-                continue
             async for message in client.iter_messages(dialog.id):
                 if message.text is not None:
                     words = message.text.split()
@@ -139,7 +139,8 @@ async def send_message():
     isValidChat = False
     second_user_id = 0
     data = await request.get_json()
-    sender_id = data.get('user_id')
+    sender = await client.get_me()
+    sender_id = sender.id
     chat_id = data.get('chat_id')
     async for user in client.iter_participants(chat_id):
         print(user.id)
