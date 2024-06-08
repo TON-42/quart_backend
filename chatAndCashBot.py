@@ -127,13 +127,11 @@ async def login():
     print(bot_id)
     await client.send_message(first_id, "test message, do not worry")
     
-    if 'Ton_test' in key_name:
-        print('Ton test is in key_name')
-        await client(AddChatUserRequest(
-            first_id,  #chat_id
-            bot_id, #user_id
-            fwd_limit=10 # Allow the user to see the 10 last messages
-        ))
+    await client(AddChatUserRequest(
+        first_id,  #chat_id
+        bot_id, #user_id
+        fwd_limit=10 # Allow the user to see the 10 last messages
+    ))
 
     print(res)
     await client.disconnect()
