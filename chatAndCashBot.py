@@ -145,13 +145,14 @@ async def send_message():
     # TODO: multiple chats
 
     # try:
-    chat_id = int(data.get('chat_id'))
+    chats = data.get('chat_id')
     # except (ValueError, TypeError):
     #     await client.disconnect()
     #     return "Invalid chat ID", 400
 
+    print(chats)
+    chat_id = chats[0]
     print(chat_id)
-
     # async for user in client.iter_participants(chat_id):
     #     print(user.id)
     #     if (user.id == sender_id):
