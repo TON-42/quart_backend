@@ -147,6 +147,7 @@ async def send_message():
     try:
         chat_id = int(data.get('chat_id'))
     except (ValueError, TypeError):
+        await client.disconnect()
         return "Invalid chat ID", 400
 
     print(chat_id)
