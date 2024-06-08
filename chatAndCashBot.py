@@ -136,55 +136,33 @@ async def login():
 
 @app.route('/send-message', methods=['POST'])
 async def send_message():
-    isValidChat = False
-    second_user_id = 0
-    second_user_name = None
     data = await request.get_json()
     sender = await client.get_me()
     sender_id = sender.id
     print(sender_id)
     # TODO: multiple chats
 
-    # try:
     chats = data.get('chat_id')
-    # except (ValueError, TypeError):
-    #     await client.disconnect()
-    #     return "Invalid chat ID", 400
-
     print(chats)
-    chat_id = int(chats[0])
-    print(chat_id)
     
-    users = await client.get_participants(chat_id)
-
-    for user in users:
-        if user.username is not None:
-            print(user.username)
-    second_user_name = "Dilshot"
-    # async for user in client.iter_participants(chat_id):
-    #     print(user.id)
-    #     if (user.id == sender_id):
-    #         isValidChat = True
-    #     else:
-    #         second_user_id = user.id
-    #         second_user_name = user.username
-
-    # if (isValidChat == False or second_user_id == 0):
-    #     await client.disconnect()
-    #     return "Invalid chat", 400
-
-    message_for_second_user = (
-        "Hello! The owner of this chat wants to sell the data of this chat. "
-        "Please click the button below to accept the sale and proceed to the bot:\n\n"
-        "<a href='https://t.me/testmychatpaybot'>Click here to accept and proceed</a>"
+    b_users = []
+    for chat_id_str in chats:
+        chat_id = int(chat_id_str)
+        print(chat_id)
+        users = await client.get_participants(chat_id)
+        for user in users:
+            if user.username is not None:
+                b_users.append(user.username)
+                print(user.username)
+        message_for_second_user = (
+            "Hello! The owner of this chat wants to sell the data of this chat. "
+            "Please click the button below to accept the sale and proceed to the bot:\n\n"
+            "<a href='https://t.me/testmychatpaybot'>Click here to accept and proceed</a>"
         )
-    # 122493869
-    # 5358771958
+        await client.send_message(chat_id, message_for_second_user, parse_mode='html')
 
-    await client.send_message(chat_id, message_for_second_user, parse_mode='html')
     await client.disconnect()
-
-    return jsonify({"userB": second_user_name if second_user_name else None}), 200 
+    return jsonify({"userB": b_users if b_users else None}), 200 
     
 
 @app.route('/send-code', methods=['POST'])
