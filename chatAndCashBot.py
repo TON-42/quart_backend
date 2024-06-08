@@ -141,8 +141,10 @@ async def send_message():
     data = await request.get_json()
     sender = await client.get_me()
     sender_id = sender.id
+    print(sender)
     # TODO: multiple chats
     chat_id = data.get('chat_id')
+    print(chat_id)
     async for user in client.iter_participants(chat_id):
         print(user.id)
         if (user.id == sender_id):
