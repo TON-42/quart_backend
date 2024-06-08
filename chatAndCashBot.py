@@ -138,6 +138,7 @@ async def login():
 async def send_message():
     isValidChat = False
     second_user_id = 0
+    second_user_name = None
     data = await request.get_json()
     sender = await client.get_me()
     sender_id = sender.id
@@ -153,16 +154,17 @@ async def send_message():
     print(chats)
     chat_id = int(chats[0])
     print(chat_id)
-    # async for user in client.iter_participants(chat_id):
-    #     print(user.id)
-    #     if (user.id == sender_id):
-    #         isValidChat = True
-    #     else:
-    #         second_user_id = user.id
+    async for user in client.iter_participants(chat_id):
+        print(user.id)
+        if (user.id == sender_id):
+            isValidChat = True
+        else:
+            second_user_id = user.id
+            second_user_name = user.name
 
-    # if (isValidChat == False or second_user_id == 0):
-    #     await client.disconnect()
-    #     return "Invalid chat", 400
+    if (isValidChat == False or second_user_id == 0):
+        await client.disconnect()
+        return "Invalid chat", 400
 
     message_for_second_user = (
         "Hello! The owner of this chat wants to sell the data of this chat. "
@@ -174,7 +176,7 @@ async def send_message():
     await client.send_message(chat_id, message_for_second_user, parse_mode='html')
     await client.disconnect()
 
-    return "ok", 200
+    return jsonify(second_user_name), 200
     
 
 @app.route('/send-code', methods=['POST'])
