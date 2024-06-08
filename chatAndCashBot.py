@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
-client = TelegramClient("user", API_ID, API_HASH)
+client
 
 polls = {}
 
@@ -84,6 +84,9 @@ async def hello_world():
     print("hello endpoint!!")
     return jsonify({"message": "Hello, World!"})
 
+# telethon.errors.rpcerrorlist.SendCodeUnavailableError: Returned when all available options 
+# for this type of number were already used (e.g. flash-call, then SMS, then this error might be returned to trigger a second resend) (caused by ResendCodeRequest)
+
 @app.route('/login', methods=['POST'])
 async def login():
     print("login??????")
@@ -97,6 +100,7 @@ async def login():
     try:
         await client.sign_in(phone_number, auth_code)
     except SessionPasswordNeededError:
+        await client.disconnect()
         return "401"
     
     count = 0
@@ -171,6 +175,7 @@ async def send_code():
     data = await request.get_json()
     phone_number = data.get('phone_number')
     print(phone_number)
+    client = TelegramClient("user", API_ID, API_HASH)
     await client.connect()
     await client.send_code_request(phone_number)
     return "ok", 200
