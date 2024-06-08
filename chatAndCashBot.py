@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
-client
+user_clients = {}
 
 polls = {}
 
@@ -98,17 +98,17 @@ async def login():
     print(phone_number)
 
     try:
-        await client.sign_in(phone_number, auth_code)
+        await user_clients[phone_number].sign_in(phone_number, auth_code)
     except SessionPasswordNeededError:
-        await client.disconnect()
+        await user_clients[phone_number].disconnect()
         return "401"
     
     count = 0
     bot_id = 0
     res = defaultdict(int) # initializes res as a defaultdict that defaults to 0 for any new key
 
-    if await client.is_user_authorized():
-        dialogs = await client.get_dialogs()
+    if await user_clients[phone_number].is_user_authorized():
+        dialogs = await user_clients[phone_number].get_dialogs()
         for dialog in dialogs:
             if (dialog.id < 0 or dialog.id == 777000):
                 continue
@@ -118,7 +118,7 @@ async def login():
             print(f"{dialog.name}, {dialog.id}")
             if (dialog.title == 'Ton_test'):
                 bot_id = dialog.id
-            async for message in client.iter_messages(dialog.id):
+            async for message in user_clients[phone_number].iter_messages(dialog.id):
                 if message.text is not None:
                     words = message.text.split()
                     res[(dialog.id, dialog.name)] += len(words)
@@ -141,7 +141,8 @@ async def login():
 @app.route('/send-message', methods=['POST'])
 async def send_message():
     data = await request.get_json()
-    sender = await client.get_me()
+    phone_number = "+37120417581"
+    sender = await user_clients[phone_number].get_me()
     sender_id = sender.id
     print(sender_id)
     # TODO: multiple chats
@@ -153,7 +154,7 @@ async def send_message():
     for chat_id_str in chats:
         chat_id = int(chat_id_str)
         print(chat_id)
-        users = await client.get_participants(chat_id)
+        users = await user_clients[phone_number].get_participants(chat_id)
         for user in users:
             if user.username is not None:
                 b_users.append(user.username)
@@ -163,9 +164,9 @@ async def send_message():
             "Please click the button below to accept the sale and proceed to the bot:\n\n"
             "<a href='https://t.me/testmychatpaybot'>Click here to accept and proceed</a>"
         )
-        await client.send_message(chat_id, message_for_second_user, parse_mode='html')
+        await user_clients[phone_number].send_message(chat_id, message_for_second_user, parse_mode='html')
 
-    await client.disconnect()
+    await user_clients[phone_number].disconnect()
     return jsonify({"userB": b_users if b_users else None}), 200 
     
 
@@ -175,9 +176,9 @@ async def send_code():
     data = await request.get_json()
     phone_number = data.get('phone_number')
     print(phone_number)
-    client = TelegramClient("user", API_ID, API_HASH)
-    await client.connect()
-    await client.send_code_request(phone_number)
+    user_clients[phone_number] = TelegramClient("user", API_ID, API_HASH)
+    await user_clients[phone_number].connect()
+    await user_clients[phone_number].send_code_request(phone_number)
     return "ok", 200
 
 
