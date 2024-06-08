@@ -144,24 +144,24 @@ async def send_message():
     print(sender_id)
     # TODO: multiple chats
 
-    try:
-        chat_id = int(data.get('chat_id'))
-    except (ValueError, TypeError):
-        await client.disconnect()
-        return "Invalid chat ID", 400
+    # try:
+    chat_id = int(data.get('chat_id'))
+    # except (ValueError, TypeError):
+    #     await client.disconnect()
+    #     return "Invalid chat ID", 400
 
     print(chat_id)
 
-    async for user in client.iter_participants(chat_id):
-        print(user.id)
-        if (user.id == sender_id):
-            isValidChat = True
-        else:
-            second_user_id = user.id
+    # async for user in client.iter_participants(chat_id):
+    #     print(user.id)
+    #     if (user.id == sender_id):
+    #         isValidChat = True
+    #     else:
+    #         second_user_id = user.id
 
-    if (isValidChat == False or second_user_id == 0):
-        await client.disconnect()
-        return "Invalid chat", 400
+    # if (isValidChat == False or second_user_id == 0):
+    #     await client.disconnect()
+    #     return "Invalid chat", 400
 
     message_for_second_user = (
         "Hello! The owner of this chat wants to sell the data of this chat. "
