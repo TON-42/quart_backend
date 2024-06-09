@@ -4,8 +4,9 @@ from sqlalchemy import (
     String,
     Boolean,
     ForeignKey,
-    create_engine,
     Table,
+    Text,
+    create_engine,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
@@ -58,6 +59,7 @@ class Chat(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
     words = Column(Integer, default=0)
+    full_text = Column(Text, nullable=False)
     status = Column(ENUM(ChatStatus), nullable=False)
     lead_id = Column(Integer, ForeignKey("users.id"))
     lead = relationship("User", foreign_keys=[lead_id])
