@@ -85,7 +85,7 @@ async def create_user():
 
     except NoResultFound:
         try:
-            new_user = User(id=32432525, name="stefano", has_profile=False, words=0, chats=None, agreed_chats=None)
+            new_user = User(id=32432525, name="stefano", has_profile=False, words=0, chats=None)
             session.add(new_user)
             session.commit()
         except Exception as e:
