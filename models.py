@@ -77,7 +77,7 @@ class Chat(Base):
     agreed_users = relationship(
         "User", secondary=agreed_users_chats, back_populates="agreed_chats"
     )
-    users = relationship("User", secondary=users_chats, back_populates="chats_users")
+    users = relationship("User", secondary=users_chats, back_populates="chats")
 
 
 # Database URL from environment variable or fallback
