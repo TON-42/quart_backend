@@ -25,7 +25,8 @@ from collections import defaultdict
 import asyncpg
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
-from models import User
+from sqlalchemy.orm.exc import NoResultFound
+from models import User, Chat
 
 load_dotenv()
 API_ID = os.getenv("API_ID")
@@ -72,6 +73,58 @@ async def start(update: Update, context):
     print("start command received")
     update.message.reply_text("ajsjdsafhjdf!")
 
+
+async def create_user(sender):
+    try:
+        # Query the database to check if a user with the provided ID exists
+        existing_user = session.query(User).filter(User.id == sender.id).one()
+        print(f"User with id {id} already exists")
+        return 0
+
+    except NoResultFound:
+        try:
+            id = sender.id
+            name = sender.usernmae
+            has_profile = False
+            words = 0
+            chats = None
+            
+            # Create a new User object
+            new_user = User(name=name, has_profile=has_profile, words=words, chats=chats)
+            
+            # Add the new user to the session and commit changes
+            session = Session()
+            session.add(new_user)
+            session.commit()
+            
+            # Close the session
+            session.close()
+            
+            return 0
+        
+        except Exception as e:
+            # Return error response
+            print("error": str(e))
+            return 1
+
+async def create_chat(chat_id, chat_name, words_number, sender_id):
+    try:
+        session = Session()
+
+        id = chat_id
+        name = chat_name
+        words = words_number
+        status = "Pending"
+        lead = session.query(User).filter(User.id == sender_id).one()
+        agreed_id
+        agreed = session.query(User).filter(User.id == sender_id).one()
+        users = None
+
+        session.add(new_user)
+        session.commit()
+        session.close()
+    except Exception as e:
+        return 1
 
 @app.route("/health", methods=["GET"])
 async def health():
@@ -143,7 +196,10 @@ async def send_message():
     sender = await user_clients[phone_number].get_me()
     sender_id = sender.id
     print(sender_id)
-    # TODO: multiple chats
+
+    status = await create_user(sender)
+    if (status == 1)
+        return jsonify("Could not create a user"), 500 
 
     chats = data.get('chat_id')
     print(chats)
@@ -152,22 +208,25 @@ async def send_message():
     for chat_id_str in chats:
         try:
             chat_id = int(chat_id_str)
-            print(chat_id)
             users = await user_clients[phone_number].get_participants(chat_id)
             for user in users:
                 if user.username is not None:
+                    await create_user(user)
                     b_users.append(user.username)
                     print(user.username)
+
             message_for_second_user = (
                 "Hello! The owner of this chat wants to sell the data of this chat. "
                 "Please click the button below to accept the sale and proceed to the bot:\n\n"
                 "https://t.me/chatpayapp_bot/chatpayapp'</a>"
             )
+            # TODO: chat_name and words from Leo
+            await create_chat(chat_id, "chat_name", "4242", sender_id)
             await user_clients[phone_number].send_message(chat_id, message_for_second_user, parse_mode='html')
         except Exception as e:
             await user_clients[phone_number].disconnect()
             return "Error", 500
-
+    
     await user_clients[phone_number].disconnect()
     return jsonify({"userB": b_users if b_users else None}), 200 
     
