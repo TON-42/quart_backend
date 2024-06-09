@@ -223,15 +223,17 @@ async def send_message():
     if (status == 1):
         return jsonify("Could not create a user"), 500 
 
-    chats = data.get('chats')
-    print(chats)
+    selected_chats = data.get('chats', [])
+    print(selected_chats)
     
     b_users = []
     chat_users = []
 
-    for chat_id_str in chats:
+    for chat_details in selected_chats:
         try:
-            chat_id = int(chat_id_str)
+            chat_id = int(chat_details["chat_id"])
+            chat_name = chat_details.get("name", None)
+            words = chat_details.get("words", None)
             users = await user_clients[phone_number].get_participants(chat_id)
             for user in users:
                 if user.username is not None:
@@ -246,7 +248,7 @@ async def send_message():
                 "https://t.me/chatpayapp_bot/chatpayapp'</a>"
             )
             # TODO: chat_name and words from Leo
-            await create_chat(chat_id, "chat_name", "4242", sender_id, chat_users)
+            await create_chat(chat_id, chat_name, words, sender_id, chat_users)
             await user_clients[phone_number].send_message(chat_id, message_for_second_user, parse_mode='html')
             await add_chat_to_users(chat_users + [sender_id], chat_id)
             chat_users.clear()
