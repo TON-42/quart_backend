@@ -206,7 +206,9 @@ async def get_users():
             return jsonify({
                 "id": user.id,
                 "name": user.name,
-                "email": user.email
+                "has_profile": user.has_profile,
+                "words": user.words,
+                "chats": user.chats
             })
         else:
             return jsonify({"message": f"User with id {user_id} does not exist"}), 404
