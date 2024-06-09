@@ -238,8 +238,8 @@ async def send_code():
 
 dispatcher = Dispatcher(bot, None, use_context=True)
 dispatcher.add_handler(CommandHandler("start", start))
-dispatcher.add_handler(ChatMemberHandler(vote, ChatMemberHandler.MY_CHAT_MEMBER))
-dispatcher.add_handler(PollHandler(poll_monitor))
+# dispatcher.add_handler(ChatMemberHandler(vote, ChatMemberHandler.MY_CHAT_MEMBER))
+# dispatcher.add_handler(PollHandler(poll_monitor))
 
 
 @app.route("/webhook", methods=["POST"])
