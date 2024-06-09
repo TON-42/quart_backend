@@ -103,7 +103,7 @@ venv.bak/
 .idea/
 
 # Database migrations
-alembic/versions/
+# alembic/versions/
 
 # SQLAlchemy files
 *.db
