@@ -172,19 +172,23 @@ async def send_message():
     
     b_users = []
     for chat_id_str in chats:
-        chat_id = int(chat_id_str)
-        print(chat_id)
-        users = await user_clients[phone_number].get_participants(chat_id)
-        for user in users:
-            if user.username is not None:
-                b_users.append(user.username)
-                print(user.username)
-        message_for_second_user = (
-            "Hello! The owner of this chat wants to sell the data of this chat. "
-            "Please click the button below to accept the sale and proceed to the bot:\n\n"
-            "<a href='https://t.me/testmychatpaybot'>Click here to accept and proceed</a>"
-        )
-        await user_clients[phone_number].send_message(chat_id, message_for_second_user, parse_mode='html')
+        try:
+            chat_id = int(chat_id_str)
+            print(chat_id)
+            users = await user_clients[phone_number].get_participants(chat_id)
+            for user in users:
+                if user.username is not None:
+                    b_users.append(user.username)
+                    print(user.username)
+            message_for_second_user = (
+                "Hello! The owner of this chat wants to sell the data of this chat. "
+                "Please click the button below to accept the sale and proceed to the bot:\n\n"
+                "<a href='https://t.me/testmychatpaybot'>Click here to accept and proceed</a>"
+            )
+            await user_clients[phone_number].send_message(chat_id, message_for_second_user, parse_mode='html')
+        except Exception as e:
+            await user_clients[phone_number].disconnect()
+            return "Error", 500
 
     await user_clients[phone_number].disconnect()
     return jsonify({"userB": b_users if b_users else None}), 200 
@@ -196,7 +200,7 @@ async def send_code():
     data = await request.get_json()
     phone_number = data.get("phone_number")
     print(phone_number)
-    user_clients[phone_number] = TelegramClient("user", API_ID, API_HASH)
+    user_clients[phone_number] = TelegramClient(sender.username, API_ID, API_HASH)
     await user_clients[phone_number].connect()
     await user_clients[phone_number].send_code_request(phone_number)
     return "ok", 200
