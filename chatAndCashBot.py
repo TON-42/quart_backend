@@ -82,6 +82,7 @@ async def create_user():
     try:
         print("ok")
         existing_user = session.query(User).filter(User.id == 32432524).one()
+        print("User already exists")
     except NoResultFound:
         new_user = User(id=32432524, name="danto", has_profile=False, words=0)
         user_data = {
@@ -384,9 +385,6 @@ async def webhook():
         update = Update.de_json(data, bot)
         update.message.reply_text("webhook")
         dispatcher.process_update(update)
-        # update = Update.de_json(request.get_json(force=True), bot)
-        # update.message.reply_text("webhook")
-        # dispatcher.process_update(update)
     return "ok"
 
 
