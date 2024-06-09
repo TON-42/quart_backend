@@ -1,8 +1,18 @@
-from sqlalchemy import Column, Integer, String, create_engine
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    ForeignKey,
+    create_engine,
+    Table,
+)
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.dialects.postgresql import ENUM
 from dotenv import load_dotenv
 import os
+import enum
 
 
 load_dotenv()
@@ -10,11 +20,42 @@ load_dotenv()
 Base = declarative_base()
 
 
+# Enum for chat status
+class ChatStatus(enum.Enum):
+    pending = "pending"
+    sold = "sold"
+    declined = "declined"
+
+
+# Association table for many-to-many relationship between users and chats
+users_chats = Table(
+    "users_chats",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
+    Column("chat_id", Integer, ForeignKey("chats.id"), primary_key=True),
+)
+
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
-    name = Column(String(100))
-    email = Column(String(100), unique=True)
+    name = Column(String(100), nullable=False)
+    has_profile = Column(Boolean, default=False)
+    words = Column(Integer, default=0)
+    chats = relationship("Chat", secondary=users_chats, back_populates="users")
+
+
+class Chat(Base):
+    __tablename__ = "chats"
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False)
+    words = Column(Integer, default=0)
+    status = Column(ENUM(ChatStatus), nullable=False)
+    lead_id = Column(Integer, ForeignKey("users.id"))
+    lead = relationship("User", foreign_keys=[lead_id])
+    agreed_id = Column(Integer, ForeignKey("users.id"))
+    agreed = relationship("User", foreign_keys=[agreed_id])
+    users = relationship("User", secondary=users_chats, back_populates="chats")
 
 
 # Database URL from environment variable or fallback
@@ -22,9 +63,6 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 print(f"DATABASE_URL: {DATABASE_URL}")  # Debugging line
 if DATABASE_URL is None:
     raise ValueError("No DATABASE_URL found in environment variables")
-
-# Create engine
-# engine = create_engine(DATABASE_URL)
 
 
 # Create engine and session in a function to avoid import-time side effects
@@ -37,16 +75,7 @@ def get_session():
     return sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-# Create session
-# SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
 # Initialize database
 def init_db():
     engine = get_engine()
     Base.metadata.create_all(bind=engine)
-
-
-# # Initialize database
-# def init_db():
-#     Base.metadata.create_all(bind=engine)
