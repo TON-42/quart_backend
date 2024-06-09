@@ -225,7 +225,7 @@ async def send_message():
     if (status == 1):
         return jsonify("Could not create a user"), 500 
 
-    chats = data.get('chat_id')
+    chats = data.get('chats')
     print(chats)
     
     b_users = []
