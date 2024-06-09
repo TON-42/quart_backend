@@ -35,6 +35,14 @@ users_chats = Table(
     Column("chat_id", Integer, ForeignKey("chats.id"), primary_key=True),
 )
 
+# Association table for many-to-many relationship between agreed users and chats
+agreed_users = Table(
+    "agreed_users",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
+    Column("chat_id", Integer, ForeignKey("chats.id"), primary_key=True),
+)
+
 
 class User(Base):
     __tablename__ = "users"
@@ -43,6 +51,9 @@ class User(Base):
     has_profile = Column(Boolean, default=False)
     words = Column(Integer, default=0)
     chats = relationship("Chat", secondary=users_chats, back_populates="users")
+    agreed_chats = relationship(
+        "Chat", secondary=agreed_users, back_populates="agreed_chats"
+    )
 
 
 class Chat(Base):
@@ -53,8 +64,9 @@ class Chat(Base):
     status = Column(ENUM(ChatStatus), nullable=False)
     lead_id = Column(Integer, ForeignKey("users.id"))
     lead = relationship("User", foreign_keys=[lead_id])
-    agreed_id = Column(Integer, ForeignKey("users.id"))
-    agreed = relationship("User", foreign_keys=[agreed_id])
+    agreed_users = relationship(
+        "User", secondary=agreed_users, back_populates="agreed_chats"
+    )
     users = relationship("User", secondary=users_chats, back_populates="chats")
 
 
