@@ -200,7 +200,7 @@ async def send_code():
     data = await request.get_json()
     phone_number = data.get("phone_number")
     print(phone_number)
-    user_clients[phone_number] = TelegramClient(sender.username, API_ID, API_HASH)
+    user_clients[phone_number] = TelegramClient(phone_number, API_ID, API_HASH)
     await user_clients[phone_number].connect()
     await user_clients[phone_number].send_code_request(phone_number)
     return "ok", 200
