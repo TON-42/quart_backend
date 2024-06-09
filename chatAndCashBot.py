@@ -27,7 +27,9 @@ from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import IntegrityError
-from models import User, Chat
+from models import User, Chat, ChatStatus
+import enum
+
 
 load_dotenv()
 API_ID = os.getenv("API_ID")
@@ -74,17 +76,15 @@ async def start(update: Update, context):
     print("start command received")
     update.message.reply_text("ajsjdsafhjdf!")
 
-@app.route("/user", methods=["GET"])
-async def create_user():
+async def create_user(user_id):
     session = Session()
     status = 0
-    # Query the database to check if a user with the provided ID exists
     try:
-        print("ok")
-        existing_user = session.query(User).filter(User.id == 32432524).one()
+        # Query the database to check if a user with the provided ID exists
+        existing_user = session.query(User).filter(User.id == user_id).one()
         print("User already exists")
     except NoResultFound:
-        new_user = User(id=32432524, name="danto", has_profile=False, words=0)
+        new_user = User(id=user_id, name="danto", has_profile=False, words=0)
         user_data = {
             "id": new_user.id,
             "name": new_user.name,
@@ -99,41 +99,37 @@ async def create_user():
         return jsonify(user_data), 200
     except Exception as e:
         print(f"Error: {str(e)}")
-        session.close()
-        return jsonify({f"Error: {str(e)}"}), 400
+        status = 1
     finally:
         session.close()
-        return jsonify({"message": "OK"}), 200
+        return status
 
-# chat_id, chat_name, words_number, sender_id, chat_users
-@app.route("/chat", methods=["GET"])
-async def create_chat():
+
+async def create_chat(chat_id, chat_name, words_number, sender_id, chat_users):
     status = 0
     try:
         session = Session()
 
-        new_chat = Chat(id=32432525, name="Ton_stuff", words=12345, status="Pending", lead_id=32432524)
+        new_chat = Chat(id=chat_id, name=chat_name, words=words_number, status=ChatStatus.pending, lead_id=sender_id, full_text="None")
 
-        lead = session.query(User).filter(User.id == 32432524).one()
+        lead = session.query(User).filter(User.id == sender_id).one()
         new_chat.lead = lead
         
-        agreed_user_ids = [32432524]
+        agreed_user_ids = [sender_id]
         agreed_users = session.query(User).filter(User.id.in_(agreed_user_ids)).all()
         new_chat.agreed_users.extend(agreed_users)
 
-        all_users = session.query(User).filter(User.id.in_([32432524, 32432525])).all()
+        all_users = session.query(User).filter(User.id.in_([sender_id] + chat_users)).all()
         new_chat.users.extend(all_users)
     
         session.add(new_chat)
         session.commit()
     except Exception as e:
         print(f"Error: {str(e)}")
-        return jsonify({f"Error: {str(e)}"}), 400
         status = 1
     finally:
         session.close()
-        return jsonify({"message": "OK"}), 200
-        # return status
+        return status
 
 
 async def add_chat_to_users(users_id, chat_id):
@@ -150,6 +146,7 @@ async def add_chat_to_users(users_id, chat_id):
         status = 1
     finally:
         session.close()
+        return status
 
 
 
@@ -312,7 +309,7 @@ async def get_user():
                 "name": user.name,
                 "has_profile": user.has_profile,
                 "words": user.words,
-                "chats": user.chats
+                "chats": [{"id": chat.id} for chat in user.chats] 
             })
         
         return jsonify({"message": f"User with id {user_id} does not exist"}), 404
@@ -321,67 +318,70 @@ async def get_user():
         session.close()
         return jsonify({"error": str(e)}), 500
 
-@app.route("/get-users", methods=["GET"])
-async def get_users():
-    try:
-        # Create a session
-        session = Session()
+# @app.route("/get-users", methods=["GET"])
+# async def get_users():
+#     try:
+#         # Create a session
+#         session = Session()
         
-        # Query all users
-        users = session.query(User).options(joinedload(User.chats)).all()
+#         # Query all users
+#         users = session.query(User).options(joinedload(User.chats)).all()
 
-        # Close the session
-        session.close()
+#         # Close the session
+#         session.close()
         
-        users_json = [
-            {
-                "id": user.id,
-                "name": user.name,
-                "has_profile": user.has_profile,
-                "words": user.words,
-                "chats": [chat.id for chat in user.chats]
-            }
-            for user in users
-        ]
+#         users_json = [
+#             {
+#                 "id": user.id,
+#                 "name": user.name,
+#                 "has_profile": user.has_profile,
+#                 "words": user.words,
+#                 "chats": [chat.id for chat in user.chats]
+#             }
+#             for user in users
+#         ]
         
-        return jsonify(users_json)
+#         return jsonify(users_json)
     
-    except Exception as e:
-        session.close()
-        return jsonify({"error": str(e)}), 500
+#     except Exception as e:
+#         session.close()
+#         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/get-chats", methods=["GET"])
-async def get_chats():
-    try:
-        # Create a session
-        session = Session()
+# @app.route("/get-chats", methods=["GET"])
+# async def get_chats():
+#     try:
+#         # Create a session
+#         session = Session()
         
-        # Query all chats
-        chats = session.query(Chat).all()
+#         # Query all chats
+#         chats = session.query(Chat).options(
+#             joinedload(Chat.agreed_users),
+#             joinedload(Chat.users)
+#         ).all()
 
-        # Close the session
-        session.close()
+#         # Close the session
+#         session.close()
         
-        chats_json = [
-            {
-                "id": chat.id,
-                "name": chat.name,
-                "words": chat.words,
-                "status": chat.status,
-                "lead": chat.lead_id,
-                "full_text": chat.full_text,
-                "agreed_users": [user.id for user in chat.agreed_users],
-                "users": [user.id for user in chat.users]
-            }
-            for chat in chats
-        ]
+#         chats_json = [
+#             {
+#                 "id": chat.id,
+#                 "name": chat.name,
+#                 "words": chat.words,
+#                 "status": chat.status.name,  # Convert enum to string
+#                 "lead": chat.lead_id,
+#                 "full_text": chat.full_text,
+#                 "agreed_users": [user.id for user in chat.agreed_users],
+#                 "users": [user.id for user in chat.users]
+#             }
+#             for chat in chats
+#         ]
         
-        return jsonify(chats_json)
+#         return jsonify(chats_json)
     
-    except Exception as e:
-        session.close()
-        return jsonify({"error": str(e)}), 500
+#     except Exception as e:
+#         session.close()
+#         return jsonify({"error": str(e)}), 500
 
 dispatcher = Dispatcher(bot, None, use_context=True)
 dispatcher.add_handler(CommandHandler("start", start))
@@ -410,3 +410,66 @@ if __name__ == "__main__":
     #     await client.connect()
     # except OSError:
     #     print('Failed to connect')
+
+
+# @app.route("/chat", methods=["GET"])
+# async def create_chat():
+#     # Enum for chat status
+#     status = 0
+#     try:
+#         session = Session()
+
+#         new_chat = Chat(id=32432525, name="Ton_stuff", words=12345, status=ChatStatus.pending, lead_id=32432524, full_text="123")
+
+#         lead = session.query(User).filter(User.id == 32432524).one()
+#         new_chat.lead = lead
+        
+#         agreed_user_ids = [32432524]
+#         agreed_users = session.query(User).filter(User.id.in_(agreed_user_ids)).all()
+#         new_chat.agreed_users.extend(agreed_users)
+
+#         all_users = session.query(User).filter(User.id.in_([32432524, 32432525])).all()
+#         new_chat.users.extend(all_users)
+    
+#         session.add(new_chat)
+#         session.commit()
+#     except Exception as e:
+#         print(f"Error: {str(e)}")
+#         return jsonify({f"Error: {str(e)}"}), 400
+#         status = 1
+#     finally:
+#         session.close()
+#         return jsonify({"message": "OK"}), 200
+#         # return status
+
+
+# @app.route("/user", methods=["GET"])
+# async def create_user():
+#     session = Session()
+#     status = 0
+#     # Query the database to check if a user with the provided ID exists
+#     try:
+#         print("ok")
+#         existing_user = session.query(User).filter(User.id == 32432524).one()
+#         print("User already exists")
+#     except NoResultFound:
+#         new_user = User(id=32432524, name="danto", has_profile=False, words=0)
+#         user_data = {
+#             "id": new_user.id,
+#             "name": new_user.name,
+#             "has_profile": new_user.has_profile,
+#             "words": new_user.words
+#         }
+
+#         print(user_data)
+#         session.add(new_user)
+#         session.commit()
+#         session.close()
+#         return jsonify(user_data), 200
+#     except Exception as e:
+#         print(f"Error: {str(e)}")
+#         session.close()
+#         return jsonify({f"Error: {str(e)}"}), 400
+#     finally:
+#         session.close()
+#         return jsonify({"message": "OK"}), 200
