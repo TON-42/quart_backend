@@ -64,7 +64,7 @@ class Chat(Base):
     lead_id = Column(Integer, ForeignKey("users.id"))
     lead = relationship("User", foreign_keys=[lead_id])
     agreed_users = relationship("User", secondary=agreed_users, back_populates="chats")
-    users = relationship("User", secondary=users_chats, backref="chats")
+    users = relationship("User", secondary=users_chats, back_populates="chats_users")
 
 
 # Database URL from environment variable or fallback
