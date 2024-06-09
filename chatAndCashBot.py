@@ -233,6 +233,9 @@ async def send_message():
         try:
             chat_id = int(chat_details["chat_id"])
             chat_name = chat_details.get("name", None)
+            if not chat.name:
+                print("Chat.name is not defined")
+                char.name = "Undefined"
             words = chat_details.get("words", None)
             users = await user_clients[phone_number].get_participants(chat_id)
             for user in users:
@@ -347,40 +350,40 @@ async def get_users():
         return jsonify({"error": str(e)}), 500
 
 
-# @app.route("/get-chats", methods=["GET"])
-# async def get_chats():
-#     try:
-#         # Create a session
-#         session = Session()
+@app.route("/get-chats", methods=["GET"])
+async def get_chats():
+    try:
+        # Create a session
+        session = Session()
         
-#         # Query all chats
-#         chats = session.query(Chat).options(
-#             joinedload(Chat.agreed_users),
-#             joinedload(Chat.users)
-#         ).all()
+        # Query all chats
+        chats = session.query(Chat).options(
+            joinedload(Chat.agreed_users),
+            joinedload(Chat.users)
+        ).all()
 
-#         # Close the session
-#         session.close()
+        # Close the session
+        session.close()
         
-#         chats_json = [
-#             {
-#                 "id": chat.id,
-#                 "name": chat.name,
-#                 "words": chat.words,
-#                 "status": chat.status.name,  # Convert enum to string
-#                 "lead": chat.lead_id,
-#                 "full_text": chat.full_text,
-#                 "agreed_users": [user.id for user in chat.agreed_users],
-#                 "users": [user.id for user in chat.users]
-#             }
-#             for chat in chats
-#         ]
+        chats_json = [
+            {
+                "id": chat.id,
+                "name": chat.name,
+                "words": chat.words,
+                "status": chat.status.name,  # Convert enum to string
+                "lead": chat.lead_id,
+                "full_text": chat.full_text,
+                "agreed_users": [user.id for user in chat.agreed_users],
+                "users": [user.id for user in chat.users]
+            }
+            for chat in chats
+        ]
         
-#         return jsonify(chats_json)
+        return jsonify(chats_json)
     
-#     except Exception as e:
-#         session.close()
-#         return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        session.close()
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/user", methods=["GET"])
 async def create_test_user():
