@@ -34,6 +34,10 @@ This repository contains a Quart backend application integrated with SQLAlchemy 
 
    Create a `.env` file in the root directory and add the following:
 
+   ```
+   DATABASE_URL=postgresql://user:password@localhost/dbname
+   ```
+
 5. Initialize the database:
 
    ```sh
@@ -60,7 +64,33 @@ This repository contains a Quart backend application integrated with SQLAlchemy 
 - `POST /users`: Creates a new user in the database.
 - `GET /users`: Retrieves all users from the database.
 
-## Database Migrations
+## Database Management
+
+### SQLAlchemy
+
+SQLAlchemy is the ORM (Object Relational Mapper) used in this project. It allows us to define our database models as Python classes and provides a high-level API to interact with the database.
+
+#### Example
+
+Here's a very basic example of a SQLAlchemy model:
+
+```python
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+```
+
+### Alembic
+
+Alembic is a database migration tool for SQLAlchemy. It helps manage database schema changes over time, ensuring that the database schema is always in sync with the application code.
+
+#### Common Commands
 
 1. Create a new migration script:
 
@@ -72,4 +102,16 @@ This repository contains a Quart backend application integrated with SQLAlchemy 
 
    ```sh
    alembic upgrade head
+   ```
+
+3. View the current status of migrations:
+
+   ```sh
+   alembic current
+   ```
+
+4. Downgrade to a previous migration:
+
+   ```sh
+   alembic downgrade -1
    ```
