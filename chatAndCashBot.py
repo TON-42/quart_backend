@@ -97,7 +97,7 @@ async def create_user(sender):
         session.commit()
     except Exception as e:
         print(f"Error: {str(e)}")
-        status = 1
+        # status = 1
     finally:
         session.close()
         return status
@@ -220,10 +220,11 @@ async def send_message():
     print(sender_id)
 
     status = await create_user(sender)
-    if (status == 1):
-        return jsonify("Could not create a user"), 500 
+    # if (status == 1):
+    #     return jsonify("Could not create a user"), 500 
 
     selected_chats = data.get('chats', [])
+    print("received from front-end:")
     print(selected_chats)
     
     b_users = []
