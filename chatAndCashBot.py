@@ -20,7 +20,7 @@ from telethon.tl.functions.messages import AddChatUserRequest
 from dotenv import load_dotenv, dotenv_values
 import os
 import logging
-from telethon.errors import SessionPasswordNeededError
+from telethon.errors import SessionPasswordNeededError, PhoneNumberInvalidError
 from collections import defaultdict
 import asyncpg
 from sqlalchemy import create_engine, inspect
@@ -270,8 +270,21 @@ async def send_code():
     phone_number = data.get("phone_number")
     print(phone_number)
     user_clients[phone_number] = TelegramClient(phone_number, API_ID, API_HASH)
-    await user_clients[phone_number].connect()
-    await user_clients[phone_number].send_code_request(phone_number)
+    
+    try:
+        await user_clients[phone_number].connect()
+    except OSError as e:
+        return {"error": str(e)}, "400"
+
+    try:
+        await user_clients[phone_number].send_code_request(phone_number)
+    except (PhoneNumberInvalidError, AuthCodeInvalidError) as e:
+        await user_clients[phone_number].disconnect()
+        return {"error": str(e)}, "400"
+    except Exception as e:
+        await user_clients[phone_number].disconnect()
+        return {"error": str(e)}, "400"
+    
     return "ok", 200
 
 
@@ -390,10 +403,6 @@ async def webhook():
 
 if __name__ == "__main__":
     app.run(port=8080)
-
-    # Process or return retrieved dialogs (e.g., list of chat titles)
-    # except (PhoneNumberInvalidError, AuthCodeInvalidError) as e:
-    #     return {"error": str(e)}, "400"  # Return specific error message
 
     # client = TelegramClient(f'session_{phone_number}', api_id, api_hash)
     # session_dict[phone_number] = client
