@@ -73,58 +73,73 @@ async def start(update: Update, context):
     print("start command received")
     update.message.reply_text("ajsjdsafhjdf!")
 
-
-async def create_user(sender):
+@app.route("/user", methods=["GET"])
+async def create_user():
+    session = Session()
+    status = 0
     try:
         # Query the database to check if a user with the provided ID exists
-        existing_user = session.query(User).filter(User.id == sender.id).one()
+        existing_user = session.query(User).filter(User.id == 32432525).one()
         print(f"User with id {id} already exists")
-        return 0
+        return status
 
     except NoResultFound:
         try:
-            id = sender.id
-            name = sender.usernmae
-            has_profile = False
-            words = 0
-            chats = None
-            
-            # Create a new User object
-            new_user = User(name=name, has_profile=has_profile, words=words, chats=chats)
-            
-            # Add the new user to the session and commit changes
-            session = Session()
+            new_user = User(id=32432525, name="stefano", has_profile=False, words=0, chats=None, agreed_chats=None)
             session.add(new_user)
             session.commit()
-            
-            # Close the session
-            session.close()
-            
-            return 0
-        
         except Exception as e:
-            # Return error response
-            print("error": str(e))
-            return 1
+            print(f"Error: {str(e)}")
+            status = 1
+        finally:
+            session.close()
+            return status
 
-async def create_chat(chat_id, chat_name, words_number, sender_id):
+async def create_chat(chat_id, chat_name, words_number, sender_id, chat_users):
+    status = 0
     try:
         session = Session()
 
-        id = chat_id
-        name = chat_name
-        words = words_number
-        status = "Pending"
-        lead = session.query(User).filter(User.id == sender_id).one()
-        agreed_id
-        agreed = session.query(User).filter(User.id == sender_id).one()
-        users = None
+        new_chat = Chat(id=chat_id, name=chat_name, words=words_number, status="Pending", lead_id=sender_id)
 
-        session.add(new_user)
+        lead = session.query(User).filter(User.id == sender_id).one()
+        new_chat.lead = lead
+        
+        agreed_user_ids = [sender_id]
+        agreed_users = session.query(User).filter(User.id.in_(agreed_user_ids)).all()
+        new_chat.agreed_users.extend(agreed_users)
+
+        all_users = session.query(User).filter(User.id.in_([sender_id] + chat_users)).all()
+        new_chat.users.extend(all_users)
+
+        print(new_chat.__dict__)
+
+        session.add(new_chat)
         session.commit()
-        session.close()
     except Exception as e:
-        return 1
+        print(f"Error: {str(e)}")
+        status = 1
+    finally:
+        session.close()
+        return status
+
+
+async def add_chat_to_users(users_id, chat_id):
+    status = 0
+    try:
+        session = Session()
+
+        chat = session.query(Chat).filter(Chat.id == chat_id).one()
+        users = session.query(User).filter(User.id.in_(users_id)).all()
+        chat.users.extend(users)
+        session.commit()
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        status = 1
+    finally:
+        session.close()
+
+
 
 @app.route("/health", methods=["GET"])
 async def health():
@@ -198,13 +213,15 @@ async def send_message():
     print(sender_id)
 
     status = await create_user(sender)
-    if (status == 1)
+    if (status == 1):
         return jsonify("Could not create a user"), 500 
 
     chats = data.get('chat_id')
     print(chats)
     
     b_users = []
+    chat_users = []
+
     for chat_id_str in chats:
         try:
             chat_id = int(chat_id_str)
@@ -212,6 +229,7 @@ async def send_message():
             for user in users:
                 if user.username is not None:
                     await create_user(user)
+                    chat_users.append(user.id)
                     b_users.append(user.username)
                     print(user.username)
 
@@ -221,8 +239,10 @@ async def send_message():
                 "https://t.me/chatpayapp_bot/chatpayapp'</a>"
             )
             # TODO: chat_name and words from Leo
-            await create_chat(chat_id, "chat_name", "4242", sender_id)
+            await create_chat(chat_id, "chat_name", "4242", sender_id, chat_users)
             await user_clients[phone_number].send_message(chat_id, message_for_second_user, parse_mode='html')
+            await add_chat_to_users(chat_users + [sender_id], chat_id)
+            chat_users.clear()
         except Exception as e:
             await user_clients[phone_number].disconnect()
             return "Error", 500
@@ -244,7 +264,7 @@ async def send_code():
 
 
 @app.route("/get-user", methods=["POST"])
-async def get_users():
+async def get_user():
     try:
         data = await request.get_json()
 
@@ -276,24 +296,34 @@ async def get_users():
         # Return error response
         return jsonify({"error": str(e)}), 500
 
-
-# @app.route("/create-user", methods=["GET"])
-# async def create_user():
-#     try:
-#         new_user = User(name="dantol", email="bla@gmail.com")
-#         # Add the new user to the database
-#         session = Session()
-#         session.add(new_user)
-#         session.commit()
-#         session.close()
+@app.route("/get-users", methods=["GET"])
+async def get_users():
+    try:
+        # Create a session
+        session = Session()
         
-#         return jsonify({"message": "User created successfully"}), 201
-#         return jsonify(users_json)
-    
-#     except Exception as e:
-#         # Return error response
-#         return jsonify({"error": str(e)}), 500
+        # Query all users
+        users = session.query(User).all()
 
+        # Close the session
+        session.close()
+        
+        users_json = [
+            {
+                "id": user.id,
+                "name": user.name,
+                "has_profile": user.has_profile,
+                "words": user.words,
+                "chats": [chat.id for chat in user.chats]
+            }
+            for user in users
+        ]
+        
+        return jsonify(users_json)
+    
+    except Exception as e:
+        # Return error response
+        return jsonify({"error": str(e)}), 500
 
 dispatcher = Dispatcher(bot, None, use_context=True)
 dispatcher.add_handler(CommandHandler("start", start))
