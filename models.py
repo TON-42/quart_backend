@@ -51,9 +51,6 @@ class User(Base):
     has_profile = Column(Boolean, default=False)
     words = Column(Integer, default=0)
     chats = relationship("Chat", secondary=users_chats, back_populates="users")
-    agreed_chats = relationship(
-        "Chat", secondary=agreed_users, back_populates="agreed_chats"
-    )
 
 
 class Chat(Base):
@@ -64,9 +61,7 @@ class Chat(Base):
     status = Column(ENUM(ChatStatus), nullable=False)
     lead_id = Column(Integer, ForeignKey("users.id"))
     lead = relationship("User", foreign_keys=[lead_id])
-    agreed_users = relationship(
-        "User", secondary=agreed_users, back_populates="agreed_chats"
-    )
+    agreed_users = relationship("User", secondary=agreed_users, back_populates="chats")
     users = relationship("User", secondary=users_chats, back_populates="chats")
 
 
