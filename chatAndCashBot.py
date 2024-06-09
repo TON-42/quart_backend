@@ -95,8 +95,6 @@ async def create_user(user_id):
         print(user_data)
         session.add(new_user)
         session.commit()
-        session.close()
-        return jsonify(user_data), 200
     except Exception as e:
         print(f"Error: {str(e)}")
         status = 1
@@ -318,34 +316,34 @@ async def get_user():
         session.close()
         return jsonify({"error": str(e)}), 500
 
-# @app.route("/get-users", methods=["GET"])
-# async def get_users():
-#     try:
-#         # Create a session
-#         session = Session()
+@app.route("/get-users", methods=["GET"])
+async def get_users():
+    try:
+        # Create a session
+        session = Session()
         
-#         # Query all users
-#         users = session.query(User).options(joinedload(User.chats)).all()
+        # Query all users
+        users = session.query(User).options(joinedload(User.chats)).all()
 
-#         # Close the session
-#         session.close()
+        # Close the session
+        session.close()
         
-#         users_json = [
-#             {
-#                 "id": user.id,
-#                 "name": user.name,
-#                 "has_profile": user.has_profile,
-#                 "words": user.words,
-#                 "chats": [chat.id for chat in user.chats]
-#             }
-#             for user in users
-#         ]
+        users_json = [
+            {
+                "id": user.id,
+                "name": user.name,
+                "has_profile": user.has_profile,
+                "words": user.words,
+                "chats": [chat.id for chat in user.chats]
+            }
+            for user in users
+        ]
         
-#         return jsonify(users_json)
+        return jsonify(users_json)
     
-#     except Exception as e:
-#         session.close()
-#         return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        session.close()
+        return jsonify({"error": str(e)}), 500
 
 
 # @app.route("/get-chats", methods=["GET"])
