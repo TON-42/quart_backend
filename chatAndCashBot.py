@@ -22,55 +22,36 @@ import os
 import logging
 from telethon.errors import SessionPasswordNeededError
 from collections import defaultdict
+import asyncpg
+from sqlalchemy import create_engine, inspect
+from sqlalchemy.orm import sessionmaker
+from models import User
 
-# New imports for database
-# from shared_models.models import init_db, SessionLocal, User
-# from sqlalchemy.orm import Session
-
-# Print the current working directory
-# print(f"Current Working Directory: {os.getcwd()}")
-
-
-# Load environment variables from .env file if present
-# Load the .env file explicitly
-# env_path = os.path.join(os.path.dirname(__file__), ".env")
-# load_dotenv(dotenv_path=env_path)
-# load_dotenv(dotenv_path=".env")
-
-# Print the content of the .env file
-# env_contents = dotenv_values(env_path)
-# print("Loaded .env contents:")
-# for key, value in env_contents.items():
-#     print(f"{key}: {value}")
-
-# # Manually set environment variables
-# os.environ["API_ID"] = env_contents["API_ID"]
-# os.environ["API_HASH"] = env_contents["API_HASH"]
-# os.environ["BOT_TOKEN"] = env_contents["BOT_TOKEN"]
-
-# Print the content of the .env file
-# print("Content of the .env file:")
-# with open(env_path, "r") as file:
-#     print(file.read())
 load_dotenv()
 API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")
 TOKEN = os.getenv("BOT_TOKEN")
-# TOKEN = os.getenv("BOT_TOKEN")
-# print(f"Loaded API_ID: {API_ID}")
-# print(f"Loaded API_HASH: {API_HASH}")
-# print(f"Loaded TOKEN: {TOKEN}")
-# Configure logging
+POSTGRES_USER = os.getenv("POSTGRES_USER")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+POSTGRES_DB = os.getenv("POSTGRES_DB")
+POSTGRES_PORT = os.getenv("POSTGRES_PORT")
+POSTGRES_HOST = os.getenv("POSTGRES_HOST")
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Create SQLAlchemy engine
+engine = create_engine(DATABASE_URL)
+
+# Create session maker bound to the engine
+Session = sessionmaker(bind=engine)
 
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
 user_clients = {}
-
-polls = {}
 
 if not TOKEN:
     logger.error("BOT_TOKEN environment variable not set")
@@ -78,11 +59,14 @@ if not TOKEN:
 bot: Bot = Bot(token=TOKEN)
 
 
-# Initialize database before serving
-# @app.before_serving
-# async def startup():
-#     init_db()
-
+async def get_db_pool():
+    return await asyncpg.create_pool(
+        user=POSTGRES_USER,
+        password=POSTGRES_PASSWORD,
+        database=POSTGRES_DB,
+        host=POSTGRES_HOST,
+        port=POSTGRES_PORT
+    )
 
 async def start(update: Update, context):
     print("start command received")
@@ -151,12 +135,6 @@ async def login():
 
     return jsonify(res_json_serializable), 200
 
-    # await client(AddChatUserRequest(
-    #     first_id,  #chat_id
-    #     bot_id, #user_id
-    #     fwd_limit=10 # Allow the user to see the 10 last messages
-    # ))
-
 
 @app.route("/send-message", methods=["POST"])
 async def send_message():
@@ -183,7 +161,7 @@ async def send_message():
             message_for_second_user = (
                 "Hello! The owner of this chat wants to sell the data of this chat. "
                 "Please click the button below to accept the sale and proceed to the bot:\n\n"
-                "<a href='https://t.me/testmychatpaybot'>Click here to accept and proceed</a>"
+                "https://t.me/chatpayapp_bot/chatpayapp'</a>"
             )
             await user_clients[phone_number].send_message(chat_id, message_for_second_user, parse_mode='html')
         except Exception as e:
@@ -206,38 +184,54 @@ async def send_code():
     return "ok", 200
 
 
-# # New endpoints for database testing
-# @app.route("/users", methods=["POST"])
+@app.route("/get-user", methods=["POST"])
+async def get_users():
+    try:
+        data = await request.get_json()
+
+        user_id = data.get("userId")
+        if user_id is None:
+            return jsonify({"error": "userId is missing"}), 400
+    
+        # Create a session
+        session = Session()
+        
+        # Query all users
+        user = session.query(User).filter(User.id == user_id).first()
+
+        # Close the session
+        session.close()
+        
+        if user is not None:
+            return jsonify({
+                "id": user.id,
+                "name": user.name,
+                "email": user.email
+            })
+        else:
+            return jsonify({"message": f"User with id {user_id} does not exist"}), 404
+    
+    except Exception as e:
+        # Return error response
+        return jsonify({"error": str(e)}), 500
+
+
+# @app.route("/create-user", methods=["GET"])
 # async def create_user():
-#     data = await request.get_json()
-#     name = data["name"]
-#     email = data["email"]
-#     db: Session = SessionLocal()
-#     new_user = User(name=name, email=email)
-#     db.add(new_user)
-#     db.commit()
-#     db.refresh(new_user)
-#     return jsonify({"id": new_user.id, "name": new_user.name, "email": new_user.email})
-
-
-# @app.route("/users", methods=["GET"])
-# async def read_users():
-#     db: Session = SessionLocal()
-#     users = db.query(User).all()
-#     return jsonify(
-#         [{"id": user.id, "name": user.name, "email": user.email} for user in users]
-#     )
-
-
-# @app.route("/test-data", methods=["POST"])
-# async def add_test_data():
-#     db: Session = SessionLocal()
-#     user1 = User(name="Test User 1", email="test1@example.com")
-#     user2 = User(name="Test User 2", email="test2@example.com")
-#     db.add(user1)
-#     db.add(user2)
-#     db.commit()
-#     return jsonify({"message": "Test data added"}), 200
+#     try:
+#         new_user = User(name="dantol", email="bla@gmail.com")
+#         # Add the new user to the database
+#         session = Session()
+#         session.add(new_user)
+#         session.commit()
+#         session.close()
+        
+#         return jsonify({"message": "User created successfully"}), 201
+#         return jsonify(users_json)
+    
+#     except Exception as e:
+#         # Return error response
+#         return jsonify({"error": str(e)}), 500
 
 
 dispatcher = Dispatcher(bot, None, use_context=True)
