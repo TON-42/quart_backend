@@ -89,42 +89,6 @@ async def start(update: Update, context):
     update.message.reply_text("ajsjdsafhjdf!")
 
 
-def vote(update: Update, context):
-    chat_member = update.my_chat_member
-
-    # Check if the bot was added to the group
-    if chat_member.new_chat_member.status == "member":
-        context.bot.send_message(
-            chat_id=update.effective_chat.id, text="just arrived, whatsup"
-        )
-        message = context.bot.send_poll(
-            chat_id=update.effective_chat.id,
-            question="Do you argee to sell your part of this chat",
-            options=["I argee", "I do not argee"],
-        )
-        polls[message.poll.id] = (update.effective_chat.id, message.message_id)
-
-
-def poll_monitor(update: Update, context: ContextTypes):
-    poll = update.poll
-    options = poll.options
-
-    chat_id, message_id = polls.get(poll.id, (None, None))
-    if chat_id is not None:
-        if options[0].voter_count == 1 and options[1].voter_count == 0:
-            context.bot.stop_poll(chat_id, message_id)
-            context.bot.send_message(
-                chat_id=chat_id,
-                text="Every member in the group argeed to sell their chat history in this group",
-            )
-        if options[1].voter_count > 0:
-            context.bot.stop_poll(chat_id, message_id)
-            context.bot.send_message(
-                chat_id=chat_id,
-                text="Atleast one member declined, please consider later!",
-            )
-
-
 @app.route("/health", methods=["GET"])
 async def health():
     app.logger.info("Health check endpoint called")
@@ -152,6 +116,7 @@ async def login():
     try:
         await user_clients[phone_number].sign_in(phone_number, auth_code)
     except SessionPasswordNeededError:
+        print("two-steps verification is active")
         await user_clients[phone_number].disconnect()
         return "401"
 
