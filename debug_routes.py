@@ -1,5 +1,7 @@
 from quart import Blueprint, jsonify, request
 from sqlalchemy.orm import joinedload
+from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.exc import IntegrityError
 from models import User, Chat, ChatStatus
 from db import Session
 
@@ -81,7 +83,7 @@ async def delete_user():
         
         try:
             # Query the user by ID
-            user = session.query(User).filter(User.id == 122493869).one()
+            user = session.query(User).filter(User.id == 843373640).one()
             
             # Delete the user
             session.delete(user)
@@ -117,7 +119,7 @@ async def delete_chat():
         
         try:
             # Query the user by ID
-            chat = session.query(Chat).filter(Chat.id == 1942086946).one()
+            chat = session.query(Chat).filter(Chat.id == 122493869).one()
             
             # Delete the chat
             session.delete(chat)

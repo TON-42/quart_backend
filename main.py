@@ -72,7 +72,8 @@ async def startup():
 
 @app.after_serving
 async def shutdown():
-    app.background_tasks.pop().cancel()
+    for task in app.background_tasks:
+        task.cancel()
 
 class ClientWrapper:
     def __init__(self, phone_number, api_id, api_hash):
@@ -183,12 +184,19 @@ async def add_chat_to_users(users_id, chat_id):
     try:
         session = Session()
 
+        # get 1 chat
         chat = session.query(Chat).filter(Chat.id == chat_id).one()
+        # get all related users
         users = session.query(User).filter(User.id.in_(users_id)).all()
-        chat.users.extend(users)
+
+        # add the chat to each user
+        for user in users:
+            if chat not in user.chats:
+                user.chats.append(chat)
         session.commit()
     except Exception as e:
         print(f"Error: {str(e)}")
+        session.rollback()
         status = 1
     finally:
         session.close()
@@ -380,7 +388,7 @@ async def get_user():
         session = Session()
         
         # Query all users
-        user = session.query(User).filter(User.id == user_id).first()
+        user = session.query(User).options(joinedload(User.chats)).filter(User.id == user_id).first()
 
         # Close the session
         session.close()
@@ -391,7 +399,15 @@ async def get_user():
                 "name": user.name,
                 "has_profile": user.has_profile,
                 "words": user.words,
-                "chats": [{"id": chat.id} for chat in user.chats] 
+                "chats": [{
+                    "id": chat.id,
+                    "name": chat.name,
+                    "words": chat.words,
+                    "status": chat.status.name,
+                    "lead_id": chat.lead_id,
+                    "agreed_users": [agreed_user.id for agreed_user in chat.agreed_users],
+                    "users": [user.id for user in chat.users]
+                } for chat in user.chats],
             })
         
         return jsonify({"message": f"User with id {user_id} does not exist"}), 404
@@ -431,7 +447,7 @@ async def webhook():
     if request.method == "POST":
         data = await request.get_json()
         update = Update.de_json(data, bot)
-        update.message.reply_text("webhook")
+        update.message.reply_text("Open the miniapp to find out more!")
         dispatcher.process_update(update)
     return "ok"
 
