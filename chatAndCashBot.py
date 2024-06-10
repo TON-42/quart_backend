@@ -74,7 +74,7 @@ async def get_db_pool():
 
 async def start(update: Update, context):
     print("start command received")
-    update.message.reply_text("ajsjdsafhjdf!")
+    update.message.reply_text("Open the miniapp to find out more!")
 
 async def create_user(sender):
     session = Session()
@@ -97,7 +97,7 @@ async def create_user(sender):
         session.commit()
     except Exception as e:
         print(f"Error: {str(e)}")
-        # status = 1
+        status = 1
     finally:
         session.close()
         return status
@@ -153,14 +153,11 @@ async def health():
     app.logger.info("Health check endpoint called")
     return "ok", 200
 
-
 @app.route("/hello", methods=["GET"])
 async def hello_world():
     print("hello endpoint!!")
     return jsonify({"message": "Hello, World!"})
 
-# telethon.errors.rpcerrorlist.SendCodeUnavailableError: Returned when all available options 
-# for this type of number were already used (e.g. flash-call, then SMS, then this error might be returned to trigger a second resend) (caused by ResendCodeRequest)
 
 @app.route('/login', methods=['POST'])
 async def login():
@@ -178,6 +175,10 @@ async def login():
         print("two-steps verification is active")
         await user_clients[phone_number].disconnect()
         return "401"
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        await user_clients[phone_number].disconnect()
+        return {"error": str(e)}, 500
 
     count = 0
     bot_id = 0
@@ -233,11 +234,17 @@ async def send_message():
     for chat_details in selected_chats:
         try:
             chat_id = int(chat_details["chat_id"])
+            if not chat_id:
+                print("Chat.id is not defined")
+                chat_id = 123
             chat_name = chat_details.get("name", None)
-            if not chat.name:
+            if not chat_name:
                 print("Chat.name is not defined")
-                char.name = "Undefined"
+                chat_name = "Undefined"
             words = chat_details.get("words", None)
+            if not words:
+                print("words is not defined")
+                words = 123
             users = await user_clients[phone_number].get_participants(chat_id)
             for user in users:
                 if user.username is not None:
@@ -256,8 +263,9 @@ async def send_message():
             await add_chat_to_users(chat_users + [sender_id], chat_id)
             chat_users.clear()
         except Exception as e:
+            print(f"Error: {str(e)}")
             await user_clients[phone_number].disconnect()
-            return "Error", 500
+            return {"error": str(e)}, "500
     
     await user_clients[phone_number].disconnect()
     return jsonify({"userB": b_users if b_users else None}), 200 
@@ -269,6 +277,9 @@ async def send_code():
     data = await request.get_json()
     phone_number = data.get("phone_number")
     print(phone_number)
+    if phone_number is None:
+        return jsonify({"error": "phone_number is missing"}), 400
+        
     user_clients[phone_number] = TelegramClient(phone_number, API_ID, API_HASH)
     
     try:
@@ -386,36 +397,36 @@ async def get_chats():
         session.close()
         return jsonify({"error": str(e)}), 500
 
-@app.route("/user", methods=["GET"])
-async def create_test_user():
-    session = Session()
-    status = 0
-    # Query the database to check if a user with the provided ID exists
-    try:
-        print("ok")
-        existing_user = session.query(User).filter(User.id == 32432523).one()
-        print("User already exists")
-    except NoResultFound:
-        new_user = User(id=32432523, name="danto", has_profile=False, words=0)
-        user_data = {
-            "id": new_user.id,
-            "name": new_user.name,
-            "has_profile": new_user.has_profile,
-            "words": new_user.words
-        }
+# @app.route("/user", methods=["GET"])
+# async def create_test_user():
+#     session = Session()
+#     status = 0
+#     # Query the database to check if a user with the provided ID exists
+#     try:
+#         print("ok")
+#         existing_user = session.query(User).filter(User.id == 32432523).one()
+#         print("User already exists")
+#     except NoResultFound:
+#         new_user = User(id=32432523, name="danto", has_profile=False, words=0)
+#         user_data = {
+#             "id": new_user.id,
+#             "name": new_user.name,
+#             "has_profile": new_user.has_profile,
+#             "words": new_user.words
+#         }
 
-        print(user_data)
-        session.add(new_user)
-        session.commit()
-        session.close()
-        return jsonify(user_data), 200
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        session.close()
-        return jsonify({f"Error: {str(e)}"}), 400
-    finally:
-        session.close()
-        return jsonify({"message": "OK"}), 200
+#         print(user_data)
+#         session.add(new_user)
+#         session.commit()
+#         session.close()
+#         return jsonify(user_data), 200
+#     except Exception as e:
+#         print(f"Error: {str(e)}")
+#         session.close()
+#         return jsonify({f"Error: {str(e)}"}), 400
+#     finally:
+#         session.close()
+#         return jsonify({"message": "OK"}), 200
 
 dispatcher = Dispatcher(bot, None, use_context=True)
 dispatcher.add_handler(CommandHandler("start", start))
@@ -437,13 +448,6 @@ async def webhook():
 
 if __name__ == "__main__":
     app.run(port=8080)
-
-    # client = TelegramClient(f'session_{phone_number}', api_id, api_hash)
-    # session_dict[phone_number] = client
-    # try:
-    #     await client.connect()
-    # except OSError:
-    #     print('Failed to connect')
 
 
 # @app.route("/chat", methods=["GET"])
