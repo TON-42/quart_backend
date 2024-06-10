@@ -32,26 +32,16 @@ jobs:
         ports:
           - 5432:5432
 
-      # quart-app:
-      #   image: python:3.11
-      #   env:
-      #     POSTGRES_USER: ${{ secrets.POSTGRES_USER}}
-      #     POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-      #     POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-      #     POSTGRES_PORT: 5432
-      #     POSTGRES_HOST: postgres
-      #     DATABASE_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres:5432/${{ secrets.POSTGRES_DB }}
-      #     API_ID: ${{ secrets.API_ID }}
-      #     API_HASH: ${{ secrets.API_HASH }}
-      #     BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-      #   command: >
-      #     bash -c "pip install -r requirements.txt &&
-      #              python chatAndCashBot.py"
-      #   ports:
-          # - 5000:5000
+      chat-and-cash:
+        image: chat-and-cash
+        ports:
+          - 8080:8080
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t chat-and-cash .
       
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -66,5 +56,5 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       
-      - name: Start quart server
-        run: python3 chatAndCashBot.py
+      # - name: Start quart server
+      #   run: python3 chatAndCashBot.py
