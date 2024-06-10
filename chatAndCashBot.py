@@ -265,7 +265,7 @@ async def send_message():
         except Exception as e:
             print(f"Error: {str(e)}")
             await user_clients[phone_number].disconnect()
-            return {"error": str(e)}, "500
+            return {"error": str(e)}, 500
     
     await user_clients[phone_number].disconnect()
     return jsonify({"userB": b_users if b_users else None}), 200 
