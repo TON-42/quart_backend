@@ -256,7 +256,7 @@ async def send_message():
             message_for_second_user = (
                 "Hello! The owner of this chat wants to sell the data of this chat. "
                 "Please click the button below to accept the sale and proceed to the bot:\n\n"
-                "https://t.me/chatpayapp_bot/chatpayapp'</a>"
+                "https://t.me/chatpayapp_bot/chatpayapp</a>"
             )
             await create_chat(chat_id, chat_name, words, sender_id, chat_users)
             await user_clients[phone_number].send_message(chat_id, message_for_second_user, parse_mode='html')
@@ -397,6 +397,42 @@ async def get_chats():
         session.close()
         return jsonify({"error": str(e)}), 500
 
+
+@app.route("/delete-user", methods=["GET"])
+async def delete_user(user_id):
+    try:
+        # Create a session
+        session = Session()
+        
+        try:
+            # Query the user by ID
+            user = session.query(User).filter(User.id == 123).one()
+            
+            # Delete the user
+            session.delete(user)
+            session.commit()
+            
+            response = {"message": f"User with id {user_id} has been deleted."}
+            status_code = 200
+
+        except NoResultFound:
+            response = {"error": f"No user found with id {user_id}."}
+            status_code = 404
+
+        except IntegrityError as e:
+            session.rollback()
+            response = {"error": f"Integrity error occurred: {str(e)}"}
+            status_code = 500
+
+    except Exception as e:
+        session.rollback()
+        response = {"error": f"An error occurred: {str(e)}"}
+        status_code = 500
+
+    finally:
+        session.close()
+        
+    return jsonify(response), status_code
 # @app.route("/user", methods=["GET"])
 # async def create_test_user():
 #     session = Session()
