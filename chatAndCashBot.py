@@ -289,7 +289,7 @@ async def send_code():
 
     try:
         await user_clients[phone_number].send_code_request(phone_number)
-    except (PhoneNumberInvalidError, AuthCodeInvalidError) as e:
+    except (PhoneNumberInvalidError) as e:
         await user_clients[phone_number].disconnect()
         return {"error": str(e)}, "400"
     except Exception as e:
