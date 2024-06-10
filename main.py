@@ -257,7 +257,7 @@ async def login():
                     continue
                 
                 users = await user_clients[phone_number].get_client().get_participants(dialog.id)
-                if (len(users) > 5)
+                if (len(users) > 5):
                     continue
                 
                 count += 1
