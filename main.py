@@ -383,34 +383,39 @@ async def get_user():
         user_id = data.get("userId")
         if user_id is None:
             return jsonify({"error": "userId is missing"}), 400
-    
+
         # Create a session
         session = Session()
         
         # Query all users
-        user = session.query(User).options(joinedload(User.chats)).filter(User.id == user_id).first()
+        user = session.query(User).options(joinedload(User.chats).joinedload(Chat.users)).filter(User.id == user_id).first()
 
+        if user is None:
+            session.close()
+            return jsonify({"message": f"User with id {user_id} does not exist"}), 404
+        
+        for chat in user.chats:
+            chat.agreed_users
+        
         # Close the session
         session.close()
         
-        if user is not None:
-            return jsonify({
-                "id": user.id,
-                "name": user.name,
-                "has_profile": user.has_profile,
-                "words": user.words,
-                "chats": [{
-                    "id": chat.id,
-                    "name": chat.name,
-                    "words": chat.words,
-                    "status": chat.status.name,
-                    "lead_id": chat.lead_id,
-                    "agreed_users": [agreed_user.id for agreed_user in chat.agreed_users],
-                    "users": [user.id for user in chat.users]
-                } for chat in user.chats],
-            })
+        return jsonify({
+            "id": user.id,
+            "name": user.name,
+            "has_profile": user.has_profile,
+            "words": user.words,
+             "chats": [{
+                "id": chat.id,
+                "name": chat.name,
+                "words": chat.words,
+                "status": chat.status.name,
+                "lead_id": chat.lead_id,
+                "agreed_users": [agreed_user.id for agreed_user in chat.agreed_users],
+                "users": [user.id for user in chat.users]
+            } for chat in user.chats],
+        })
         
-        return jsonify({"message": f"User with id {user_id} does not exist"}), 404
     
     except Exception as e:
         session.close()
