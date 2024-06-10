@@ -91,35 +91,35 @@ class ClientWrapper:
         self.id = new_id
     
 
-@app.route("/get-sessions", methods=["GET"])
-async def get_sessions():
-    print(len(user_clients))
-    try:
-        sessions = []
-        for phone_number, client_wrapper in user_clients.items():
-            session_info = {
-                "phone_number": phone_number,
-                "created_at": client_wrapper.get_creation_time().isoformat()
-            }
-            sessions.append(session_info)
+# @app.route("/get-sessions", methods=["GET"])
+# async def get_sessions():
+#     print(len(user_clients))
+#     try:
+#         sessions = []
+#         for phone_number, client_wrapper in user_clients.items():
+#             session_info = {
+#                 "phone_number": phone_number,
+#                 "created_at": client_wrapper.get_creation_time().isoformat()
+#             }
+#             sessions.append(session_info)
 
-        return jsonify(sessions), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+#         return jsonify(sessions), 200
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
 
-@app.route("/initialize-client", methods=["GET"])
-async def initialize_client():
-    phone_number = request.args.get("phone_number", "")
+# @app.route("/initialize-client", methods=["GET"])
+# async def initialize_client():
+#     phone_number = request.args.get("phone_number", "")
 
-    if phone_number not in user_clients:
-        user_clients[phone_number] = ClientWrapper(phone_number, API_ID, API_HASH)
+#     if phone_number not in user_clients:
+#         user_clients[phone_number] = ClientWrapper(phone_number, API_ID, API_HASH)
 
-    client_info = {
-        "phone_number": phone_number,
-        "created_at": user_clients[phone_number].get_creation_time().isoformat()
-    }
-    print(len(user_clients))
-    return jsonify(client_info)
+#     client_info = {
+#         "phone_number": phone_number,
+#         "created_at": user_clients[phone_number].get_creation_time().isoformat()
+#     }
+#     print(len(user_clients))
+#     return jsonify(client_info)
 
 async def start(update: Update, context):
     print("start command received")
@@ -153,10 +153,13 @@ async def create_user(sender, profile):
 
 
 async def create_chat(chat_id, chat_name, words_number, sender_id, chat_users):
+    session = Session()
     status = 0
     try:
-        session = Session()
-
+        # Query the database to check if a chat with the provided ID exists
+        existing_chat = session.query(Chat).filter(Chat.id == chat_id).one()
+        print("Chat already exists")
+    except NoResultFound:
         new_chat = Chat(id=chat_id, name=chat_name, words=words_number, status=ChatStatus.pending, lead_id=sender_id, full_text="None")
 
         lead = session.query(User).filter(User.id == sender_id).one()
@@ -252,6 +255,11 @@ async def login():
             for dialog in dialogs:
                 if dialog.id < 0 or dialog.id == 777000:
                     continue
+                
+                users = await user_clients[phone_number].get_client().get_participants(dialog.id)
+                if (len(users) > 5)
+                    continue
+                
                 count += 1
                 if count > 10:
                     break
@@ -327,7 +335,7 @@ async def send_message():
             message_for_second_user = (
                 "Hello! The owner of this chat wants to sell the data of this chat. "
                 "Please click the button below to accept the sale and proceed to the bot:\n\n"
-                "https://t.me/chatpayapp_bot/chatpayapp</a>"
+                "https://t.me/chatpayapp_bot/chatpayapp"
             )
             await create_chat(chat_id, chat_name, words, sender_id, chat_users)
             await user_clients[phone_number].get_client().send_message(chat_id, message_for_second_user, parse_mode='html')
