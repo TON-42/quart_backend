@@ -222,10 +222,12 @@ async def login():
     except SessionPasswordNeededError:
         print("two-steps verification is active")
         await user_clients[phone_number].get_client().disconnect()
+        del user_clients[phone_number]
         return "401"
     except Exception as e:
         print(f"Error: {str(e)}")
         await user_clients[phone_number].get_client().disconnect()
+        del user_clients[phone_number]
         return {"error": str(e)}, 500
 
     # save user id in the session
@@ -255,6 +257,7 @@ async def login():
     except Exception as e:
         print(f"Error: {str(e)}")
         await user_clients[phone_number].get_client().disconnect()
+        del user_clients[phone_number]
         return {"error": str(e)}, 500
 
     res_json_serializable = {str(key): value for key, value in res.items()}
@@ -286,13 +289,16 @@ async def send_message():
 
     for chat_details in selected_chats:
         try:
-            chat_id, chat_name = chat_details['id'].split(", '")
-            chat_id = int(chat_id[1:-1])
+            # Extract chat_id and chat_name from 'id' field
+            id_field = chat_details['id']
+            chat_id_str, chat_name_str = id_field[1:-1].split(", '")
+            chat_id = int(chat_id_str)
+            chat_name = chat_name_str[:-1]
+    
             if not chat_id:
                 print("Chat.id is not defined")
                 chat_id = 123
     
-            chat_name = chat_details.get("name", None)
             if not chat_name:
                 print("Chat.name is not defined")
                 chat_name = "Undefined"
@@ -322,9 +328,11 @@ async def send_message():
         except Exception as e:
             print(f"Error: {str(e)}")
             await user_clients[phone_number].get_client().disconnect()
+            del user_clients[phone_number]
             return {"error": str(e)}, 500
     
     await user_clients[phone_number].get_client().disconnect()
+    del user_clients[phone_number]
     return jsonify({"userB": b_users if b_users else None}), 200 
     
 
@@ -342,15 +350,18 @@ async def send_code():
     try:
         await user_clients[phone_number].get_client().connect()
     except OSError as e:
+        del user_clients[phone_number]
         return {"error": str(e)}, "400"
 
     try:
         await user_clients[phone_number].get_client().send_code_request(phone_number)
     except (PhoneNumberInvalidError) as e:
         await user_clients[phone_number].get_client().disconnect()
+        del user_clients[phone_number]
         return {"error": str(e)}, "400"
     except Exception as e:
         await user_clients[phone_number].get_client().disconnect()
+        del user_clients[phone_number]
         return {"error": str(e)}, "400"
     
     return "ok", 200
