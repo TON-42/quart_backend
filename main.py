@@ -23,6 +23,7 @@ import os
 import enum
 import logging
 import asyncpg
+from datetime import datetime, timedelta
 from collections import defaultdict
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker, joinedload
@@ -31,17 +32,17 @@ from sqlalchemy.exc import IntegrityError
 from models import User, Chat, ChatStatus
 from debug_routes import debug_routes
 from db import Session
+import asyncio
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")
 TOKEN = os.getenv("BOT_TOKEN")
 
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
+bot: Bot = Bot(token=TOKEN)
 
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
@@ -50,11 +51,74 @@ app.register_blueprint(debug_routes)
 
 user_clients = {}
 
-if not TOKEN:
-    logger.error("BOT_TOKEN environment variable not set")
-    exit(1)
-bot: Bot = Bot(token=TOKEN)
+async def check_session_expiry():
+    while True:
+        # Iterate over user_clients to check each session
+        for phone_number, client_wrapper in list(user_clients.items()):
+            # Calculate the difference between current time and session creation time
+            print(f"Session for: {phone_number} is active")
+            time_difference = datetime.now() - client_wrapper.created_at
+            if time_difference >= timedelta(minutes=20):
+                print(f"Session for {phone_number} has expired.")
+                del user_clients[phone_number]
+        
+        # Wait for 5 minute before checking again
+        await asyncio.sleep(300)
 
+
+@app.before_serving
+async def startup():
+    app.add_background_task(check_session_expiry)
+
+@app.after_serving
+async def shutdown():
+    app.background_tasks.pop().cancel()
+
+class ClientWrapper:
+    def __init__(self, phone_number, api_id, api_hash):
+        self.client = TelegramClient(phone_number, api_id, api_hash)
+        self.created_at = datetime.now()
+        self.id = 0
+
+    def get_client(self):
+        return self.client
+    def get_creation_time(self):
+        return self.created_at
+    def get_id(self):
+        return self.client
+    def set_id(self, new_id):
+        self.id = new_id
+    
+
+@app.route("/get-sessions", methods=["GET"])
+async def get_sessions():
+    print(len(user_clients))
+    try:
+        sessions = []
+        for phone_number, client_wrapper in user_clients.items():
+            session_info = {
+                "phone_number": phone_number,
+                "created_at": client_wrapper.get_creation_time().isoformat()
+            }
+            sessions.append(session_info)
+
+        return jsonify(sessions), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/initialize-client", methods=["GET"])
+async def initialize_client():
+    phone_number = request.args.get("phone_number", "")
+
+    if phone_number not in user_clients:
+        user_clients[phone_number] = ClientWrapper(phone_number, API_ID, API_HASH)
+
+    client_info = {
+        "phone_number": phone_number,
+        "created_at": user_clients[phone_number].get_creation_time().isoformat()
+    }
+    print(len(user_clients))
+    return jsonify(client_info)
 
 async def start(update: Update, context):
     print("start command received")
@@ -145,7 +209,7 @@ async def hello_world():
 
 @app.route('/login', methods=['POST'])
 async def login():
-    print("login??????")
+    print("entered login")
     data = await request.get_json()
     auth_code = data.get("code")
     print("auth code:")
@@ -154,23 +218,27 @@ async def login():
     print(phone_number)
 
     try:
-        await user_clients[phone_number].sign_in(phone_number, auth_code)
+        await user_clients[phone_number].get_client().sign_in(phone_number, auth_code)
     except SessionPasswordNeededError:
         print("two-steps verification is active")
-        await user_clients[phone_number].disconnect()
+        await user_clients[phone_number].get_client().disconnect()
         return "401"
     except Exception as e:
         print(f"Error: {str(e)}")
-        await user_clients[phone_number].disconnect()
+        await user_clients[phone_number].get_client().disconnect()
         return {"error": str(e)}, 500
+
+    # save user id in the session
+    sender = await user_clients[phone_number].get_client().get_me()
+    user_clients[phone_number].set_id(sender.id)
 
     count = 0
     bot_id = 0
     res = defaultdict(int)
 
     try:
-        if await user_clients[phone_number].is_user_authorized():
-            dialogs = await user_clients[phone_number].get_dialogs()
+        if await user_clients[phone_number].get_client().is_user_authorized():
+            dialogs = await user_clients[phone_number].get_client().get_dialogs()
             for dialog in dialogs:
                 if dialog.id < 0 or dialog.id == 777000:
                     continue
@@ -178,7 +246,7 @@ async def login():
                 if count > 10:
                     break
                 print(f"{dialog.name}, {dialog.id}")
-                async for message in user_clients[phone_number].iter_messages(dialog.id):
+                async for message in user_clients[phone_number].get_client().iter_messages(dialog.id):
                     if message.text is not None:
                         words = message.text.split()
                         res[(dialog.id, dialog.name)] += len(words)
@@ -186,7 +254,7 @@ async def login():
                             break
     except Exception as e:
         print(f"Error: {str(e)}")
-        await user_clients[phone_number].disconnect()
+        await user_clients[phone_number].get_client().disconnect()
         return {"error": str(e)}, 500
 
     res_json_serializable = {str(key): value for key, value in res.items()}
@@ -201,7 +269,7 @@ async def login():
 async def send_message():
     data = await request.get_json()
     phone_number = data.get("phone_number")
-    sender = await user_clients[phone_number].get_me()
+    sender = await user_clients[phone_number].get_client().get_me()
     sender_id = sender.id
     print(sender_id)
 
@@ -218,19 +286,23 @@ async def send_message():
 
     for chat_details in selected_chats:
         try:
-            chat_id = int(chat_details["chat_id"])
+            chat_id, chat_name = chat['id'].split(", '")
+            chat_id = int(chat_id[1:-1])
             if not chat_id:
                 print("Chat.id is not defined")
                 chat_id = 123
+    
             chat_name = chat_details.get("name", None)
             if not chat_name:
                 print("Chat.name is not defined")
                 chat_name = "Undefined"
-            words = chat_details.get("words", None)
+
+            words = chat['value']
             if not words:
                 print("words is not defined")
                 words = 123
-            users = await user_clients[phone_number].get_participants(chat_id)
+
+            users = await user_clients[phone_number].get_client().get_participants(chat_id)
             for user in users:
                 if user.username is not None:
                     await create_user(user, False)
@@ -244,41 +316,41 @@ async def send_message():
                 "https://t.me/chatpayapp_bot/chatpayapp</a>"
             )
             await create_chat(chat_id, chat_name, words, sender_id, chat_users)
-            await user_clients[phone_number].send_message(chat_id, message_for_second_user, parse_mode='html')
+            await user_clients[phone_number].get_client().send_message(chat_id, message_for_second_user, parse_mode='html')
             await add_chat_to_users(chat_users + [sender_id], chat_id)
             chat_users.clear()
         except Exception as e:
             print(f"Error: {str(e)}")
-            await user_clients[phone_number].disconnect()
+            await user_clients[phone_number].get_client().disconnect()
             return {"error": str(e)}, 500
     
-    await user_clients[phone_number].disconnect()
+    await user_clients[phone_number].get_client().disconnect()
     return jsonify({"userB": b_users if b_users else None}), 200 
     
 
 @app.route("/send-code", methods=["POST"])
 async def send_code():
-    print("send-code!!!!!!!!!!!!!")
+    print("entered send_code")
     data = await request.get_json()
     phone_number = data.get("phone_number")
     print(phone_number)
     if phone_number is None:
         return jsonify({"error": "phone_number is missing"}), 400
         
-    user_clients[phone_number] = TelegramClient(phone_number, API_ID, API_HASH)
+    user_clients[phone_number] = ClientWrapper(phone_number, API_ID, API_HASH)
     
     try:
-        await user_clients[phone_number].connect()
+        await user_clients[phone_number].get_client().connect()
     except OSError as e:
         return {"error": str(e)}, "400"
 
     try:
-        await user_clients[phone_number].send_code_request(phone_number)
+        await user_clients[phone_number].get_client().send_code_request(phone_number)
     except (PhoneNumberInvalidError) as e:
-        await user_clients[phone_number].disconnect()
+        await user_clients[phone_number].get_client().disconnect()
         return {"error": str(e)}, "400"
     except Exception as e:
-        await user_clients[phone_number].disconnect()
+        await user_clients[phone_number].get_client().disconnect()
         return {"error": str(e)}, "400"
     
     return "ok", 200
@@ -317,6 +389,23 @@ async def get_user():
         session.close()
         return jsonify({"error": str(e)}), 500
 
+
+@app.route("/is-active", methods=["POST"])
+async def is_active():
+    try:
+        data = await request.get_json()
+
+        user_id = data.get("userId")
+        if user_id is None:
+            return jsonify({"error": "userId is missing"}), 400
+        
+        for phone_number, client_wrapper in user_clients.items():
+           if (user_id == client_wrapper.get_id()):
+                return "ok", 200
+        return "Not found", 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 
 dispatcher = Dispatcher(bot, None, use_context=True)
 dispatcher.add_handler(CommandHandler("start", start))
