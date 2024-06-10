@@ -286,7 +286,7 @@ async def send_message():
 
     for chat_details in selected_chats:
         try:
-            chat_id, chat_name = chat['id'].split(", '")
+            chat_id, chat_name = chat_details['id'].split(", '")
             chat_id = int(chat_id[1:-1])
             if not chat_id:
                 print("Chat.id is not defined")
@@ -297,7 +297,7 @@ async def send_message():
                 print("Chat.name is not defined")
                 chat_name = "Undefined"
 
-            words = chat['value']
+            words = chat_details['value']
             if not words:
                 print("words is not defined")
                 words = 123
