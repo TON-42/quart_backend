@@ -1,6 +1,6 @@
 from sqlalchemy import (
     Column,
-    Integer,
+    BigInteger,
     String,
     Boolean,
     ForeignKey,
@@ -32,33 +32,33 @@ class ChatStatus(enum.Enum):
 users_chats = Table(
     "users_chats",
     Base.metadata,
-    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
-    Column("chat_id", Integer, ForeignKey("chats.id"), primary_key=True),
+    Column("user_id", BigInteger, ForeignKey("users.id"), primary_key=True),
+    Column("chat_id", BigInteger, ForeignKey("chats.id"), primary_key=True),
 )
 
 # Association table for many-to-many relationship between agreed users and chats
 agreed_users = Table(
     "agreed_users",
     Base.metadata,
-    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
-    Column("chat_id", Integer, ForeignKey("chats.id"), primary_key=True),
+    Column("user_id", BigInteger, ForeignKey("users.id"), primary_key=True),
+    Column("chat_id", BigInteger, ForeignKey("chats.id"), primary_key=True),
 )
 
 # Association table for many-to-many relationship between agreed users and chats
 agreed_users_chats = Table(
     "agreed_users_chats",
     Base.metadata,
-    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
-    Column("chat_id", Integer, ForeignKey("chats.id"), primary_key=True),
+    Column("user_id", BigInteger, ForeignKey("users.id"), primary_key=True),
+    Column("chat_id", BigInteger, ForeignKey("chats.id"), primary_key=True),
 )
 
 
 class User(Base):
     __tablename__ = "users"
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     name = Column(String(100), nullable=False)
     has_profile = Column(Boolean, default=False)
-    words = Column(Integer, default=0)
+    words = Column(BigInteger, default=0)
     chats = relationship("Chat", secondary=users_chats, back_populates="users")
     agreed_chats = relationship(
         "Chat", secondary=agreed_users_chats, back_populates="agreed_users"
@@ -67,12 +67,12 @@ class User(Base):
 
 class Chat(Base):
     __tablename__ = "chats"
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     name = Column(String(100), nullable=False)
-    words = Column(Integer, default=0)
+    words = Column(BigInteger, default=0)
     full_text = Column(Text, nullable=False)
     status = Column(ENUM(ChatStatus), nullable=False)
-    lead_id = Column(Integer, ForeignKey("users.id"))
+    lead_id = Column(BigInteger, ForeignKey("users.id"))
     lead = relationship("User", foreign_keys=[lead_id])
     agreed_users = relationship(
         "User", secondary=agreed_users_chats, back_populates="agreed_chats"
