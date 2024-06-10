@@ -1,45 +1,63 @@
 # API Endpoints
 
-## `/get-user`
+## `/get-user` [POST] (userId)
+```
+Get all information about a user (including chats)
+```
 
-## `/send-code`
+## `/send-code` [POST] (phone_number)
+```
+Send a code to a user's phone
+```
 
-## `/send-message`
+## `/send-message` [POST] (phone_number, chats)
+```
+Send a message to all chats that user chose
+```
 
-## `/login`
+## `/login` [POST] (phone_number, code)
+```
+Login to a user account
+```
 
-## `/is-active`
+## `/is-active` [POST] (userId)
+```
+Is a session still active?(are we still logged in as a user)
+```
 
-## `/health`
+## `/health` [GET]
+```
+Check that an app is responding
+```
 
 # DEBUG API Endpoints
 
-## `/get-users`
+## `/get-users` [GET]
 ```
 Get all users
 ```
 
-## `/get-chats`
+## `/get-chats` [GET]
 ```
 Get all chats
 ```
 
-## `/delete-user`
+## `/delete-user` [GET]
 ```
 Delete 1 user (hardcoded)
 ```
 
-## `/delete-chat`
+## `/delete-chat` [GET]
 ```
 Delete 1 chat (hardcoded)
 ```
 
-## `/create-user`
+## `/create-user` [GET]
 ```
 Create 1 user (hardcoded)
 ```
 
-## `/create-chat`
+## `/create-chat` [GET]
 ```
 Create 1 chat (hardcoded)
 ```
