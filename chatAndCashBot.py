@@ -76,7 +76,7 @@ async def start(update: Update, context):
     print("start command received")
     update.message.reply_text("Open the miniapp to find out more!")
 
-async def create_user(sender):
+async def create_user(sender, profile):
     session = Session()
     status = 0
     try:
@@ -84,7 +84,7 @@ async def create_user(sender):
         existing_user = session.query(User).filter(User.id == sender.id).one()
         print("User already exists")
     except NoResultFound:
-        new_user = User(id=sender.id, name=sender.username, has_profile=False, words=0)
+        new_user = User(id=sender.id, name=sender.username, has_profile=profile, words=0)
         user_data = {
             "id": new_user.id,
             "name": new_user.name,
@@ -220,7 +220,7 @@ async def send_message():
     sender_id = sender.id
     print(sender_id)
 
-    status = await create_user(sender)
+    status = await create_user(sender, True)
     # if (status == 1):
     #     return jsonify("Could not create a user"), 500 
 
@@ -248,7 +248,7 @@ async def send_message():
             users = await user_clients[phone_number].get_participants(chat_id)
             for user in users:
                 if user.username is not None:
-                    await create_user(user)
+                    await create_user(user, False)
                     chat_users.append(user.id)
                     b_users.append(user.username)
                     print(user.username)
@@ -406,7 +406,7 @@ async def delete_user():
         
         try:
             # Query the user by ID
-            user = session.query(User).filter(User.id == 843373640).one()
+            user = session.query(User).filter(User.id == 122493869).one()
             
             # Delete the user
             session.delete(user)
@@ -442,7 +442,7 @@ async def delete_chat():
         
         try:
             # Query the user by ID
-            chat = session.query(Chat).filter(Chat.id == 122493869).one()
+            chat = session.query(Chat).filter(Chat.id == 1942086946).one()
             
             # Delete the chat
             session.delete(chat)
@@ -470,6 +470,37 @@ async def delete_chat():
         
     return jsonify(response), status_code
 
+@app.route("/user", methods=["GET"])
+async def create_test_user():
+    session = Session()
+    status = 0
+    response = jsonify({"message": "OK"}), 200
+    # Query the database to check if a user with the provided ID exists
+    try:
+        print("ok")
+        existing_user = session.query(User).filter(User.id == 3243252343).one()
+        print("User already exists")
+    except NoResultFound:
+        new_user = User(id=3243252343, name="dantollllll", has_profile=False, words=0)
+        user_data = {
+            "id": new_user.id,
+            "name": new_user.name,
+            "has_profile": new_user.has_profile,
+            "words": new_user.words
+        }
+
+        print(user_data)
+        session.add(new_user)
+        session.commit()
+        response =  jsonify(user_data), 200
+        print("added")
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        response = jsonify({f"Error: {str(e)}"}), 400
+    finally:
+        session.close()
+    return response
+
 dispatcher = Dispatcher(bot, None, use_context=True)
 dispatcher.add_handler(CommandHandler("start", start))
 # dispatcher.add_handler(ChatMemberHandler(vote, ChatMemberHandler.MY_CHAT_MEMBER))
@@ -490,37 +521,6 @@ async def webhook():
 
 if __name__ == "__main__":
     app.run(port=8080)
-
-# @app.route("/user", methods=["GET"])
-# async def create_test_user():
-#     session = Session()
-#     status = 0
-#     # Query the database to check if a user with the provided ID exists
-#     try:
-#         print("ok")
-#         existing_user = session.query(User).filter(User.id == 32432523).one()
-#         print("User already exists")
-#     except NoResultFound:
-#         new_user = User(id=32432523, name="danto", has_profile=False, words=0)
-#         user_data = {
-#             "id": new_user.id,
-#             "name": new_user.name,
-#             "has_profile": new_user.has_profile,
-#             "words": new_user.words
-#         }
-
-#         print(user_data)
-#         session.add(new_user)
-#         session.commit()
-#         session.close()
-#         return jsonify(user_data), 200
-#     except Exception as e:
-#         print(f"Error: {str(e)}")
-#         session.close()
-#         return jsonify({f"Error: {str(e)}"}), 400
-#     finally:
-#         session.close()
-#         return jsonify({"message": "OK"}), 200
 
 # @app.route("/chat", methods=["GET"])
 # async def create_chat():
