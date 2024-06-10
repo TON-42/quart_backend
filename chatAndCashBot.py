@@ -399,24 +399,24 @@ async def get_chats():
 
 
 @app.route("/delete-user", methods=["GET"])
-async def delete_user(user_id):
+async def delete_user():
     try:
         # Create a session
         session = Session()
         
         try:
             # Query the user by ID
-            user = session.query(User).filter(User.id == 123).one()
+            user = session.query(User).filter(User.id == 843373640).one()
             
             # Delete the user
             session.delete(user)
             session.commit()
             
-            response = {"message": f"User with id {user_id} has been deleted."}
+            response = {"message": f"User has been deleted."}
             status_code = 200
 
         except NoResultFound:
-            response = {"error": f"No user found with id {user_id}."}
+            response = {"error": f"No user found."}
             status_code = 404
 
         except IntegrityError as e:
@@ -433,6 +433,64 @@ async def delete_user(user_id):
         session.close()
         
     return jsonify(response), status_code
+
+@app.route("/delete-chat", methods=["GET"])
+async def delete_chat():
+    try:
+        # Create a session
+        session = Session()
+        
+        try:
+            # Query the user by ID
+            chat = session.query(Chat).filter(Chat.id == 122493869).one()
+            
+            # Delete the chat
+            session.delete(chat)
+            session.commit()
+            
+            response = {"message": f"Chat has been deleted."}
+            status_code = 200
+
+        except NoResultFound:
+            response = {"error": f"No chat found."}
+            status_code = 404
+
+        except IntegrityError as e:
+            session.rollback()
+            response = {"error": f"Integrity error occurred: {str(e)}"}
+            status_code = 500
+
+    except Exception as e:
+        session.rollback()
+        response = {"error": f"An error occurred: {str(e)}"}
+        status_code = 500
+
+    finally:
+        session.close()
+        
+    return jsonify(response), status_code
+
+dispatcher = Dispatcher(bot, None, use_context=True)
+dispatcher.add_handler(CommandHandler("start", start))
+# dispatcher.add_handler(ChatMemberHandler(vote, ChatMemberHandler.MY_CHAT_MEMBER))
+# dispatcher.add_handler(PollHandler(poll_monitor))
+
+
+@app.route("/webhook", methods=["POST"])
+async def webhook():
+    print("entered webhook")
+    app.logger.info("Webhook received")
+    if request.method == "POST":
+        data = await request.get_json()
+        update = Update.de_json(data, bot)
+        update.message.reply_text("webhook")
+        dispatcher.process_update(update)
+    return "ok"
+
+
+if __name__ == "__main__":
+    app.run(port=8080)
+
 # @app.route("/user", methods=["GET"])
 # async def create_test_user():
 #     session = Session()
@@ -463,28 +521,6 @@ async def delete_user(user_id):
 #     finally:
 #         session.close()
 #         return jsonify({"message": "OK"}), 200
-
-dispatcher = Dispatcher(bot, None, use_context=True)
-dispatcher.add_handler(CommandHandler("start", start))
-# dispatcher.add_handler(ChatMemberHandler(vote, ChatMemberHandler.MY_CHAT_MEMBER))
-# dispatcher.add_handler(PollHandler(poll_monitor))
-
-
-@app.route("/webhook", methods=["POST"])
-async def webhook():
-    print("entered webhook")
-    app.logger.info("Webhook received")
-    if request.method == "POST":
-        data = await request.get_json()
-        update = Update.de_json(data, bot)
-        update.message.reply_text("webhook")
-        dispatcher.process_update(update)
-    return "ok"
-
-
-if __name__ == "__main__":
-    app.run(port=8080)
-
 
 # @app.route("/chat", methods=["GET"])
 # async def create_chat():
