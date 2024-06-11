@@ -67,3 +67,6 @@ jobs:
           -e API_HASH=${{ secrets.API_HASH }} \
           -e BOT_TOKEN=${{ secrets.BOT_TOKEN }} \
           chat-and-cash
+
+      - name: test
+        run: echo "test"
