@@ -33,7 +33,7 @@ from models import User, Chat, ChatStatus
 from debug_routes import debug_routes
 from db import Session
 import asyncio
-from quart_jwt_extended import JWTManager, create_access_token, jwt_required
+# from quart_jwt_extended import JWTManager, create_access_token, jwt_required
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -73,18 +73,18 @@ async def check_session_expiry():
         # Wait for 5 minute before checking again
         await asyncio.sleep(300)
 
-@app.route('/access', methods=['POST'])
-async def access():
-    data = await request.get_json()
-    username = data.get('username', None)
-    password = data.get('password', None)
+# @app.route('/access', methods=['POST'])
+# async def access():
+#     data = await request.get_json()
+#     username = data.get('username', None)
+#     password = data.get('password', None)
     
-    # Replace with your user authentication logic
-    if username != API_USERNAME or password != API_PASSWORD:
-        return jsonify({"msg": "Bad username or password"}), 401
+#     # Replace with your user authentication logic
+#     if username != API_USERNAME or password != API_PASSWORD:
+#         return jsonify({"msg": "Bad username or password"}), 401
     
-    access_token = create_access_token(identity=username)
-    return jsonify(access_token=access_token), 200
+#     access_token = create_access_token(identity=username)
+#     return jsonify(access_token=access_token), 200
 
 @app.errorhandler(401)
 async def custom_401(error):
@@ -255,14 +255,12 @@ async def health():
 
 
 @app.route("/hello", methods=["GET"])
-@jwt_required
 async def hello_world():
     print("hello endpoint!!")
     return jsonify({"message": "Hello, World!"})
 
 
 @app.route('/login', methods=['POST'])
-@jwt_required
 async def login():
     print("entered login")
     data = await request.get_json()
@@ -331,7 +329,6 @@ async def login():
 
 
 @app.route("/send-message", methods=["POST"])
-@jwt_required
 async def send_message():
     data = await request.get_json()
     phone_number = data.get("phone_number")
@@ -404,7 +401,6 @@ async def send_message():
 
 
 @app.route("/send-code", methods=["POST"])
-@jwt_required
 async def send_code():
     print("entered send_code")
     data = await request.get_json()
@@ -438,7 +434,6 @@ async def send_code():
 
 
 @app.route("/get-user", methods=["POST"])
-@jwt_required
 async def get_user():
     try:
         data = await request.get_json()
@@ -497,7 +492,6 @@ async def get_user():
 
 
 @app.route("/is-active", methods=["POST"])
-@jwt_required
 async def is_active():
     try:
         data = await request.get_json()
