@@ -34,6 +34,9 @@ from debug_routes import debug_routes
 from db import Session
 import asyncio
 # from quart_jwt_extended import JWTManager, create_access_token, jwt_required
+# app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
+
+# jwt = JWTManager(app)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -53,9 +56,6 @@ app = cors(app, allow_origin="*")
 
 app.register_blueprint(debug_routes)
 
-app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
-
-jwt = JWTManager(app)
 
 user_clients = {}
 
@@ -86,9 +86,9 @@ async def check_session_expiry():
 #     access_token = create_access_token(identity=username)
 #     return jsonify(access_token=access_token), 200
 
-@app.errorhandler(401)
-async def custom_401(error):
-    return jsonify({"msg": "Unauthorized access"}), 401
+# @app.errorhandler(401)
+# async def custom_401(error):
+#     return jsonify({"msg": "Unauthorized access"}), 401
 
 @app.before_serving
 async def startup():
