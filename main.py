@@ -281,6 +281,7 @@ async def login():
 
                 count += 1
                 if count > 15:
+                if count > 15:
                     break
                 print(f"{dialog.name}, {dialog.id}")
                 async for message in (
