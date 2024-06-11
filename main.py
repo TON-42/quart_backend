@@ -17,7 +17,7 @@ from telegram.ext import (
 )
 from telethon import TelegramClient, events
 from telethon.tl.functions.messages import AddChatUserRequest
-from telethon.errors import SessionPasswordNeededError, PhoneNumberInvalidError
+from telethon.errors import SessionPasswordNeededError, PhoneNumberInvalidError, AuthRestartError
 from dotenv import load_dotenv, dotenv_values
 import os
 import enum
@@ -33,6 +33,7 @@ from models import User, Chat, ChatStatus
 from debug_routes import debug_routes
 from db import Session
 import asyncio
+from quart_jwt_extended import JWTManager, create_access_token, jwt_required
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -41,6 +42,9 @@ load_dotenv()
 API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")
 TOKEN = os.getenv("BOT_TOKEN")
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+API_USERNAME = os.getenv("API_USERNAME")
+API_PASSWORD = os.getenv("API_PASSWORD")
 
 bot: Bot = Bot(token=TOKEN)
 
@@ -48,6 +52,10 @@ app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
 app.register_blueprint(debug_routes)
+
+app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
+
+jwt = JWTManager(app)
 
 user_clients = {}
 
@@ -66,6 +74,24 @@ async def check_session_expiry():
         # Wait for 5 minute before checking again
         await asyncio.sleep(300)
 
+
+
+@app.route('/access', methods=['POST'])
+async def access():
+    data = await request.get_json()
+    username = data.get('username', None)
+    password = data.get('password', None)
+    
+    # Replace with your user authentication logic
+    if username != API_USERNAME or password != API_PASSWORD:
+        return jsonify({"msg": "Bad username or password"}), 401
+    
+    access_token = create_access_token(identity=username)
+    return jsonify(access_token=access_token), 200
+
+@app.errorhandler(401)
+async def custom_401(error):
+    return jsonify({"msg": "Unauthorized access"}), 401
 
 @app.before_serving
 async def startup():
@@ -232,12 +258,14 @@ async def health():
 
 
 @app.route("/hello", methods=["GET"])
+@jwt_required
 async def hello_world():
     print("hello endpoint!!")
     return jsonify({"message": "Hello, World!"})
 
 
-@app.route("/login", methods=["POST"])
+@app.route('/login', methods=['POST'])
+@jwt_required
 async def login():
     print("entered login")
     data = await request.get_json()
@@ -307,6 +335,7 @@ async def login():
 
 
 @app.route("/send-message", methods=["POST"])
+@jwt_required
 async def send_message():
     data = await request.get_json()
     phone_number = data.get("phone_number")
@@ -379,6 +408,7 @@ async def send_message():
 
 
 @app.route("/send-code", methods=["POST"])
+@jwt_required
 async def send_code():
     print("entered send_code")
     data = await request.get_json()
@@ -400,7 +430,9 @@ async def send_code():
     except PhoneNumberInvalidError as e:
         await user_clients[phone_number].get_client().disconnect()
         del user_clients[phone_number]
-        return {"error": str(e)}, "400"
+        return {"error": str(e)}, "404"
+    except (AuthRestartError) as e:
+        await user_clients[phone_number].get_client().send_code_request(phone_number)
     except Exception as e:
         await user_clients[phone_number].get_client().disconnect()
         del user_clients[phone_number]
@@ -410,6 +442,7 @@ async def send_code():
 
 
 @app.route("/get-user", methods=["POST"])
+@jwt_required
 async def get_user():
     try:
         data = await request.get_json()
@@ -468,6 +501,7 @@ async def get_user():
 
 
 @app.route("/is-active", methods=["POST"])
+@jwt_required
 async def is_active():
     try:
         data = await request.get_json()

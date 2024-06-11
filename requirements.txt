@@ -43,3 +43,4 @@ psycopg2-binary==2.9.3
 asyncpg
 hypercorn
 asyncio
+quart-jwt-extended
