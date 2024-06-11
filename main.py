@@ -120,21 +120,21 @@ class ClientWrapper:
         self.id = new_id
 
 
-# @app.route("/get-sessions", methods=["GET"])
-# async def get_sessions():
-#     print(len(user_clients))
-#     try:
-#         sessions = []
-#         for phone_number, client_wrapper in user_clients.items():
-#             session_info = {
-#                 "phone_number": phone_number,
-#                 "created_at": client_wrapper.get_creation_time().isoformat()
-#             }
-#             sessions.append(session_info)
+@app.route("/get-sessions", methods=["GET"])
+async def get_sessions():
+    print(len(user_clients))
+    try:
+        sessions = []
+        for phone_number, client_wrapper in user_clients.items():
+            session_info = {
+                "phone_number": phone_number,
+                "created_at": client_wrapper.get_creation_time().isoformat()
+            }
+            sessions.append(session_info)
 
-#         return jsonify(sessions), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
+        return jsonify(sessions), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # @app.route("/initialize-client", methods=["GET"])
 # async def initialize_client():
@@ -408,6 +408,10 @@ async def send_code():
     print(phone_number)
     if phone_number is None:
         return jsonify({"error": "phone_number is missing"}), 400
+    
+    if (user_clients[phone_number]):
+        await user_clients[phone_number].get_client().disconnect()
+        del user_clients[phone_number]
 
     user_clients[phone_number] = ClientWrapper(phone_number, API_ID, API_HASH)
 
