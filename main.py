@@ -51,6 +51,7 @@ app.register_blueprint(debug_routes)
 
 user_clients = {}
 
+
 async def check_session_expiry():
     while True:
         # Iterate over user_clients to check each session
@@ -61,7 +62,7 @@ async def check_session_expiry():
             if time_difference >= timedelta(minutes=20):
                 print(f"Session for {phone_number} has expired.")
                 del user_clients[phone_number]
-        
+
         # Wait for 5 minute before checking again
         await asyncio.sleep(300)
 
@@ -70,10 +71,12 @@ async def check_session_expiry():
 async def startup():
     app.add_background_task(check_session_expiry)
 
+
 @app.after_serving
 async def shutdown():
     for task in app.background_tasks:
         task.cancel()
+
 
 class ClientWrapper:
     def __init__(self, phone_number, api_id, api_hash):
@@ -83,13 +86,16 @@ class ClientWrapper:
 
     def get_client(self):
         return self.client
+
     def get_creation_time(self):
         return self.created_at
+
     def get_id(self):
         return self.client
+
     def set_id(self, new_id):
         self.id = new_id
-    
+
 
 # @app.route("/get-sessions", methods=["GET"])
 # async def get_sessions():
@@ -121,9 +127,11 @@ class ClientWrapper:
 #     print(len(user_clients))
 #     return jsonify(client_info)
 
+
 async def start(update: Update, context):
     print("start command received")
     update.message.reply_text("Open the miniapp to find out more!")
+
 
 async def create_user(sender, profile):
     session = Session()
@@ -133,12 +141,14 @@ async def create_user(sender, profile):
         existing_user = session.query(User).filter(User.id == sender.id).one()
         print("User already exists")
     except NoResultFound:
-        new_user = User(id=sender.id, name=sender.username, has_profile=profile, words=0)
+        new_user = User(
+            id=sender.id, name=sender.username, has_profile=profile, words=0
+        )
         user_data = {
             "id": new_user.id,
             "name": new_user.name,
             "has_profile": new_user.has_profile,
-            "words": new_user.words
+            "words": new_user.words,
         }
 
         print(user_data)
@@ -160,18 +170,27 @@ async def create_chat(chat_id, chat_name, words_number, sender_id, chat_users):
         existing_chat = session.query(Chat).filter(Chat.id == chat_id).one()
         print("Chat already exists")
     except NoResultFound:
-        new_chat = Chat(id=chat_id, name=chat_name, words=words_number, status=ChatStatus.pending, lead_id=sender_id, full_text="None")
+        new_chat = Chat(
+            id=chat_id,
+            name=chat_name,
+            words=words_number,
+            status=ChatStatus.pending,
+            lead_id=sender_id,
+            full_text="None",
+        )
 
         lead = session.query(User).filter(User.id == sender_id).one()
         new_chat.lead = lead
-        
+
         agreed_user_ids = [sender_id]
         agreed_users = session.query(User).filter(User.id.in_(agreed_user_ids)).all()
         new_chat.agreed_users.extend(agreed_users)
 
-        all_users = session.query(User).filter(User.id.in_([sender_id] + chat_users)).all()
+        all_users = (
+            session.query(User).filter(User.id.in_([sender_id] + chat_users)).all()
+        )
         new_chat.users.extend(all_users)
-    
+
         session.add(new_chat)
         session.commit()
     except Exception as e:
@@ -206,11 +225,11 @@ async def add_chat_to_users(users_id, chat_id):
         return status
 
 
-
 @app.route("/health", methods=["GET"])
 async def health():
     app.logger.info("Health check endpoint called")
     return "ok", 200
+
 
 @app.route("/hello", methods=["GET"])
 async def hello_world():
@@ -218,7 +237,7 @@ async def hello_world():
     return jsonify({"message": "Hello, World!"})
 
 
-@app.route('/login', methods=['POST'])
+@app.route("/login", methods=["POST"])
 async def login():
     print("entered login")
     data = await request.get_json()
@@ -255,16 +274,18 @@ async def login():
             for dialog in dialogs:
                 if dialog.id < 0 or dialog.id == 777000:
                     continue
-                
-                users = await user_clients[phone_number].get_client().get_participants(dialog.id)
-                if (len(users) > 5):
-                    continue
-                
+
+                # users = await user_clients[phone_number].get_client().get_participants(dialog.id)
+                # if (len(users) > 5):
+                #     continue
+
                 count += 1
-                if count > 10:
+                if count > 15:
                     break
                 print(f"{dialog.name}, {dialog.id}")
-                async for message in user_clients[phone_number].get_client().iter_messages(dialog.id):
+                async for message in (
+                    user_clients[phone_number].get_client().iter_messages(dialog.id)
+                ):
                     if message.text is not None:
                         words = message.text.split()
                         res[(dialog.id, dialog.name)] += len(words)
@@ -294,37 +315,39 @@ async def send_message():
 
     status = await create_user(sender, True)
     # if (status == 1):
-    #     return jsonify("Could not create a user"), 500 
+    #     return jsonify("Could not create a user"), 500
 
-    selected_chats = data.get('chats', [])
+    selected_chats = data.get("chats", [])
     print("received from front-end:")
     print(selected_chats)
-    
+
     b_users = []
     chat_users = []
 
     for chat_details in selected_chats:
         try:
             # Extract chat_id and chat_name from 'id' field
-            id_field = chat_details['id']
+            id_field = chat_details["id"]
             chat_id_str, chat_name_str = id_field[1:-1].split(", '")
             chat_id = int(chat_id_str)
             chat_name = chat_name_str[:-1]
-    
+
             if not chat_id:
                 print("Chat.id is not defined")
                 chat_id = 123
-    
+
             if not chat_name:
                 print("Chat.name is not defined")
                 chat_name = "Undefined"
 
-            words = chat_details['value']
+            words = chat_details["value"]
             if not words:
                 print("words is not defined")
                 words = 123
 
-            users = await user_clients[phone_number].get_client().get_participants(chat_id)
+            users = (
+                await user_clients[phone_number].get_client().get_participants(chat_id)
+            )
             for user in users:
                 if user.username is not None:
                     await create_user(user, False)
@@ -338,7 +361,9 @@ async def send_message():
                 "https://t.me/chatpayapp_bot/chatpayapp"
             )
             await create_chat(chat_id, chat_name, words, sender_id, chat_users)
-            await user_clients[phone_number].get_client().send_message(chat_id, message_for_second_user, parse_mode='html')
+            await user_clients[phone_number].get_client().send_message(
+                chat_id, message_for_second_user, parse_mode="html"
+            )
             await add_chat_to_users(chat_users + [sender_id], chat_id)
             chat_users.clear()
         except Exception as e:
@@ -346,11 +371,11 @@ async def send_message():
             await user_clients[phone_number].get_client().disconnect()
             del user_clients[phone_number]
             return {"error": str(e)}, 500
-    
+
     await user_clients[phone_number].get_client().disconnect()
     del user_clients[phone_number]
-    return jsonify({"userB": b_users if b_users else None}), 200 
-    
+    return jsonify({"userB": b_users if b_users else None}), 200
+
 
 @app.route("/send-code", methods=["POST"])
 async def send_code():
@@ -360,9 +385,9 @@ async def send_code():
     print(phone_number)
     if phone_number is None:
         return jsonify({"error": "phone_number is missing"}), 400
-        
+
     user_clients[phone_number] = ClientWrapper(phone_number, API_ID, API_HASH)
-    
+
     try:
         await user_clients[phone_number].get_client().connect()
     except OSError as e:
@@ -371,7 +396,7 @@ async def send_code():
 
     try:
         await user_clients[phone_number].get_client().send_code_request(phone_number)
-    except (PhoneNumberInvalidError) as e:
+    except PhoneNumberInvalidError as e:
         await user_clients[phone_number].get_client().disconnect()
         del user_clients[phone_number]
         return {"error": str(e)}, "400"
@@ -379,7 +404,7 @@ async def send_code():
         await user_clients[phone_number].get_client().disconnect()
         del user_clients[phone_number]
         return {"error": str(e)}, "400"
-    
+
     return "ok", 200
 
 
@@ -394,37 +419,48 @@ async def get_user():
 
         # Create a session
         session = Session()
-        
+
         # Query all users
-        user = session.query(User).options(joinedload(User.chats).joinedload(Chat.users)).filter(User.id == user_id).first()
+        user = (
+            session.query(User)
+            .options(joinedload(User.chats).joinedload(Chat.users))
+            .filter(User.id == user_id)
+            .first()
+        )
 
         if user is None:
             session.close()
             return jsonify({"message": f"User with id {user_id} does not exist"}), 404
-        
+
         for chat in user.chats:
             chat.agreed_users
-        
+
         # Close the session
         session.close()
-        
-        return jsonify({
-            "id": user.id,
-            "name": user.name,
-            "has_profile": user.has_profile,
-            "words": user.words,
-             "chats": [{
-                "id": chat.id,
-                "name": chat.name,
-                "words": chat.words,
-                "status": chat.status.name,
-                "lead_id": chat.lead_id,
-                "agreed_users": [agreed_user.id for agreed_user in chat.agreed_users],
-                "users": [user.id for user in chat.users]
-            } for chat in user.chats],
-        })
-        
-    
+
+        return jsonify(
+            {
+                "id": user.id,
+                "name": user.name,
+                "has_profile": user.has_profile,
+                "words": user.words,
+                "chats": [
+                    {
+                        "id": chat.id,
+                        "name": chat.name,
+                        "words": chat.words,
+                        "status": chat.status.name,
+                        "lead_id": chat.lead_id,
+                        "agreed_users": [
+                            agreed_user.id for agreed_user in chat.agreed_users
+                        ],
+                        "users": [user.id for user in chat.users],
+                    }
+                    for chat in user.chats
+                ],
+            }
+        )
+
     except Exception as e:
         session.close()
         return jsonify({"error": str(e)}), 500
@@ -438,14 +474,14 @@ async def is_active():
         user_id = data.get("userId")
         if user_id is None:
             return jsonify({"error": "userId is missing"}), 400
-        
+
         for phone_number, client_wrapper in user_clients.items():
-           if (user_id == client_wrapper.get_id()):
+            if user_id == client_wrapper.get_id():
                 return "ok", 200
         return "Not found", 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
+
 
 dispatcher = Dispatcher(bot, None, use_context=True)
 dispatcher.add_handler(CommandHandler("start", start))
@@ -467,4 +503,3 @@ async def webhook():
 
 if __name__ == "__main__":
     app.run(port=8080)
-
