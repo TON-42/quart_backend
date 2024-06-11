@@ -409,7 +409,7 @@ async def send_code():
     if phone_number is None:
         return jsonify({"error": "phone_number is missing"}), 400
     
-    if (user_clients[phone_number]):
+    if phone_number in user_clients:
         await user_clients[phone_number].get_client().disconnect()
         del user_clients[phone_number]
 
@@ -417,6 +417,7 @@ async def send_code():
 
     try:
         await user_clients[phone_number].get_client().connect()
+
     except OSError as e:
         del user_clients[phone_number]
         return {"error": str(e)}, "400"
