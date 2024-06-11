@@ -56,13 +56,14 @@ jobs:
       
       - name: Start quart server
         run: |
-          docker run 
-          -e POSTGRES_USER=${{ secrets.POSTGRES_USER}}
-          -e POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-          -e POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-          -e POSTGRES_PORT=5432
-          -e POSTGRES_HOST=postgres
-          -e DATABASE_URL=postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres:5432/${{ secrets.POSTGRES_DB }}
-          -e API_ID=${{ secrets.API_ID }}
-          -e API_HASH=${{ secrets.API_HASH }}
-          -e BOT_TOKEN=${{ secrets.BOT_TOKEN }} chat-and-cash
+          docker run -p 8080:8080 \
+          -e POSTGRES_USER=${{ secrets.POSTGRES_USER}} \
+          -e POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
+          -e POSTGRES_DB=${{ secrets.POSTGRES_DB }} \
+          -e POSTGRES_PORT=5432 \
+          -e POSTGRES_HOST=postgres \
+          -e DATABASE_URL=postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres:5432/${{ secrets.POSTGRES_DB }} \
+          -e API_ID=${{ secrets.API_ID }} \
+          -e API_HASH=${{ secrets.API_HASH }} \
+          -e BOT_TOKEN=${{ secrets.BOT_TOKEN }} \
+          chat-and-cash
