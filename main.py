@@ -59,7 +59,6 @@ jwt = JWTManager(app)
 
 user_clients = {}
 
-
 async def check_session_expiry():
     while True:
         # Iterate over user_clients to check each session
@@ -73,8 +72,6 @@ async def check_session_expiry():
 
         # Wait for 5 minute before checking again
         await asyncio.sleep(300)
-
-
 
 @app.route('/access', methods=['POST'])
 async def access():
@@ -306,11 +303,10 @@ async def login():
                 # users = await user_clients[phone_number].get_client().get_participants(dialog.id)
                 # if (len(users) > 5):
                 #     continue
-
                 count += 1
                 if count > 15:
-                if count > 15:
                     break
+                
                 print(f"{dialog.name}, {dialog.id}")
                 async for message in (
                     user_clients[phone_number].get_client().iter_messages(dialog.id)

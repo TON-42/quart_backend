@@ -1,3 +1,18 @@
+# Authorization with JWT(JSON Web Tokens)
+
+## 1. Connect to API
+Make a call to `/access` with credentials in JSON
+```
+data = {"username": API_USERNAME, "password": API_PASSWORD}
+```
+## 2. Receive access token from `/access` response and store it
+Store it to access other routes
+
+## 3. Make a request to other routes with a token in a header
+API should know that logged in user accessed it
+```
+headers = { "Authorization": f"Bearer {access_token}" }
+```
 # API Endpoints
 
 ## `/get-user` [POST] (userId)

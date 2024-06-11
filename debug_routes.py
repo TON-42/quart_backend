@@ -4,11 +4,63 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import IntegrityError
 from models import User, Chat, ChatStatus
 from db import Session
+import requests
+import httpx
+import os
 
 debug_routes = Blueprint('debug_routes', __name__)
 
+API_USERNAME = os.getenv("API_USERNAME")
+API_PASSWORD = os.getenv("API_PASSWORD")
 
 # ------------------ DEBUG routes ---------------------------
+
+# @app.route('/send', methods=['GET'])
+# async def send():
+#     API_URL = "http://localhost:8080/access"
+
+#     # Data to send in the request body (as JSON)
+#     data = {"username": API_USERNAME, "password": API_PASSWORD}
+
+#     # Send POST request with JSON data
+#     async with httpx.AsyncClient() as client:
+#         response = await client.post(API_URL, json=data)
+
+#     print(response)
+#     # Check for successful response
+#     if response.status_code == 200:
+#         # Access token is in the response data
+#         access_token = response.json().get("access_token")
+#         return "ok", 200
+#     else:
+#         # Handle error
+#         return "ko", response.status_code
+
+@debug_routes.route('/send', methods=['GET'])
+async def request_hello():
+    send_url = "http://localhost:8080/access"
+    hello_url = "http://localhost:8080/hello"
+    data = {"username": API_USERNAME, "password": API_PASSWORD}
+    async with httpx.AsyncClient() as client:
+        # Get the JWT token from the /send endpoint
+        response = await client.post(send_url, json=data)
+        if response.status_code == 200:
+            access_token = response.json().get("access_token")
+            headers = {
+                "Authorization": f"Bearer {access_token}"
+            }
+
+            # Use the token to access the /hello endpoint
+            hello_response = await client.get(hello_url, headers=headers)
+            if hello_response.status_code == 200:
+                print(hello_response.json())
+                return jsonify([hello_response.json(), response.json()])
+            else:
+                print(f"Failed to access /hello: {hello_response.status_code}")
+        else:
+            print(f"Failed to get token: {send_response.status_code}")
+    return "ko", 500
+
 @debug_routes.route("/get-users", methods=["GET"])
 async def get_users():
     try:

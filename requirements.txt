@@ -44,3 +44,5 @@ asyncpg
 hypercorn
 asyncio
 quart-jwt-extended
+requests
+httpx
