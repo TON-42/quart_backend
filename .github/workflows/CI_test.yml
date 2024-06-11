@@ -46,8 +46,8 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Install libpq-dev
-        run: sudo apt-get install libpq-dev
+      # - name: Install libpq-dev
+        # run: sudo apt-get install libpq-dev
 
       # - name: Install dependencies
       #   run: |
