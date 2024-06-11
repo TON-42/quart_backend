@@ -69,4 +69,4 @@ jobs:
           chat-and-cash
 
       - name: test
-        run: echo "test"
+        run: python3 api_test.py
