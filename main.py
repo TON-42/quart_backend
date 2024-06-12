@@ -540,6 +540,29 @@ async def add_user_to_agreed():
         session.close()
         return jsonify({"error": str(e)}), 500
 
+@app.route("/sell-chat", methods=["POST"])
+async def sell_chat():
+    session = Session()
+    try:
+        data = await request.get_json()
+
+        chat_id = data.get("chatId")
+        if chat_id is None:
+            return jsonify({"error": "chatId is missing"}), 400
+        
+        chat = session.query(Chat).options(
+            joinedload(Chat.agreed_users),
+            joinedload(Chat.users)
+        ).filter(Chat.id == chat_id).one()
+
+        # TODO: add tokens for selling the chat
+        chat.status = ChatStatus.sold 
+        session.commit()
+        session.close()
+        return "ok", 200
+    except Exception as e:
+        session.close()
+        return jsonify({"error": str(e)}), 500
 
 dispatcher = Dispatcher(bot, None, use_context=True)
 dispatcher.add_handler(CommandHandler("start", start))
@@ -547,7 +570,6 @@ dispatcher.add_handler(CommandHandler("start", start))
 @app.route("/webhook", methods=["POST"])
 async def webhook():
     print("entered webhook")
-    app.logger.info("Webhook received")
     if request.method == "POST":
         data = await request.get_json()
         update = Update.de_json(data, bot)

@@ -1,18 +1,3 @@
-# Authorization with JWT(JSON Web Tokens)
-
-## 1. Connect to API
-Make a call to `/access` with credentials in JSON
-```
-data = {"username": API_USERNAME, "password": API_PASSWORD}
-```
-## 2. Receive access token from `/access` response and store it
-Store it to access other routes
-
-## 3. Make a request to other routes with a token in a header
-API should know that logged in user accessed it
-```
-headers = { "Authorization": f"Bearer {access_token}" }
-```
 # API Endpoints
 
 ## `/get-user` [POST] (userId)
@@ -22,6 +7,10 @@ Get all information about a user (including chats)
 ## `/add-user-to-agreed` [POST] (chatId, userId)
 ```
 Adds a user to the agreed users of the chat
+```
+## `/sell-chat` [POST] (chatId)
+```
+Changes the status of the chat to sold
 ```
 ## `/send-code` [POST] (phone_number)
 ```
@@ -60,15 +49,17 @@ Get all users
 Get all chats
 ```
 
-## `/delete-user` [GET]
+## `/delete-user?id=123` [GET]
 ```
-Delete 1 user (hardcoded)
+Delete 1 user
 ```
 
-## `/delete-chat` [GET]
+## `/delete-chat?id=123` [GET]
 ```
-Delete 1 chat (hardcoded)
+Delete 1 chat
 ```
+
+# Legacy
 
 ## `/create-user` [GET]
 ```
@@ -80,19 +71,18 @@ Create 1 user (hardcoded)
 Create 1 chat (hardcoded)
 ```
 
-<!-- chats	
-0	
-agreed_users	
-0	843373640
-id	1942086946
-lead_id	843373640
-name	"Michael R"
-status	"pending"
-users	
-0	843373640
-1	1942086946
-words	600
-has_profile	false
-id	1942086946
-name	"Mihej_eth"
-words	0 -->
+# Authorization with JWT(JSON Web Tokens)
+
+## 1. Connect to API
+Make a call to `/access` with credentials in JSON
+```
+data = {"username": API_USERNAME, "password": API_PASSWORD}
+```
+## 2. Receive access token from `/access` response and store it
+Store it to access other routes
+
+## 3. Make a request to other routes with a token in a header
+API should know that logged in user accessed it
+```
+headers = { "Authorization": f"Bearer {access_token}" }
+```

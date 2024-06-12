@@ -129,13 +129,17 @@ async def get_chats():
 
 @debug_routes.route("/delete-user", methods=["GET"])
 async def delete_user():
+    user_id = request.args.get('id', type=int)
+    
+    if not user_id:
+        return jsonify({"error": "User ID is required"}), 400
     try:
         # Create a session
         session = Session()
         
         try:
             # Query the user by ID
-            user = session.query(User).filter(User.id == 843373640).one()
+            user = session.query(User).filter(User.id == user_id).one()
             
             # Delete the user
             session.delete(user)
@@ -165,13 +169,18 @@ async def delete_user():
 
 @debug_routes.route("/delete-chat", methods=["GET"])
 async def delete_chat():
+    chat_id = request.args.get('id', type=int)
+    
+    if not chat_id:
+        return jsonify({"error": "chat ID is required"}), 400
+
     try:
         # Create a session
         session = Session()
         
         try:
             # Query the user by ID
-            chat = session.query(Chat).filter(Chat.id == 122493869).one()
+            chat = session.query(Chat).filter(Chat.id == chat_id).one()
             
             # Delete the chat
             session.delete(chat)
@@ -199,76 +208,76 @@ async def delete_chat():
         
     return jsonify(response), status_code
 
-@debug_routes.route("/create-user", methods=["GET"])
-async def create_test_user():
-    session = Session()
-    status = 0
-    response = jsonify({"message": "OK"}), 200
-    try:
-        await client.get_dialogs()
+# @debug_routes.route("/create-user", methods=["GET"])
+# async def create_test_user():
+#     session = Session()
+#     status = 0
+#     response = jsonify({"message": "OK"}), 200
+#     try:
+#         await client.get_dialogs()
 
-        user_entity = await client.get_entity(int(user_id))
+#         user_entity = await client.get_entity(int(user_id))
         
-        if user_entity.username:
-            return user_entity.username
-        else:
-            return False
-    except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({f"Error: {str(e)}"}), 400
-    try:
-        # Query the database to check if a user with the provided ID exists
-        existing_user = session.query(User).filter(User.id == 3243252343).one()
-        print("User already exists")
-    except NoResultFound:
-        new_user = User(id=3243252343, name="dantollllll", has_profile=False, words=0)
-        user_data = {
-            "id": new_user.id,
-            "name": new_user.name,
-            "has_profile": new_user.has_profile,
-            "words": new_user.words
-        }
+#         if user_entity.username:
+#             return user_entity.username
+#         else:
+#             return False
+#     except Exception as e:
+#         print(f"Error: {e}")
+#         return jsonify({f"Error: {str(e)}"}), 400
+#     try:
+#         # Query the database to check if a user with the provided ID exists
+#         existing_user = session.query(User).filter(User.id == 3243252343).one()
+#         print("User already exists")
+#     except NoResultFound:
+#         new_user = User(id=3243252343, name="dantollllll", has_profile=False, words=0)
+#         user_data = {
+#             "id": new_user.id,
+#             "name": new_user.name,
+#             "has_profile": new_user.has_profile,
+#             "words": new_user.words
+#         }
 
-        print(user_data)
-        session.add(new_user)
-        session.commit()
-        response =  jsonify(user_data), 200
-        print("added")
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        response = jsonify({f"Error: {str(e)}"}), 400
-    finally:
-        session.close()
-    return response
+#         print(user_data)
+#         session.add(new_user)
+#         session.commit()
+#         response =  jsonify(user_data), 200
+#         print("added")
+#     except Exception as e:
+#         print(f"Error: {str(e)}")
+#         response = jsonify({f"Error: {str(e)}"}), 400
+#     finally:
+#         session.close()
+#     return response
 
-@debug_routes.route("/create-chat", methods=["GET"])
-async def create_chat():
-    # Enum for chat status
-    status = 0
-    try:
-        session = Session()
+# @debug_routes.route("/create-chat", methods=["GET"])
+# async def create_chat():
+#     # Enum for chat status
+#     status = 0
+#     try:
+#         session = Session()
 
-        new_chat = Chat(id=32432525, name="Ton_stuff", words=12345, status=ChatStatus.pending, lead_id=32432524, full_text="123")
+#         new_chat = Chat(id=32432525, name="Ton_stuff", words=12345, status=ChatStatus.pending, lead_id=32432524, full_text="123")
 
-        lead = session.query(User).filter(User.id == 32432524).one()
-        new_chat.lead = lead
+#         lead = session.query(User).filter(User.id == 32432524).one()
+#         new_chat.lead = lead
         
-        agreed_user_ids = [32432524]
-        agreed_users = session.query(User).filter(User.id.in_(agreed_user_ids)).all()
-        new_chat.agreed_users.extend(agreed_users)
+#         agreed_user_ids = [32432524]
+#         agreed_users = session.query(User).filter(User.id.in_(agreed_user_ids)).all()
+#         new_chat.agreed_users.extend(agreed_users)
 
-        all_users = session.query(User).filter(User.id.in_([32432524, 32432525])).all()
-        new_chat.users.extend(all_users)
+#         all_users = session.query(User).filter(User.id.in_([32432524, 32432525])).all()
+    #     new_chat.users.extend(all_users)
     
-        session.add(new_chat)
-        session.commit()
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        return jsonify({f"Error: {str(e)}"}), 400
-        status = 1
-    finally:
-        session.close()
-        return jsonify({"message": "OK"}), 200
+    #     session.add(new_chat)
+    #     session.commit()
+    # except Exception as e:
+    #     print(f"Error: {str(e)}")
+    #     return jsonify({f"Error: {str(e)}"}), 400
+    #     status = 1
+    # finally:
+    #     session.close()
+    #     return jsonify({"message": "OK"}), 200
         # return status
 
 
