@@ -432,7 +432,7 @@ async def get_user():
 
 
         try:
-            await create_user(userId, "None", False)
+            await create_user(user_id, "None", False)
             if (status == 1):
                 return jsonify("Could not create a user"), 500
         except Exception as e:
