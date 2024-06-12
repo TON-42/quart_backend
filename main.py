@@ -430,12 +430,17 @@ async def get_user():
             return jsonify({"error": "userId is missing"}), 400
         
 
+
+        try:
+            await create_user(userId, "None", False)
+            if (status == 1):
+                return jsonify("Could not create a user"), 500
+        except Exception as e:
+            print(f"Error creating user: {str(e)}")
+            return jsonify({"error": "Internal error"}), 500
+        
         # Create a session
         session = Session()
-
-        status = await create_user(userId, "None", false)
-        if (status == 1):
-            return jsonify("Could not create a user"), 500
         
         # Query all users
         user = (
