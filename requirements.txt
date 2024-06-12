@@ -39,10 +39,10 @@ Werkzeug==3.0.3
 wsproto==1.2.0
 SQLAlchemy==2.0.12
 alembic==1.10.3
-psycopg2-binary==2.9.3
 asyncpg
 hypercorn
 asyncio
 quart-jwt-extended
 requests
 httpx
+psycopg2

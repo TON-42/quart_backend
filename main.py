@@ -277,10 +277,7 @@ async def login():
             for dialog in dialogs:
                 if dialog.id < 0 or dialog.id == 777000:
                     continue
-
-                # users = await user_clients[phone_number].get_client().get_participants(dialog.id)
-                # if (len(users) > 5):
-                #     continue
+    
                 count += 1
                 if count > 15:
                     break
@@ -425,8 +422,6 @@ async def get_user():
         user_id = data.get("userId")
         if user_id is None:
             return jsonify({"error": "userId is missing"}), 400
-        
-
 
         try:
             await create_user(user_id, "None", False)
@@ -499,12 +494,47 @@ async def is_active():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/add-user-to-agreed", methods=["POST"])
+async def add_user_to_agreed():
+    session = Session()
+    try:
+        data = await request.get_json()
+
+        user_id = data.get("userId")
+        if user_id is None:
+            return jsonify({"error": "userId is missing"}), 400
+        
+        chat_id = data.get("chatId")
+        if chat_id is None:
+            return jsonify({"error": "chatId is missing"}), 400
+        
+        user = session.query(User).options(
+            joinedload(User.chats)).filter(User.id == user_id).one()
+
+        chat = session.query(Chat).options(
+            joinedload(Chat.agreed_users),
+            joinedload(Chat.users)
+        ).filter(Chat.id == chat_id).one()
+
+        # if user exists in the chat, then if user has not already agreed
+        for chat_user in chat.users:
+            if chat_user.id == user_id:
+                for user_agreed in chat.agreed_users:
+                    if user_agreed.id == user_id:
+                        session.close()
+                        return "User already agreed", 200
+                chat.agreed_users.append(user)
+
+        session.commit()
+        session.close()
+        return "ok", 200
+    except Exception as e:
+        session.close()
+        return jsonify({"error": str(e)}), 500
+
 
 dispatcher = Dispatcher(bot, None, use_context=True)
 dispatcher.add_handler(CommandHandler("start", start))
-# dispatcher.add_handler(ChatMemberHandler(vote, ChatMemberHandler.MY_CHAT_MEMBER))
-# dispatcher.add_handler(PollHandler(poll_monitor))
-
 
 @app.route("/webhook", methods=["POST"])
 async def webhook():
