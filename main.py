@@ -18,6 +18,7 @@ from telegram.ext import (
 from telethon import TelegramClient, events
 from telethon.tl.functions.messages import AddChatUserRequest
 from telethon.errors import SessionPasswordNeededError, PhoneNumberInvalidError, AuthRestartError
+from telethon.tl.functions.users import GetFullUserRequest
 from dotenv import load_dotenv, dotenv_values
 import os
 import enum
@@ -33,10 +34,6 @@ from models import User, Chat, ChatStatus
 from debug_routes import debug_routes
 from db import Session
 import asyncio
-# from quart_jwt_extended import JWTManager, create_access_token, jwt_required
-# app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
-
-# jwt = JWTManager(app)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -73,22 +70,6 @@ async def check_session_expiry():
         # Wait for 5 minute before checking again
         await asyncio.sleep(300)
 
-# @app.route('/access', methods=['POST'])
-# async def access():
-#     data = await request.get_json()
-#     username = data.get('username', None)
-#     password = data.get('password', None)
-    
-#     # Replace with your user authentication logic
-#     if username != API_USERNAME or password != API_PASSWORD:
-#         return jsonify({"msg": "Bad username or password"}), 401
-    
-#     access_token = create_access_token(identity=username)
-#     return jsonify(access_token=access_token), 200
-
-# @app.errorhandler(401)
-# async def custom_401(error):
-#     return jsonify({"msg": "Unauthorized access"}), 401
 
 @app.before_serving
 async def startup():
@@ -136,36 +117,21 @@ async def get_sessions():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# @app.route("/initialize-client", methods=["GET"])
-# async def initialize_client():
-#     phone_number = request.args.get("phone_number", "")
-
-#     if phone_number not in user_clients:
-#         user_clients[phone_number] = ClientWrapper(phone_number, API_ID, API_HASH)
-
-#     client_info = {
-#         "phone_number": phone_number,
-#         "created_at": user_clients[phone_number].get_creation_time().isoformat()
-#     }
-#     print(len(user_clients))
-#     return jsonify(client_info)
-
-
 async def start(update: Update, context):
     print("start command received")
     update.message.reply_text("Open the miniapp to find out more!")
 
 
-async def create_user(sender, profile):
+async def create_user(user_id, username, profile):
     session = Session()
     status = 0
     try:
         # Query the database to check if a user with the provided ID exists
-        existing_user = session.query(User).filter(User.id == sender.id).one()
+        existing_user = session.query(User).filter(User.id == user_id).one()
         print("User already exists")
     except NoResultFound:
         new_user = User(
-            id=sender.id, name=sender.username, has_profile=profile, words=0
+            id=user_id, name=username, has_profile=profile, words=0
         )
         user_data = {
             "id": new_user.id,
@@ -223,6 +189,23 @@ async def create_chat(chat_id, chat_name, words_number, sender_id, chat_users):
         session.close()
         return status
 
+async def update_username_and_profile(user_id, username, has_profile):
+    session = Session()
+    status = 0
+    try:
+        user = session.query(User).filter(User.id == user_id).one()
+        user.username = username
+        user.has_profile = has_profile
+        session.commit()
+    except NoResultFound:
+        print(f"User with ID {user_id} not found")
+        status = 1
+    except Exception as e:
+        print(f"Error updating username or profile: {str(e)}")
+        status = 1
+    finally:
+        session.close()
+        return status
 
 async def add_chat_to_users(users_id, chat_id):
     status = 0
@@ -334,11 +317,10 @@ async def send_message():
     phone_number = data.get("phone_number")
     sender = await user_clients[phone_number].get_client().get_me()
     sender_id = sender.id
-    print(sender_id)
 
-    status = await create_user(sender, True)
-    # if (status == 1):
-    #     return jsonify("Could not create a user"), 500
+    status = await update_username_and_profile(sender.id,  sender.username, True)
+    if (status == 1):
+        return jsonify("Could not create a user"), 500
 
     selected_chats = data.get("chats", [])
     print("received from front-end:")
@@ -373,7 +355,7 @@ async def send_message():
             )
             for user in users:
                 if user.username is not None:
-                    await create_user(user, False)
+                    await create_user(user.id, user.username, False)
                     chat_users.append(user.id)
                     b_users.append(user.username)
                     print(user.username)
@@ -446,10 +428,15 @@ async def get_user():
         user_id = data.get("userId")
         if user_id is None:
             return jsonify({"error": "userId is missing"}), 400
+        
 
         # Create a session
         session = Session()
 
+        status = await create_user(userId, "None", false)
+        if (status == 1):
+            return jsonify("Could not create a user"), 500
+        
         # Query all users
         user = (
             session.query(User)
@@ -533,3 +520,40 @@ async def webhook():
 
 if __name__ == "__main__":
     app.run(port=8080)
+
+# from quart_jwt_extended import JWTManager, create_access_token, jwt_required
+# app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
+
+# jwt = JWTManager(app)
+
+# @app.route('/access', methods=['POST'])
+# async def access():
+#     data = await request.get_json()
+#     username = data.get('username', None)
+#     password = data.get('password', None)
+    
+#     # Replace with your user authentication logic
+#     if username != API_USERNAME or password != API_PASSWORD:
+#         return jsonify({"msg": "Bad username or password"}), 401
+    
+#     access_token = create_access_token(identity=username)
+#     return jsonify(access_token=access_token), 200
+
+# @app.errorhandler(401)
+# async def custom_401(error):
+#     return jsonify({"msg": "Unauthorized access"}), 401
+
+
+# @app.route("/initialize-client", methods=["GET"])
+# async def initialize_client():
+#     phone_number = request.args.get("phone_number", "")
+
+#     if phone_number not in user_clients:
+#         user_clients[phone_number] = ClientWrapper(phone_number, API_ID, API_HASH)
+
+#     client_info = {
+#         "phone_number": phone_number,
+#         "created_at": user_clients[phone_number].get_creation_time().isoformat()
+#     }
+#     print(len(user_clients))
+#     return jsonify(client_info)

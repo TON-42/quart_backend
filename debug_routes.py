@@ -204,9 +204,20 @@ async def create_test_user():
     session = Session()
     status = 0
     response = jsonify({"message": "OK"}), 200
-    # Query the database to check if a user with the provided ID exists
     try:
-        print("ok")
+        await client.get_dialogs()
+
+        user_entity = await client.get_entity(int(user_id))
+        
+        if user_entity.username:
+            return user_entity.username
+        else:
+            return False
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({f"Error: {str(e)}"}), 400
+    try:
+        # Query the database to check if a user with the provided ID exists
         existing_user = session.query(User).filter(User.id == 3243252343).one()
         print("User already exists")
     except NoResultFound:
