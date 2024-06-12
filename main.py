@@ -254,13 +254,11 @@ async def login():
         await user_clients[phone_number].get_client().sign_in(phone_number, auth_code)
     except SessionPasswordNeededError:
         print("two-steps verification is active")
-        await user_clients[phone_number].get_client().disconnect()
         await user_clients[phone_number].get_client().log_out()
         del user_clients[phone_number]
         return "401"
     except Exception as e:
         print(f"Error: {str(e)}")
-        await user_clients[phone_number].get_client().disconnect()
         await user_clients[phone_number].get_client().log_out()
         del user_clients[phone_number]
         return {"error": str(e)}, 500
@@ -295,7 +293,6 @@ async def login():
                             break
     except Exception as e:
         print(f"Error: {str(e)}")
-        await user_clients[phone_number].get_client().disconnect()
         await user_clients[phone_number].get_client().log_out()
         del user_clients[phone_number]
         return {"error": str(e)}, 500
@@ -370,12 +367,10 @@ async def send_message():
             chat_users.clear()
         except Exception as e:
             print(f"Error: {str(e)}")
-            await user_clients[phone_number].get_client().disconnect()
             await user_clients[phone_number].get_client().log_out()
             del user_clients[phone_number]
             return {"error": str(e)}, 500
 
-    await user_clients[phone_number].get_client().disconnect()
     await user_clients[phone_number].get_client().log_out()
     del user_clients[phone_number]
     return jsonify({"userB": b_users if b_users else None}), 200
@@ -391,7 +386,6 @@ async def send_code():
         return jsonify({"error": "phone_number is missing"}), 400
     
     if phone_number in user_clients:
-        await user_clients[phone_number].get_client().disconnect()
         await user_clients[phone_number].get_client().log_out()
         del user_clients[phone_number]
 
@@ -407,14 +401,12 @@ async def send_code():
     try:
         await user_clients[phone_number].get_client().send_code_request(phone_number)
     except PhoneNumberInvalidError as e:
-        await user_clients[phone_number].get_client().disconnect()
         await user_clients[phone_number].get_client().log_out()
         del user_clients[phone_number]
         return {"error": str(e)}, "404"
     except (AuthRestartError) as e:
         await user_clients[phone_number].get_client().send_code_request(phone_number)
     except Exception as e:
-        await user_clients[phone_number].get_client().disconnect()
         await user_clients[phone_number].get_client().log_out()
         del user_clients[phone_number]
         return {"error": str(e)}, "400"
