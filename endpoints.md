@@ -19,7 +19,10 @@ headers = { "Authorization": f"Bearer {access_token}" }
 ```
 Get all information about a user (including chats)
 ```
-
+## `/add-user-to-agreed` [POST] (chatId, userId)
+```
+Adds a user to the agreed users of the chat
+```
 ## `/send-code` [POST] (phone_number)
 ```
 Send a code to a user's phone
