@@ -124,7 +124,6 @@ async def start(update: Update, context):
 
 async def create_user(user_id, username, profile):
     session = Session()
-    status = 0
     try:
         # Query the database to check if a user with the provided ID exists
         existing_user = session.query(User).filter(User.id == user_id).one()
@@ -145,10 +144,8 @@ async def create_user(user_id, username, profile):
         session.commit()
     except Exception as e:
         print(f"Error: {str(e)}")
-        status = 1
     finally:
         session.close()
-        return status
 
 
 async def create_chat(chat_id, chat_name, words_number, sender_id, chat_users):
@@ -433,8 +430,6 @@ async def get_user():
 
         try:
             await create_user(user_id, "None", False)
-            if (status == 1):
-                return jsonify("Could not create a user"), 500
         except Exception as e:
             print(f"Error creating user: {str(e)}")
             return jsonify({"error": "Internal error"}), 500
