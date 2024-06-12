@@ -410,7 +410,9 @@ async def send_code():
         await user_clients[phone_number].get_client().log_out()
         del user_clients[phone_number]
         return {"error": str(e)}, "400"
-
+    
+    # log out for testing (disconnect() vs log_out())
+    await user_clients[phone_number].get_client().log_out()
     return "ok", 200
 
 
