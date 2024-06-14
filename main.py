@@ -315,14 +315,14 @@ async def send_message():
     if (status == 1):
         return jsonify("Could not create a user"), 500
 
-    selected_chats = data.get("chats", [])
+    selected_chats = data.get("chats", {})
     print("received from front-end:")
     print(selected_chats)
 
     b_users = []
     chat_users = []
 
-    for chat_details, words in selected_chats:
+    for chat_details, words in selected_chats.items():
         try:
             # Extract chat_id and chat_name from 'id' field
             id_field = str(chat_details)
@@ -335,7 +335,7 @@ async def send_message():
             
             # Convert chat_id_str to an integer and clean chat_name_str
             chat_id = int(chat_id_str)
-            chat_name = chat_name_str.strip("'")
+            chat_name = chat_name_str[:-1]  # Remove the trailing single quote
             
             print(f"id: {chat_id}, name: {chat_name}")
             if not chat_id:
