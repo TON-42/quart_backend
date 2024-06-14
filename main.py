@@ -301,8 +301,6 @@ async def login():
 
     # Print the JSON-serializable dictionary
     print(res_json_serializable)
-    await user_clients[phone_number].get_client().log_out()
-    del user_clients[phone_number]
     return jsonify(res_json_serializable), 200
 
 
