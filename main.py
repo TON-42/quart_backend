@@ -65,6 +65,7 @@ async def check_session_expiry():
             time_difference = datetime.now() - client_wrapper.created_at
             if time_difference >= timedelta(minutes=20):
                 print(f"Session for {phone_number} has expired.")
+                await user_clients[phone_number].get_client().log_out()
                 del user_clients[phone_number]
 
         # Wait for 5 minute before checking again
