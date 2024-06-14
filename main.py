@@ -320,7 +320,7 @@ async def send_message():
     if (status == 1):
         return jsonify("Could not create a user"), 500
 
-    selected_chats = data.get("chats", {})
+    selected_chats = data.get("chats", [])
     if not selected_chats:
         print("No chats received from front-end.")
         return jsonify("No chats were send"), 400
