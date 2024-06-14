@@ -322,14 +322,22 @@ async def send_message():
     b_users = []
     chat_users = []
 
-    for chat_details in selected_chats:
+    for chat_details, words in selected_chats:
         try:
             # Extract chat_id and chat_name from 'id' field
-            id_field = chat_details["id"]
-            chat_id_str, chat_name_str = id_field[1:-1].split(", '")
+            id_field = str(chat_details)
+            
+            # Remove the surrounding parentheses
+            id_field_clean = id_field.strip("()")
+            
+            # Split the cleaned id_field by ", '"
+            chat_id_str, chat_name_str = id_field_clean.split(", '", 1)
+            
+            # Convert chat_id_str to an integer and clean chat_name_str
             chat_id = int(chat_id_str)
-            chat_name = chat_name_str[:-1]
-
+            chat_name = chat_name_str.strip("'")
+            
+            print(f"id: {chat_id}, name: {chat_name}")
             if not chat_id:
                 print("Chat.id is not defined")
                 chat_id = 123
@@ -338,7 +346,6 @@ async def send_message():
                 print("Chat.name is not defined")
                 chat_name = "Undefined"
 
-            words = chat_details["value"]
             if not words:
                 print("words is not defined")
                 words = 123
@@ -370,8 +377,8 @@ async def send_message():
             del user_clients[phone_number]
             return {"error": str(e)}, 500
 
-    await user_clients[phone_number].get_client().log_out()
-    del user_clients[phone_number]
+    # await user_clients[phone_number].get_client().log_out()
+    # del user_clients[phone_number]
     return jsonify({"userB": b_users if b_users else None}), 200
 
 
