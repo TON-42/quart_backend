@@ -330,60 +330,60 @@ async def send_message():
 
     b_users = []
     chat_users = []
+    for chats in selected_chats:
+        for chat_details, words in chats.items():
+            try:
+                # Extract chat_id and chat_name from 'id' field
+                id_field = str(chat_details)
+                
+                # Remove the surrounding parentheses
+                id_field_clean = id_field.strip("()")
+                
+                # Split the cleaned id_field by ", '"
+                chat_id_str, chat_name_str = id_field_clean.split(", '", 1)
+                
+                # Convert chat_id_str to an integer and clean chat_name_str
+                chat_id = int(chat_id_str)
+                chat_name = chat_name_str[:-1]  # Remove the trailing single quote
+                
+                print(f"id: {chat_id}, name: {chat_name}")
+                if not chat_id:
+                    print("Chat.id is not defined")
+                    chat_id = 123
 
-    for chat_details, words in selected_chats.items():
-        try:
-            # Extract chat_id and chat_name from 'id' field
-            id_field = str(chat_details)
-            
-            # Remove the surrounding parentheses
-            id_field_clean = id_field.strip("()")
-            
-            # Split the cleaned id_field by ", '"
-            chat_id_str, chat_name_str = id_field_clean.split(", '", 1)
-            
-            # Convert chat_id_str to an integer and clean chat_name_str
-            chat_id = int(chat_id_str)
-            chat_name = chat_name_str[:-1]  # Remove the trailing single quote
-            
-            print(f"id: {chat_id}, name: {chat_name}")
-            if not chat_id:
-                print("Chat.id is not defined")
-                chat_id = 123
+                if not chat_name:
+                    print("Chat.name is not defined")
+                    chat_name = "Undefined"
 
-            if not chat_name:
-                print("Chat.name is not defined")
-                chat_name = "Undefined"
+                if not words:
+                    print("words is not defined")
+                    words = 123
 
-            if not words:
-                print("words is not defined")
-                words = 123
+                users = (
+                    await user_clients[phone_number].get_client().get_participants(chat_id)
+                )
+                for user in users:
+                    if user.username is not None:
+                        await create_user(user.id, user.username, False)
+                        chat_users.append(user.id)
+                        b_users.append(user.username)
+                        print(user.username)
 
-            users = (
-                await user_clients[phone_number].get_client().get_participants(chat_id)
-            )
-            for user in users:
-                if user.username is not None:
-                    await create_user(user.id, user.username, False)
-                    chat_users.append(user.id)
-                    b_users.append(user.username)
-                    print(user.username)
-
-            message_for_second_user = (
-                message + "\n\n"
-                "https://t.me/chatpayapp_bot/chatpayapp"
-            )
-            await create_chat(chat_id, chat_name, words, sender_id, chat_users)
-            await user_clients[phone_number].get_client().send_message(
-                chat_id, message_for_second_user, parse_mode="html"
-            )
-            await add_chat_to_users(chat_users + [sender_id], chat_id)
-            chat_users.clear()
-        except Exception as e:
-            print(f"Error: {str(e)}")
-            await user_clients[phone_number].get_client().log_out()
-            del user_clients[phone_number]
-            return {"error": str(e)}, 500
+                message_for_second_user = (
+                    message + "\n\n"
+                    "https://t.me/chatpayapp_bot/chatpayapp"
+                )
+                await create_chat(chat_id, chat_name, words, sender_id, chat_users)
+                await user_clients[phone_number].get_client().send_message(
+                    chat_id, message_for_second_user, parse_mode="html"
+                )
+                await add_chat_to_users(chat_users + [sender_id], chat_id)
+                chat_users.clear()
+            except Exception as e:
+                print(f"Error: {str(e)}")
+                await user_clients[phone_number].get_client().log_out()
+                del user_clients[phone_number]
+                return {"error": str(e)}, 500
 
     # await user_clients[phone_number].get_client().log_out()
     # del user_clients[phone_number]
