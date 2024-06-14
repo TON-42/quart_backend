@@ -311,6 +311,10 @@ async def send_message():
     sender = await user_clients[phone_number].get_client().get_me()
     sender_id = sender.id
 
+    message = data.get("message")
+    if not message:
+        message = "Hello! The owner of this chat wants to sell the data of this chat.\nPlease click the button below to accept the sale and proceed to the bot:"
+    
     status = await update_username_and_profile(sender.id,  sender.username, True)
     if (status == 1):
         return jsonify("Could not create a user"), 500
@@ -361,8 +365,7 @@ async def send_message():
                     print(user.username)
 
             message_for_second_user = (
-                "Hello! The owner of this chat wants to sell the data of this chat. "
-                "Please click the button below to accept the sale and proceed to the bot:\n\n"
+                message + "\n\n"
                 "https://t.me/chatpayapp_bot/chatpayapp"
             )
             await create_chat(chat_id, chat_name, words, sender_id, chat_users)
