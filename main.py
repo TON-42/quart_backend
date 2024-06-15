@@ -433,14 +433,13 @@ async def get_user():
             return jsonify({"error": "userId is missing"}), 400
         
         username = data.get("username", "None")
-        print(username)
+        print(f"get-user: {username}")
         try:
             await create_user(user_id, username, False)
         except Exception as e:
             print(f"Error creating user: {str(e)}")
             return jsonify({"error": "Internal error"}), 500
         
-        # Create a session
         session = Session()
         
         # Query all users
