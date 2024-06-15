@@ -9,13 +9,7 @@ Get all information about a user (including chats)
 ## `/add-user-to-agreed` [POST] (chatId, userId)
 
 ```
-Adds a user to the agreed users of the chat
-```
-
-## `/sell-chat` [POST] (chatId)
-
-```
-Changes the status of the chat to sold
+Adds a user to the agreed users of the chat. If all users agreed, sends 202
 ```
 
 ## `/send-code` [POST] (phone_number)
@@ -62,6 +56,18 @@ Get all users
 Get all chats
 ```
 
+## `/delete-all-users` [GET]
+
+```
+Delete all users
+```
+
+## `/delete-all- chats` [GET]
+
+```
+Delete all chats
+```
+
 ## `/delete-user?id=123` [GET]
 
 ```
@@ -73,6 +79,11 @@ Delete 1 user
 ```
 Delete 1 chat
 ```
+
+<br>
+<br>
+<br>
+<br>
 
 # Legacy
 

@@ -187,12 +187,11 @@ async def create_chat(chat_id, chat_name, words_number, sender_id, chat_users):
         session.close()
         return status
 
-async def update_username_and_profile(user_id, username, has_profile):
+async def update_profile(user_id, has_profile):
     session = Session()
     status = 0
     try:
         user = session.query(User).filter(User.id == user_id).one()
-        user.username = username
         user.has_profile = has_profile
         session.commit()
     except NoResultFound:
@@ -315,7 +314,7 @@ async def send_message():
     if not message:
         message = "Hello! The owner of this chat wants to sell the data of this chat.\nPlease click the button below to accept the sale and proceed to the bot:"
     
-    status = await update_username_and_profile(sender.id,  sender.username, True)
+    status = await update_profile(sender.id, True)
     if (status == 1):
         return jsonify("Could not create a user"), 500
 
@@ -433,10 +432,8 @@ async def get_user():
         if user_id is None:
             return jsonify({"error": "userId is missing"}), 400
         
-        username = data.get("username")
-        if username is None:
-            username = "None"
-
+        username = data.get("username", "None")
+        print(username)
         try:
             await create_user(user_id, username, False)
         except Exception as e:
@@ -530,42 +527,27 @@ async def add_user_to_agreed():
             joinedload(Chat.users)
         ).filter(Chat.id == chat_id).one()
 
-        # if user exists in the chat, then if user has not already agreed
         for chat_user in chat.users:
+            # if user exists in the chat 
             if chat_user.id == user_id:
                 for user_agreed in chat.agreed_users:
+                    # if user has already agreed
                     if user_agreed.id == user_id:
                         session.close()
                         return "User already agreed", 200
                 chat.agreed_users.append(user)
-
-        session.commit()
-        session.close()
-        return "ok", 200
-    except Exception as e:
-        session.close()
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/sell-chat", methods=["POST"])
-async def sell_chat():
-    session = Session()
-    try:
-        data = await request.get_json()
-
-        chat_id = data.get("chatId")
-        if chat_id is None:
-            return jsonify({"error": "chatId is missing"}), 400
-        
-        chat = session.query(Chat).options(
-            joinedload(Chat.agreed_users),
-            joinedload(Chat.users)
-        ).filter(Chat.id == chat_id).one()
-
-        # TODO: add tokens for selling the chat
-        chat.status = ChatStatus.sold 
-        session.commit()
-        session.close()
-        return "ok", 200
+                break
+        # TODO: add tokens?
+        # if all users have agreed
+        if len(chat.agreed_users) == len(chat.users):
+            chat.status = ChatStatus.sold
+            session.commit()
+            session.close()
+            return jsonify({"success": "All users have agreed"}), 202
+        else:
+            session.commit()
+            session.close()
+            return "ok", 200
     except Exception as e:
         session.close()
         return jsonify({"error": str(e)}), 500
