@@ -127,10 +127,12 @@ async def get_sessions():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-async def text_messages(update: Update, context: CallbackContext) -> None:
+async def text_messages(update: Update, context: CallbackContext):
+    print("text message")
     update.message.reply_text('List of avaliable commands:\n' + commands)
 
 async def start(update: Update, context:  CallbackContext):
+    print("start command")
     chat_id = update.message.chat_id
     image_url = 'https://cdn.dorahacks.io/static/files/1901b1bf8a530aeeb65557744999b2d7.png'
     caption = (
@@ -587,7 +589,6 @@ async def webhook():
     if request.method == "POST":
         data = await request.get_json()
         update = Update.de_json(data, bot)
-        update.message.reply_text("Open the miniapp to find out more!")
         dispatcher.process_update(update)
     return "ok"
 
