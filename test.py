@@ -11,6 +11,7 @@ def get_env(name, message):
     return input(message)
 
 
+
 BASE_TEMPLATE = '''
 <!DOCTYPE html>
 <html>
