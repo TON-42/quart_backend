@@ -11,9 +11,9 @@ from telegram import (
 from telegram.ext import (
     Dispatcher,
     CommandHandler,
-    ChatMemberHandler,
-    PollHandler,
-    ContextTypes,
+    MessageHandler,
+    Filters,
+    CallbackContext
 )
 from telethon import TelegramClient, events
 from telethon.tl.functions.messages import AddChatUserRequest
@@ -35,6 +35,16 @@ from debug_routes import debug_routes
 from db import Session
 import asyncio
 
+commands = (
+    "📝 /start - Start the bot\n"
+    "❓ /help - Get help on how to use the bot\n"
+    "📷 /image - Send an image\n"
+    "📦 /package - Example command for package\n"
+    "🔄 /update - Update command\n"
+    "❌ /delete - Delete command\n"
+    "⚙️ /settings - Settings command\n"
+)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -52,7 +62,6 @@ app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
 app.register_blueprint(debug_routes)
-
 
 user_clients = {}
 
@@ -118,9 +127,26 @@ async def get_sessions():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-async def start(update: Update, context):
-    print("start command received")
-    update.message.reply_text("Open the miniapp to find out more!")
+async def text_messages(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('List of avaliable commands:\n' + commands)
+
+async def start(update: Update, context:  CallbackContext):
+    chat_id = update.message.chat_id
+    image_url = 'https://cdn.dorahacks.io/static/files/1901b1bf8a530aeeb65557744999b2d7.png'
+    caption = (
+        "**ChatPay** provides to users an easy way to **monetise** their Telegram chats by bundling them into AI training datasets.\n\n"
+        "1. Choose the chats you want to submit as AI training datasets"
+        "2. Get your estimated payout per each chat straight in the Telegram mini-app"
+        "3. Hold on tight while your payout arrives.\n\n"
+        "**Your data, your money, your consent**\n _Chats are monetised only if all chat group members give full consent._\n\n"
+        "Our business model is based on:\n"
+        "- Gathering chat user data (text initially, with audio, video and photos coming later).\n"
+        "- Anonymising data by stripping it of all identifiers.\n"
+        "- Tagging data and bundling it into datasets.\n"
+        "- Selling datasets to LLM vendors to help train AI and chatbot models.\n\n"
+        "_We work transparently by taking only a 25% cut of the sales and royalties, while letting users keep the lion's share of their earnings. A utility token will be coming soon, allowing us to do payouts for users. Token allocation for the team, early supporters, and testers is in our roadmap_"
+    )
+    await context.bot.send_photo(chat_id=chat_id, photo=image_url, caption=caption, parse_mode='md')
 
 
 async def create_user(user_id, username, profile):
@@ -553,6 +579,7 @@ async def add_user_to_agreed():
 
 dispatcher = Dispatcher(bot, None, use_context=True)
 dispatcher.add_handler(CommandHandler("start", start))
+dispatcher.add_handler(MessageHandler(Filters.all & ~Filters.text & ~Filters.command, text_messages))
 
 @app.route("/webhook", methods=["POST"])
 async def webhook():
