@@ -1,39 +1,20 @@
 from quart import Quart, jsonify, request
 from quart_cors import cors
-from telegram import (
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    KeyboardButton,
-    ReplyKeyboardMarkup,
-    Update,
-    Bot,
-)
-from telegram.ext import (
-    Dispatcher,
-    CommandHandler,
-    MessageHandler,
-    Filters,
-    CallbackContext
-)
-from telethon import TelegramClient, events
-from telethon.tl.functions.messages import AddChatUserRequest
+from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError, PhoneNumberInvalidError, AuthRestartError
-from telethon.tl.functions.users import GetFullUserRequest
-from dotenv import load_dotenv, dotenv_values
+from dotenv import load_dotenv
 import os
-import enum
-import logging
-import asyncpg
 from datetime import datetime, timedelta
 from collections import defaultdict
-from sqlalchemy import create_engine, inspect
-from sqlalchemy.orm import sessionmaker, joinedload
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import IntegrityError
 from models import User, Chat, ChatStatus
 from debug_routes import debug_routes
 from db import Session
 import asyncio
+import telebot
+from telebot import types
 
 commands = (
     "📝 /start - Start the bot\n"
@@ -45,10 +26,8 @@ commands = (
     "⚙️ /settings - Settings command\n"
 )
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 load_dotenv()
+
 API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")
 TOKEN = os.getenv("BOT_TOKEN")
@@ -56,8 +35,7 @@ JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 API_USERNAME = os.getenv("API_USERNAME")
 API_PASSWORD = os.getenv("API_PASSWORD")
 
-bot: Bot = Bot(token=TOKEN)
-
+bot = telebot.TeleBot(TOKEN, threaded=False)
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
@@ -127,13 +105,14 @@ async def get_sessions():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-async def text_messages(update: Update, context: CallbackContext):
-    print("text message")
-    update.message.reply_text('List of avaliable commands:\n' + commands)
+# async def text_messages(update: Update, context: CallbackContext):
+#     print("text message")
+#     update.message.reply_text('List of avaliable commands:\n' + commands)
 
-async def start(update: Update, context:  CallbackContext):
+@bot.message_handler(commands=['start'])
+async def start(message):
     print("start command")
-    chat_id = update.message.chat_id
+    chat_id = message.chat.id
     image_url = 'https://cdn.dorahacks.io/static/files/1901b1bf8a530aeeb65557744999b2d7.png'
     caption = (
         "**ChatPay** provides to users an easy way to **monetise** their Telegram chats by bundling them into AI training datasets.\n\n"
@@ -148,8 +127,12 @@ async def start(update: Update, context:  CallbackContext):
         "- Selling datasets to LLM vendors to help train AI and chatbot models.\n\n"
         "_We work transparently by taking only a 25% cut of the sales and royalties, while letting users keep the lion's share of their earnings. A utility token will be coming soon, allowing us to do payouts for users. Token allocation for the team, early supporters, and testers is in our roadmap_"
     )
-    await context.bot.send_photo(chat_id=chat_id, photo=image_url, caption=caption, parse_mode='md')
+    await bot.send_photo(chat_id, image_url, caption, parse_mode='md')
 
+@bot.message_handler(content_types="text")
+async def message_reply(message):
+    print("text message")
+    bot.send_message(message.chat.id, 'List of avaliable commands:\n' + commands)
 
 async def create_user(user_id, username, profile):
     session = Session()
@@ -579,17 +562,13 @@ async def add_user_to_agreed():
         session.close()
         return jsonify({"error": str(e)}), 500
 
-dispatcher = Dispatcher(bot, None, use_context=True)
-dispatcher.add_handler(CommandHandler("start", start))
-dispatcher.add_handler(MessageHandler(Filters.all & ~Filters.text & ~Filters.command, text_messages))
-
 @app.route("/webhook", methods=["POST"])
 async def webhook():
     if request.method == "POST":
         print("POST")
         data = await request.get_json()
-        update = Update.de_json(data, bot)
-        await dispatcher.process_update(update)
+        update = telebot.types.Update.de_json(data)
+        bot.process_new_updates([update])
     return "ok"
 
 
