@@ -583,19 +583,13 @@ dispatcher = Dispatcher(bot, None, use_context=True)
 dispatcher.add_handler(CommandHandler("start", start))
 dispatcher.add_handler(MessageHandler(Filters.all & ~Filters.text & ~Filters.command, text_messages))
 
-@app.route("/webhook", methods=["POST", "GET"])
+@app.route("/webhook", methods=["POST"])
 async def webhook():
-    print("entered webhook")
     if request.method == "POST":
-        print("entered post")
+        print("POST")
         data = await request.get_json()
         update = Update.de_json(data, bot)
-        dispatcher.process_update(update)
-    elif request.method == "GET":
-        print("entered get")
-        data = await request.get_json()
-        update = Update.de_json(data, bot)
-        dispatcher.process_update(update)
+        await dispatcher.process_update(update)
     return "ok"
 
 
