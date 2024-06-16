@@ -550,7 +550,6 @@ async def webhook():
 @bot.message_handler(commands=['start'])
 async def start(message):
     print("start command")
-    chat_id = message.chat.id
     image_url = 'https://cdn.dorahacks.io/static/files/1901b1bf8a530aeeb65557744999b2d7.png'
     caption = (
         "**ChatPay** provides to users an easy way to **monetise** their Telegram chats by bundling them into AI training datasets.\n\n"
@@ -565,12 +564,11 @@ async def start(message):
         "- Selling datasets to LLM vendors to help train AI and chatbot models.\n\n"
         "_We work transparently by taking only a 25% cut of the sales and royalties, while letting users keep the lion's share of their earnings. A utility token will be coming soon, allowing us to do payouts for users. Token allocation for the team, early supporters, and testers is in our roadmap_"
     )
-    await bot.send_photo(chat_id, image_url, caption, parse_mode='md')
+    await bot.send_photo(message.chat.id, image_url, caption)
 
 @bot.message_handler(content_types=['text'])
 async def message_reply(message):
-    print("text message")
-    await bot.reply_to(message, 'List of avaliable commands:\n' + commands)
+    await bot.send_message(message.chat.id, 'List of avaliable commands:\n' + commands)
 
 
 if __name__ == "__main__":
