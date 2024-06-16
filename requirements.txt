@@ -6,7 +6,6 @@ certifi==2024.6.2
 charset-normalizer==3.3.2
 click==8.1.7
 exceptiongroup==1.2.1
-Flask==3.0.3
 gunicorn==22.0.0
 h11==0.14.0
 h2==4.1.0
@@ -46,3 +45,4 @@ quart-jwt-extended
 requests
 httpx
 psycopg2
+telebot
