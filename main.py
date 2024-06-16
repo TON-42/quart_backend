@@ -543,7 +543,8 @@ async def webhook():
     if request.method == "POST":
         print("POST")
         data = await request.get_json()
-        await bot.process_new_updates([data])
+        update = types.Update.de_json(data)
+        await bot.process_new_updates([update])
     return "ok"
 
 @bot.message_handler(commands=['start'])
