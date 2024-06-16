@@ -46,3 +46,4 @@ requests
 httpx
 psycopg2
 telebot
+aiohttp

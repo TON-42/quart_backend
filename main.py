@@ -14,6 +14,7 @@ from debug_routes import debug_routes
 from db import Session
 import asyncio
 import telebot
+from telebot.async_telebot import AsyncTeleBot
 from telebot import types
 
 commands = (
@@ -35,7 +36,7 @@ JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 API_USERNAME = os.getenv("API_USERNAME")
 API_PASSWORD = os.getenv("API_PASSWORD")
 
-bot = telebot.TeleBot(TOKEN, threaded=False)
+bot = AsyncTeleBot(TOKEN)
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
@@ -108,31 +109,6 @@ async def get_sessions():
 # async def text_messages(update: Update, context: CallbackContext):
 #     print("text message")
 #     update.message.reply_text('List of avaliable commands:\n' + commands)
-
-@bot.message_handler(commands=['start'])
-async def start(message):
-    print("start command")
-    chat_id = message.chat.id
-    image_url = 'https://cdn.dorahacks.io/static/files/1901b1bf8a530aeeb65557744999b2d7.png'
-    caption = (
-        "**ChatPay** provides to users an easy way to **monetise** their Telegram chats by bundling them into AI training datasets.\n\n"
-        "1. Choose the chats you want to submit as AI training datasets"
-        "2. Get your estimated payout per each chat straight in the Telegram mini-app"
-        "3. Hold on tight while your payout arrives.\n\n"
-        "**Your data, your money, your consent**\n _Chats are monetised only if all chat group members give full consent._\n\n"
-        "Our business model is based on:\n"
-        "- Gathering chat user data (text initially, with audio, video and photos coming later).\n"
-        "- Anonymising data by stripping it of all identifiers.\n"
-        "- Tagging data and bundling it into datasets.\n"
-        "- Selling datasets to LLM vendors to help train AI and chatbot models.\n\n"
-        "_We work transparently by taking only a 25% cut of the sales and royalties, while letting users keep the lion's share of their earnings. A utility token will be coming soon, allowing us to do payouts for users. Token allocation for the team, early supporters, and testers is in our roadmap_"
-    )
-    await bot.send_photo(chat_id, image_url, caption, parse_mode='md')
-
-@bot.message_handler(content_types="text")
-async def message_reply(message):
-    print("text message")
-    bot.send_message(message.chat.id, 'List of avaliable commands:\n' + commands)
 
 async def create_user(user_id, username, profile):
     session = Session()
@@ -567,9 +543,33 @@ async def webhook():
     if request.method == "POST":
         print("POST")
         data = await request.get_json()
-        update = telebot.types.Update.de_json(data)
-        bot.process_new_updates([update])
+        await bot.process_new_updates([data])
     return "ok"
+
+@bot.message_handler(commands=['start'])
+async def start(message):
+    print("start command")
+    chat_id = message.chat.id
+    image_url = 'https://cdn.dorahacks.io/static/files/1901b1bf8a530aeeb65557744999b2d7.png'
+    caption = (
+        "**ChatPay** provides to users an easy way to **monetise** their Telegram chats by bundling them into AI training datasets.\n\n"
+        "1. Choose the chats you want to submit as AI training datasets"
+        "2. Get your estimated payout per each chat straight in the Telegram mini-app"
+        "3. Hold on tight while your payout arrives.\n\n"
+        "**Your data, your money, your consent**\n _Chats are monetised only if all chat group members give full consent._\n\n"
+        "Our business model is based on:\n"
+        "- Gathering chat user data (text initially, with audio, video and photos coming later).\n"
+        "- Anonymising data by stripping it of all identifiers.\n"
+        "- Tagging data and bundling it into datasets.\n"
+        "- Selling datasets to LLM vendors to help train AI and chatbot models.\n\n"
+        "_We work transparently by taking only a 25% cut of the sales and royalties, while letting users keep the lion's share of their earnings. A utility token will be coming soon, allowing us to do payouts for users. Token allocation for the team, early supporters, and testers is in our roadmap_"
+    )
+    await bot.send_photo(chat_id, image_url, caption, parse_mode='md')
+
+@bot.message_handler(content_types=['text'])
+async def message_reply(message):
+    print("text message")
+    await bot.reply_to(message, 'List of avaliable commands:\n' + commands)
 
 
 if __name__ == "__main__":
