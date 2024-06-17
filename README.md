@@ -1,56 +1,25 @@
+
 # Quart Backend
 
-This repository contains a Quart backend application integrated with SQLAlchemy and Alembic for database management.
+This repository contains a Quart backend application integrated with SQLAlchemy and Alembic for database management containerized with Docker for local development.
 
 ## Prerequisites
 
-- Python 3.7+
-- PostgreSQL database
-- Telegram API credentials
+- Docker
 
-## Installation
+## Creating image
 
-1. Clone the repository:
+Before creating an image don't forget to add your `.env` file to the root folder.
 
-   ```sh
-   git clone https://github.com/TON-42/quart_backend.git
-   cd quart_backend
-   ```
-
-2. Create and activate a virtual environment:
-
-   ```sh
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-   ```
-
-3. Install dependencies:
-
-   ```sh
-   pip install -r requirements.txt
-   ```
-
-4. Set up environment variables:
-
-   Create a `.env` file in the root directory and add the following:
-
-   ```
-   DATABASE_URL=postgresql://user:password@localhost/dbname
-   ```
-
-5. Initialize the database:
-
-   ```sh
-   alembic upgrade head
-   ```
+```
+   docker build -t quart_app .
+```
 
 ## Running the Application
 
-1. Start the Quart server:
-
-   ```sh
-   python3 cashAndPayBot.py
-   ```
+```
+   docker run -p 8080:8080 quart_app
+```
 
 2. The server will be running at `http://localhost:8080`.
 
@@ -65,6 +34,8 @@ This repository contains a Quart backend application integrated with SQLAlchemy 
 - `GET /users`: Retrieves all users from the database.
 
 ## Database Management
+
+Current version works with deployed Digital Ocean database. Will set up local db ASAP. 
 
 ### SQLAlchemy
 

@@ -572,7 +572,7 @@ async def message_reply(message):
 
 
 if __name__ == "__main__":
-    app.run(port=8080)
+    app.run(host='0.0.0.0', port=8080)
 
 # from quart_jwt_extended import JWTManager, create_access_token, jwt_required
 # app.config['JWT_SECRET_KEY'] = JWT_SECRET_KEY
