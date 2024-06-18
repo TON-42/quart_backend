@@ -2,8 +2,6 @@ from quart import Quart, jsonify, request
 from quart_cors import cors
 from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError, PhoneNumberInvalidError, AuthRestartError
-from dotenv import load_dotenv
-import os
 from datetime import datetime, timedelta
 from collections import defaultdict
 from sqlalchemy.orm import joinedload
@@ -17,6 +15,7 @@ import telebot
 from telebot.async_telebot import AsyncTeleBot
 from telebot import types
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+from config import Config
 
 commands = (
     "📝 /start - Start the bot\n"
@@ -28,16 +27,7 @@ commands = (
     "⚙️ /settings - Settings command\n"
 )
 
-load_dotenv()
-
-API_ID = os.getenv("API_ID")
-API_HASH = os.getenv("API_HASH")
-TOKEN = os.getenv("BOT_TOKEN")
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-API_USERNAME = os.getenv("API_USERNAME")
-API_PASSWORD = os.getenv("API_PASSWORD")
-
-bot = AsyncTeleBot(TOKEN)
+bot = AsyncTeleBot(Config.TOKEN)
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
@@ -382,7 +372,7 @@ async def send_code():
         await user_clients[phone_number].get_client().log_out()
         del user_clients[phone_number]
 
-    user_clients[phone_number] = ClientWrapper(phone_number, API_ID, API_HASH)
+    user_clients[phone_number] = ClientWrapper(phone_number, Config.API_ID, Config.API_HASH)
 
     try:
         await user_clients[phone_number].get_client().connect()
