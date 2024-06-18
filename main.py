@@ -16,6 +16,7 @@ import asyncio
 import telebot
 from telebot.async_telebot import AsyncTeleBot
 from telebot import types
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 commands = (
     "📝 /start - Start the bot\n"
@@ -105,10 +106,6 @@ async def get_sessions():
         return jsonify(sessions), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-# async def text_messages(update: Update, context: CallbackContext):
-#     print("text message")
-#     update.message.reply_text('List of avaliable commands:\n' + commands)
 
 async def create_user(user_id, username, profile):
     session = Session()
@@ -261,10 +258,9 @@ async def login():
         if await user_clients[phone_number].get_client().is_user_authorized():
             dialogs = await user_clients[phone_number].get_client().get_dialogs()
             for dialog in dialogs:
-                if dialog.id < 0 or dialog.id == 777000:
+                if dialog.id < 0 or dialog.bot == True or dialog.id == 777000:
                     continue
 
-                print(dialog)
                 count += 1
                 if count > 15:
                     break
@@ -548,20 +544,26 @@ async def webhook():
         await bot.process_new_updates([update])
     return "ok"
 
+async def gen_markup():
+    markup = InlineKeyboardMarkup()
+    markup.row_width = 1
+    webUrl = types.WebAppInfo("https://new-vite-frontend.vercel.app/")
+    markup.add(InlineKeyboardButton("Lauch", web_app=webUrl))
+    return markup
+
 @bot.message_handler(commands=['start'])
 async def start(message):
-    print("start command")
     image_url = 'https://magnumtravel-bucket.s3.amazonaws.com/static/images/bot-banner.png'
     caption = (
-        "Welcome to ChatPay 💬"
-        "Enter your phone number (don't forget your country code!). 📱"
-        "Approve our terms & conditions. 📖"
-        "Choose the chats you want to sell based on our estimated reward. ✅"
-        "Send the consent approval to your chat partner. 📩"
-        "Hold on tight while your $WORD arrives. 💸"
+        "Welcome to ChatPay 💬\n"
+        "Enter your phone number (don't forget your country code!). 📱\n"
+        "Approve our terms & conditions. 📖\n"
+        "Choose the chats you want to sell based on our estimated reward. ✅\n"
+        "Send the consent approval to your chat partner. 📩\n"
+        "Hold on tight while your $WORD arrives. 💸\n\n"
         "Empowering users one chat at the time! 💪"
     )
-    await bot.send_photo(message.chat.id, image_url, caption)
+    await bot.send_photo(message.chat.id, image_url, caption,  reply_markup=gen_markup())
 
 @bot.message_handler(content_types=['text'])
 async def message_reply(message):
