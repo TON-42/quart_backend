@@ -550,19 +550,15 @@ async def webhook():
 @bot.message_handler(commands=['start'])
 async def start(message):
     print("start command")
-    image_url = 'https://cdn.dorahacks.io/static/files/1901b1bf8a530aeeb65557744999b2d7.png'
+    image_url = 'blob:https://web.telegram.org/39275615-be3a-495f-b198-1cdf07f37153'
     caption = (
-        "**ChatPay** provides to users an easy way to **monetise** their Telegram chats by bundling them into AI training datasets.\n\n"
-        "1. Choose the chats you want to submit as AI training datasets"
-        "2. Get your estimated payout per each chat straight in the Telegram mini-app"
-        "3. Hold on tight while your payout arrives.\n\n"
-        "**Your data, your money, your consent**\n _Chats are monetised only if all chat group members give full consent._\n\n"
-        "Our business model is based on:\n"
-        "- Gathering chat user data (text initially, with audio, video and photos coming later).\n"
-        "- Anonymising data by stripping it of all identifiers.\n"
-        "- Tagging data and bundling it into datasets.\n"
-        "- Selling datasets to LLM vendors to help train AI and chatbot models.\n\n"
-        "_We work transparently by taking only a 25% cut of the sales and royalties, while letting users keep the lion's share of their earnings. A utility token will be coming soon, allowing us to do payouts for users. Token allocation for the team, early supporters, and testers is in our roadmap_"
+        "Welcome to ChatPay 💬"
+        "Enter your phone number (don't forget your country code!). 📱"
+        "Approve our terms & conditions. 📖"
+        "Choose the chats you want to sell based on our estimated reward. ✅"
+        "Send the consent approval to your chat partner. 📩"
+        "Hold on tight while your $WORD arrives. 💸"
+        "Empowering users one chat at the time! 💪"
     )
     await bot.send_photo(message.chat.id, image_url, caption)
 
