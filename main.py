@@ -263,7 +263,8 @@ async def login():
             for dialog in dialogs:
                 if dialog.id < 0 or dialog.id == 777000:
                     continue
-    
+
+                print(dialog)
                 count += 1
                 if count > 15:
                     break
@@ -550,7 +551,7 @@ async def webhook():
 @bot.message_handler(commands=['start'])
 async def start(message):
     print("start command")
-    image_url = 'blob:https://web.telegram.org/39275615-be3a-495f-b198-1cdf07f37153'
+    image_url = 'https://magnumtravel-bucket.s3.amazonaws.com/static/images/bot-banner.png'
     caption = (
         "Welcome to ChatPay 💬"
         "Enter your phone number (don't forget your country code!). 📱"
