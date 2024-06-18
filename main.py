@@ -16,7 +16,7 @@ import asyncio
 import telebot
 from telebot.async_telebot import AsyncTeleBot
 from telebot import types
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
 commands = (
     "📝 /start - Start the bot\n"
@@ -544,26 +544,25 @@ async def webhook():
         await bot.process_new_updates([update])
     return "ok"
 
-async def gen_markup():
-    markup = InlineKeyboardMarkup()
-    markup.row_width = 1
-    webUrl = types.WebAppInfo("https://new-vite-frontend.vercel.app/")
-    markup.add(InlineKeyboardButton("Lauch", web_app=webUrl))
-    return markup
-
 @bot.message_handler(commands=['start'])
 async def start(message):
     image_url = 'https://magnumtravel-bucket.s3.amazonaws.com/static/images/bot-banner.png'
     caption = (
-        "Welcome to ChatPay 💬\n"
-        "Enter your phone number (don't forget your country code!). 📱\n"
-        "Approve our terms & conditions. 📖\n"
-        "Choose the chats you want to sell based on our estimated reward. ✅\n"
-        "Send the consent approval to your chat partner. 📩\n"
-        "Hold on tight while your $WORD arrives. 💸\n\n"
+        "Welcome to ChatPay 💬\n\n"
+        "1️⃣ Enter your phone number (don't forget your country code!). 📱\n\n"
+        "2️⃣ Approve our terms & conditions. 📖\n\n"
+        "3️⃣ Choose the chats you want to sell based on our estimated reward. ✅\n\n"
+        "4️⃣ Send the consent approval to your chat partner. 📩\n\n"
+        "5️⃣ Hold on tight while your $WORD arrives. 💸\n\n\n"
         "Empowering users one chat at the time! 💪"
     )
-    await bot.send_photo(message.chat.id, image_url, caption,  reply_markup=gen_markup())
+
+    markup = InlineKeyboardMarkup()
+    markup.row_width = 1
+    webUrl = WebAppInfo("https://new-vite-frontend.vercel.app/")
+    markup.add(InlineKeyboardButton("Launch", web_app=webUrl))
+
+    await bot.send_photo(message.chat.id, image_url, caption,  reply_markup=markup)
 
 @bot.message_handler(content_types=['text'])
 async def message_reply(message):
