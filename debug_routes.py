@@ -7,6 +7,7 @@ from db import Session
 import requests
 import httpx
 import os
+from config import Config
 
 debug_routes = Blueprint('debug_routes', __name__)
 
