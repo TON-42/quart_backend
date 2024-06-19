@@ -21,6 +21,7 @@ Before creating an image don't forget to add your `.env` file to the root folder
    docker run -p 8080:8080 quart_app
 ```
 
+
 2. The server will be running at `http://localhost:8080`.
 
 ## API Endpoints
@@ -32,6 +33,12 @@ Before creating an image don't forget to add your `.env` file to the root folder
 - `POST /send-message`: Sends a message in a specific chat.
 - `POST /users`: Creates a new user in the database.
 - `GET /users`: Retrieves all users from the database.
+
+## Manually log into docker container
+
+```
+docker exec -it {container_id} /bin/sh
+```
 
 ## Database Management
 
