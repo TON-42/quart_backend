@@ -1,6 +1,5 @@
 from quart import Quart, jsonify, request
 from quart_cors import cors
-from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError, PhoneNumberInvalidError, AuthRestartError
 from datetime import datetime, timedelta
 from collections import defaultdict
@@ -16,6 +15,7 @@ from telebot.async_telebot import AsyncTeleBot
 from telebot import types
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from config import Config
+from client_wrapper import ClientWrapper
 
 commands = (
     "📝 /start - Start the bot\n"
@@ -60,25 +60,6 @@ async def startup():
 async def shutdown():
     for task in app.background_tasks:
         task.cancel()
-
-
-class ClientWrapper:
-    def __init__(self, phone_number, api_id, api_hash):
-        self.client = TelegramClient(phone_number, api_id, api_hash)
-        self.created_at = datetime.now()
-        self.id = 0
-
-    def get_client(self):
-        return self.client
-
-    def get_creation_time(self):
-        return self.created_at
-
-    def get_id(self):
-        return self.client
-
-    def set_id(self, new_id):
-        self.id = new_id
 
 
 @app.route("/get-sessions", methods=["GET"])
