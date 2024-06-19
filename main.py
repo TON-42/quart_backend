@@ -427,9 +427,10 @@ async def start(message):
     )
 
     markup = InlineKeyboardMarkup()
-    markup.row_width = 1
+    markup.row_width = 2
     webUrl = WebAppInfo("https://new-vite-frontend.vercel.app/")
-    markup.add(InlineKeyboardButton("Launch", web_app=webUrl))
+    markup.add(InlineKeyboardButton("Let's go", web_app=webUrl))
+    markup.add(InlineKeyboardButton("Follow us", url='https://x.com/chatpay_app'))
 
     await bot.send_photo(message.chat.id, image_url, caption,  reply_markup=markup)
 
