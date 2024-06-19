@@ -538,6 +538,7 @@ async def add_user_to_agreed():
         session.close()
         return jsonify({"error": str(e)}), 500
 
+
 @app.route("/webhook", methods=["POST"])
 async def webhook():
     if request.method == "POST":
