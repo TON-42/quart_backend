@@ -41,9 +41,9 @@ async def login():
         if await user_clients[phone_number].get_client().is_user_authorized():
             dialogs = await user_clients[phone_number].get_client().get_dialogs()
             for dialog in dialogs:
-                if dialog.id < 0 or dialog.bot == True or dialog.id == 777000:
+                if dialog.id < 0 or dialog.id == 777000:
                     continue
-
+                print(dialog)
                 count += 1
                 if count > 15:
                     break
