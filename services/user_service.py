@@ -3,8 +3,6 @@ from models import User
 from sqlalchemy.orm.exc import NoResultFound
 
 
-
-
 async def create_user(user_id, username, profile):
     session = Session()
     try:
