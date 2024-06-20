@@ -7,11 +7,13 @@ from sqlalchemy import (
     Table,
     Text,
     create_engine,
+    DateTime,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.dialects.postgresql import ENUM
 from dotenv import load_dotenv
+from datetime import datetime
 import os
 import enum
 
@@ -60,6 +62,7 @@ class User(Base):
     has_profile = Column(Boolean, default=False)
     words = Column(BigInteger, default=0)
     chats = relationship("Chat", secondary=users_chats, back_populates="users")
+    registration_date = Column(DateTime, default=datetime.utcnow, nullable=False)
     agreed_chats = relationship(
         "Chat", secondary=agreed_users_chats, back_populates="agreed_users"
     )
