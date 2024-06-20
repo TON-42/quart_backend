@@ -93,7 +93,6 @@ RUN pip3 install --no-cache-dir \
     telebot
 
 
-# Set the working directory in the container
 WORKDIR /app
 
 # Copy the current directory contents into the container at /app
@@ -101,5 +100,5 @@ COPY . /app
 
 EXPOSE 8080
 
-# Command to run your application
-CMD [ "python3", "main.py" ]
+# # Command to run your application
+# CMD [ "python3", "main.py" ]

@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    container_name: backend_telegram
+    build:
+      context: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    command: /bin/sh -c "./wait_for_db.sh && alembic upgrade head && python3 main.py"
+
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    ports:
+      - "25060:5432"
+    env_file:
+          - ./.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
