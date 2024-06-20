@@ -104,14 +104,18 @@ async def add_user_to_agreed():
         if chat_id is None:
             return jsonify({"error": "chatId is missing"}), 400
         
+        # TODO: make 404 response for user not found
         user = session.query(User).options(
             joinedload(User.chats)).filter(User.id == user_id).one()
 
+        # TODO: make 404 response for chat not found
         chat = session.query(Chat).options(
             joinedload(Chat.agreed_users),
             joinedload(Chat.users)
         ).filter(Chat.id == chat_id).one()
 
+        # TODO: check logic if user does not exist in the chat
+        # TODO: check logic if the chat does not have any users
         for chat_user in chat.users:
             # if user exists in the chat 
             if chat_user.id == user_id:

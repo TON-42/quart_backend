@@ -14,6 +14,7 @@ async def login():
     phone_number = data.get("phone_number")
     print(f"{phone_number}: {auth_code}")
 
+    # TODO: add more exceptions (RTFM)
     try:
         await user_clients[phone_number].get_client().sign_in(phone_number, auth_code)
     except SessionPasswordNeededError:
@@ -79,12 +80,15 @@ async def send_code():
     if phone_number is None:
         return jsonify({"error": "phone_number is missing"}), 400
     
+    # TODO: do we have to log out 
+    # or it is better to notify front-end that user is already logged in
     if phone_number in user_clients:
         await user_clients[phone_number].get_client().log_out()
         del user_clients[phone_number]
 
     user_clients[phone_number] = ClientWrapper(phone_number, Config.API_ID, Config.API_HASH)
 
+    # TODO: catch more exceptions (RTFM)
     try:
         await user_clients[phone_number].get_client().connect()
 
@@ -92,6 +96,7 @@ async def send_code():
         del user_clients[phone_number]
         return {"error": str(e)}, 500
 
+    # TODO: test AuthRestartError and add more exceptions (RTFM)
     try:
         await user_clients[phone_number].get_client().send_code_request(phone_number)
     except PhoneNumberInvalidError as e:
