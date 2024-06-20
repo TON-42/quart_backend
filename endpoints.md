@@ -120,3 +120,61 @@ API should know that logged in user accessed it
 ```
 headers = { "Authorization": f"Bearer {access_token}" }
 ```
+
+## Endpoints Detailed
+
+### `/get-user`
+
+- **Method**: `POST`
+- **Description**: Fetches user data based on the provided user ID and optional username.
+- **Request Body**:
+
+  - `userId` (number, required): The unique identifier of the user.
+  - `username` (string, optional): The username of the user.
+
+  ```json
+  {
+    "userId": 123,
+    "username": "john_doe"
+  }
+  ```
+
+- **Responses**:
+  - **200 OK**: Returns user data including profile and chat information.
+    ```json
+    {
+      "id": 1,
+      "name": "John Doe",
+      "has_profile": true,
+      "words": [],
+      "chats": [
+        {
+          "id": 1,
+          "name": "Chat with Team",
+          "words": 120,
+          "status": "active",
+          "lead_id": 1,
+          "agreed_users": [2, 3],
+          "users": [1, 2, 3]
+        }
+      ]
+    }
+    ```
+  - **400 Bad Request**: Returned if `userId` is missing from the request.
+    ```json
+    {
+      "error": "userId is missing"
+    }
+    ```
+  - **404 Not Found**: Returned if the user does not exist.
+    ```json
+    {
+      "message": "User with id 123 does not exist"
+    }
+    ```
+  - **500 Internal Server Error**: Returned if there is an internal error.
+    ```json
+    {
+      "error": "Internal error"
+    }
+    ```
