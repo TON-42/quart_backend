@@ -1,129 +1,41 @@
-# API Endpoints
+## API Endpoints
 
-## `/get-user` [POST] (userId)
+- `/get-user` [POST]
 
-```
-Get all information about a user (including chats)
-```
+- `/send-code` [POST]
 
-## `/add-user-to-agreed` [POST] (chatId, userId)
+- `/login` [POST]
 
-```
-Adds a user to the agreed users of the chat. If all users agreed, sends 202
-```
+- `/send-message` [POST]
 
-## `/send-code` [POST] (phone_number)
+- `/add-user-to-agreed` [POST]
 
-```
-Send a code to a user's phone
-```
+- `/is-active` [POST]
 
-## `/send-message` [POST] (phone_number, chats, message)
+- `/health` [GET]
 
-```
-Send a message to all chats that user chose
-```
+## DEBUG API Endpoints
 
-## `/login` [POST] (phone_number, code)
+- `/get-users` [GET]
 
-```
-Login to a user account
-```
+- `/get-chats` [GET]
 
-## `/is-active` [POST] (userId)
+- `/delete-all-users` [GET]
 
-```
-Is a session still active?(are we still logged in as a user)
-```
+- `/delete-all- chats` [GET]
 
-## `/health` [GET]
+- `/delete-user?id=123` [GET]
 
-```
-Check that an app is responding
-```
-
-# DEBUG API Endpoints
-
-## `/get-users` [GET]
-
-```
-Get all users
-```
-
-## `/get-chats` [GET]
-
-```
-Get all chats
-```
-
-## `/delete-all-users` [GET]
-
-```
-Delete all users
-```
-
-## `/delete-all- chats` [GET]
-
-```
-Delete all chats
-```
-
-## `/delete-user?id=123` [GET]
-
-```
-Delete 1 user
-```
-
-## `/delete-chat?id=123` [GET]
-
-```
-Delete 1 chat
-```
+- `/delete-chat?id=123` [GET]
 
 <br>
 <br>
-<br>
-<br>
 
-# Legacy
-
-## `/create-user` [GET]
-
-```
-Create 1 user (hardcoded)
-```
-
-## `/create-chat` [GET]
-
-```
-Create 1 chat (hardcoded)
-```
-
-# Authorization with JWT(JSON Web Tokens)
-
-## 1. Connect to API
-
-Make a call to `/access` with credentials in JSON
-
-```
-data = {"username": API_USERNAME, "password": API_PASSWORD}
-```
-
-## 2. Receive access token from `/access` response and store it
-
-Store it to access other routes
-
-## 3. Make a request to other routes with a token in a header
-
-API should know that logged in user accessed it
-
-```
-headers = { "Authorization": f"Bearer {access_token}" }
-```
 
 ## Endpoints Detailed
 
-### `/get-user`
+<details>
+<summary><h3>/get-user</h3></summary>
 
 - **Method**: `POST`
 - **Description**: Fetches user data based on the provided user ID and optional username.
@@ -178,3 +90,137 @@ headers = { "Authorization": f"Bearer {access_token}" }
       "error": "Internal error"
     }
     ```
+</details>
+
+<details>
+<summary><h3>/send-code</h3></summary>
+
+- **Method**: `POST`
+- **Description**: Sends an authotization code to a phone number of the user
+- **Request Body**:
+
+  - `phone_number` (string, required): The phone number of the user.
+
+  ```json
+  {
+    "phone_number": "+37120455123",
+  }
+  ```
+
+- **Responses**:
+  - **200 OK**: Returns OK.
+    ```json
+    {
+      "message": "ok"
+    }
+    ```
+  - **400 Bad Request**: Returned if `phone_number` is missing from the request.
+    ```json
+    {
+      "error": "phone_number is missing"
+    }
+    ```
+  - **404 Not Found**: Returned if phone number is invalid.
+    ```json
+    {
+      "error": "PhoneNumberInvalidError"
+    }
+    ```
+  - **500 Internal Server Error**: Returned if there is an internal error.
+    ```json
+    {
+    TODO: should be 500 in the code
+      "error": "Internal error"
+    }
+    ```
+</details>
+
+<details>
+<summary><h3>/login</h3></summary>
+
+- **Method**: `POST`
+- **Description**: Logs in to the user account 
+- **Request Body**:
+
+  - `phone_number` (string, required): The phone number of the user.
+  - `code` (number, required): The autherizartion code.
+  ```json
+  {
+    "phone_number": "+37120455123",
+    "code": 75129
+  }
+  ```
+
+- **Responses**:
+  - **200 OK**: Returns chat information.
+    ```json
+    {
+      TODO
+    }
+    ```
+  - **400 Bad Request**: Returned if `phone_number` is missing from the request.
+    ```json
+    {
+      "error": "phone_number is missing"
+    }
+    ```
+  - **401 Not Authorized**: Returned if two-steps verification is enabled
+    ```json
+    {
+      TODO
+      "message": "401"
+    }
+    ```
+  - **404 Not Found**: Returned if phone number is invalid.
+    ```json
+    {
+      "error": "PhoneNumberInvalidError"
+    }
+    ```
+  - **500 Internal Server Error**: Returned if there is an internal error.
+    ```json
+    {
+      "error": "Internal error"
+    }
+    ```
+</details>
+
+
+<details>
+<summary><h2>Legacy</h2></summary>
+
+- `/create-user` [GET]
+
+```
+Create 1 user (hardcoded)
+```
+
+- `/create-chat` [GET]
+
+```
+Create 1 chat (hardcoded)
+```
+
+## Authorization with JWT(JSON Web Tokens)
+
+### 1. Connect to API
+
+Make a call to `/access` with credentials in JSON
+
+```
+data = {"username": API_USERNAME, "password": API_PASSWORD}
+```
+
+### 2. Receive access token from `/access` response and store it
+
+Store it to access other routes
+
+### 3. Make a request to other routes with a token in a header
+
+API should know that logged in user accessed it
+
+```
+headers = { "Authorization": f"Bearer {access_token}" }
+```
+
+</details>
