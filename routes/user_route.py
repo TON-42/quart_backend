@@ -11,13 +11,14 @@ user_route = Blueprint('user_route', __name__)
 async def get_user():
     try:
         data = await request.get_json()
-
+        username = data.get("username", "None")
         user_id = data.get("userId")
+
         if user_id is None:
             return jsonify({"error": "userId is missing"}), 400
         
-        username = data.get("username", "None")
         print(f"get-user: {username}")
+        
         try:
             await create_user(user_id, username, False)
         except Exception as e:
@@ -75,8 +76,8 @@ async def get_user():
 async def is_active():
     try:
         data = await request.get_json()
-
         user_id = data.get("userId")
+        
         if user_id is None:
             return jsonify({"error": "userId is missing"}), 400
 
