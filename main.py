@@ -1,21 +1,20 @@
 from quart import Quart, jsonify, request
 from quart_cors import cors
-from telethon import TelegramClient
-from telethon.errors import SessionPasswordNeededError, PhoneNumberInvalidError, AuthRestartError
-from dotenv import load_dotenv
-import os
 from datetime import datetime, timedelta
-from collections import defaultdict
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import IntegrityError
 from models import User, Chat, ChatStatus
 from debug_routes import debug_routes
+from routes.login_route import login_route
 from db import Session
 import asyncio
 import telebot
 from telebot.async_telebot import AsyncTeleBot
 from telebot import types
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+from config import Config
+from shared import user_clients
 
 commands = (
     "📝 /start - Start the bot\n"
@@ -27,22 +26,13 @@ commands = (
     "⚙️ /settings - Settings command\n"
 )
 
-load_dotenv()
-
-API_ID = os.getenv("API_ID")
-API_HASH = os.getenv("API_HASH")
-TOKEN = os.getenv("BOT_TOKEN")
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-API_USERNAME = os.getenv("API_USERNAME")
-API_PASSWORD = os.getenv("API_PASSWORD")
-
-bot = AsyncTeleBot(TOKEN)
+bot = AsyncTeleBot(Config.TOKEN)
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
 app.register_blueprint(debug_routes)
+app.register_blueprint(login_route)
 
-user_clients = {}
 
 async def check_session_expiry():
     while True:
@@ -71,25 +61,6 @@ async def shutdown():
         task.cancel()
 
 
-class ClientWrapper:
-    def __init__(self, phone_number, api_id, api_hash):
-        self.client = TelegramClient(phone_number, api_id, api_hash)
-        self.created_at = datetime.now()
-        self.id = 0
-
-    def get_client(self):
-        return self.client
-
-    def get_creation_time(self):
-        return self.created_at
-
-    def get_id(self):
-        return self.client
-
-    def set_id(self, new_id):
-        self.id = new_id
-
-
 @app.route("/get-sessions", methods=["GET"])
 async def get_sessions():
     print(len(user_clients))
@@ -105,10 +76,6 @@ async def get_sessions():
         return jsonify(sessions), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-# async def text_messages(update: Update, context: CallbackContext):
-#     print("text message")
-#     update.message.reply_text('List of avaliable commands:\n' + commands)
 
 async def create_user(user_id, username, profile):
     session = Session()
@@ -227,69 +194,6 @@ async def hello_world():
     return jsonify({"message": "Hello, World!"})
 
 
-@app.route('/login', methods=['POST'])
-async def login():
-    print("entered login")
-    data = await request.get_json()
-    auth_code = data.get("code")
-    print("auth code:")
-    print(auth_code)
-    phone_number = data.get("phone_number")
-    print(phone_number)
-
-    try:
-        await user_clients[phone_number].get_client().sign_in(phone_number, auth_code)
-    except SessionPasswordNeededError:
-        print("two-steps verification is active")
-        await user_clients[phone_number].get_client().log_out()
-        del user_clients[phone_number]
-        return "401"
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        await user_clients[phone_number].get_client().log_out()
-        del user_clients[phone_number]
-        return {"error": str(e)}, 500
-
-    # save user id in the session
-    sender = await user_clients[phone_number].get_client().get_me()
-    user_clients[phone_number].set_id(sender.id)
-
-    count = 0
-    res = defaultdict(int)
-
-    try:
-        if await user_clients[phone_number].get_client().is_user_authorized():
-            dialogs = await user_clients[phone_number].get_client().get_dialogs()
-            for dialog in dialogs:
-                if dialog.id < 0 or dialog.id == 777000:
-                    continue
-    
-                count += 1
-                if count > 15:
-                    break
-                
-                print(f"{dialog.name}, {dialog.id}")
-                async for message in (
-                    user_clients[phone_number].get_client().iter_messages(dialog.id)
-                ):
-                    if message.text is not None:
-                        words = message.text.split()
-                        res[(dialog.id, dialog.name)] += len(words)
-                        if res[(dialog.id, dialog.name)] > 2000:
-                            break
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        await user_clients[phone_number].get_client().log_out()
-        del user_clients[phone_number]
-        return {"error": str(e)}, 500
-
-    res_json_serializable = {str(key): value for key, value in res.items()}
-
-    # Print the JSON-serializable dictionary
-    print(res_json_serializable)
-    return jsonify(res_json_serializable), 200
-
-
 @app.route("/send-message", methods=["POST"])
 async def send_message():
     data = await request.get_json()
@@ -370,44 +274,6 @@ async def send_message():
             return {"error": str(e)}, 500
 
     return jsonify({"userB": b_users if b_users else None}), 200
-
-
-@app.route("/send-code", methods=["POST"])
-async def send_code():
-    print("entered send_code")
-    data = await request.get_json()
-    phone_number = data.get("phone_number")
-    print(phone_number)
-    if phone_number is None:
-        return jsonify({"error": "phone_number is missing"}), 400
-    
-    if phone_number in user_clients:
-        await user_clients[phone_number].get_client().log_out()
-        del user_clients[phone_number]
-
-    user_clients[phone_number] = ClientWrapper(phone_number, API_ID, API_HASH)
-
-    try:
-        await user_clients[phone_number].get_client().connect()
-
-    except OSError as e:
-        del user_clients[phone_number]
-        return {"error": str(e)}, "400"
-
-    try:
-        await user_clients[phone_number].get_client().send_code_request(phone_number)
-    except PhoneNumberInvalidError as e:
-        await user_clients[phone_number].get_client().log_out()
-        del user_clients[phone_number]
-        return {"error": str(e)}, "404"
-    except (AuthRestartError) as e:
-        await user_clients[phone_number].get_client().send_code_request(phone_number)
-    except Exception as e:
-        await user_clients[phone_number].get_client().log_out()
-        del user_clients[phone_number]
-        return {"error": str(e)}, "400"
-
-    return "ok", 200
 
 
 @app.route("/get-user", methods=["POST"])
@@ -550,26 +416,28 @@ async def webhook():
 
 @bot.message_handler(commands=['start'])
 async def start(message):
-    print("start command")
-    image_url = 'https://cdn.dorahacks.io/static/files/1901b1bf8a530aeeb65557744999b2d7.png'
+    image_url = 'https://magnumtravel-bucket.s3.amazonaws.com/static/images/bot-banner.png'
     caption = (
-        "**ChatPay** provides to users an easy way to **monetise** their Telegram chats by bundling them into AI training datasets.\n\n"
-        "1. Choose the chats you want to submit as AI training datasets"
-        "2. Get your estimated payout per each chat straight in the Telegram mini-app"
-        "3. Hold on tight while your payout arrives.\n\n"
-        "**Your data, your money, your consent**\n _Chats are monetised only if all chat group members give full consent._\n\n"
-        "Our business model is based on:\n"
-        "- Gathering chat user data (text initially, with audio, video and photos coming later).\n"
-        "- Anonymising data by stripping it of all identifiers.\n"
-        "- Tagging data and bundling it into datasets.\n"
-        "- Selling datasets to LLM vendors to help train AI and chatbot models.\n\n"
-        "_We work transparently by taking only a 25% cut of the sales and royalties, while letting users keep the lion's share of their earnings. A utility token will be coming soon, allowing us to do payouts for users. Token allocation for the team, early supporters, and testers is in our roadmap_"
+        "Welcome to ChatPay 💬\n\n"
+        "1️⃣ Enter your phone number (don't forget your country code!). 📱\n\n"
+        "2️⃣ Approve our terms & conditions. 📖\n\n"
+        "3️⃣ Choose the chats you want to sell based on our estimated reward. ✅\n\n"
+        "4️⃣ Send the consent approval to your chat partner. 📩\n\n"
+        "5️⃣ Hold on tight while your $WORD arrives. 💸\n\n\n"
+        "Empowering users one chat at the time! 💪"
     )
-    await bot.send_photo(message.chat.id, image_url, caption)
+
+    markup = InlineKeyboardMarkup()
+    markup.row_width = 1
+    webUrl = WebAppInfo("https://new-vite-frontend.vercel.app/")
+    markup.add(InlineKeyboardButton("Launch", web_app=webUrl))
+
+    await bot.send_photo(message.chat.id, image_url, caption,  reply_markup=markup)
 
 @bot.message_handler(content_types=['text'])
 async def message_reply(message):
     await bot.send_message(message.chat.id, 'List of avaliable commands:\n' + commands)
+
 
 
 if __name__ == "__main__":

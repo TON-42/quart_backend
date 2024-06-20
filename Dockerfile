@@ -102,4 +102,4 @@ COPY . /app
 EXPOSE 8080
 
 # Command to run your application
-CMD ["python3", "main.py"]
+CMD [ "python3", "main.py" ]
