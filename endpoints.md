@@ -121,7 +121,9 @@ API should know that logged in user accessed it
 headers = { "Authorization": f"Bearer {access_token}" }
 ```
 
-### Endpoint: `/get-user`
+## Endpoints Detailed
+
+### `/get-user`
 
 - **Method**: `POST`
 - **Description**: Fetches user data based on the provided user ID and optional username.
