@@ -45,6 +45,7 @@ async def get_user():
         # Close the session
         session.close()
 
+        # TODO: return creation time too
         return jsonify(
             {
                 "id": user.id,

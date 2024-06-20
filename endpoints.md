@@ -129,7 +129,6 @@
   - **500 Internal Server Error**: Returned if there is an internal error.
     ```json
     {
-    TODO: should be 500 in the code
       "error": "Internal error"
     }
     ```
@@ -152,10 +151,10 @@
   ```
 
 - **Responses**:
-  - **200 OK**: Returns chat information.
+  - **200 OK**: Returns chat information(chat_id, chat_name, words).
     ```json
     {
-      TODO
+      "message": {"(122493869, 'stefano')": 1825}
     }
     ```
   - **400 Bad Request**: Returned if `phone_number` is missing from the request.
@@ -167,14 +166,97 @@
   - **401 Not Authorized**: Returned if two-steps verification is enabled
     ```json
     {
-      TODO
-      "message": "401"
+      "error": "two-steps verification is enabled"
     }
     ```
   - **404 Not Found**: Returned if phone number is invalid.
     ```json
     {
       "error": "PhoneNumberInvalidError"
+    }
+    ```
+  - **500 Internal Server Error**: Returned if there is an internal error.
+    ```json
+    {
+      "error": "Internal error"
+    }
+    ```
+</details>
+
+<details>
+<summary><h3>/is-active</h3></summary>
+
+- **Method**: `POST`
+- **Description**: Checks if we are still logged in to the user account
+- **Request Body**:
+
+  - `userId` (number, required): The unique identifier of the user.
+  ```json
+  {
+    "userId": 84375302,
+  }
+  ```
+
+- **Responses**:
+  - **200 OK**: Returns OK.
+    ```json
+    {
+      "message": "ok"
+    }
+    ```
+  - **400 Bad Request**: Returned if `userId` is missing from the request.
+    ```json
+    {
+      "message": "userId is missing"
+    }
+    ```
+  - **404 Not Found**: Returned if session is not found.
+    ```json
+    {
+      "message": "Not Found"
+    }
+    ```
+  - **500 Internal Server Error**: Returned if there is an internal error.
+    ```json
+    {
+      "error": "Internal error"
+    }
+    ```
+</details>
+
+<details>
+<summary><h3>/add-user-to-agreed</h3></summary>
+
+- **Method**: `POST`
+- **Description**: Adds a user to the agreed group of the chat and checks if all users have agreed
+- **Request Body**:
+
+  - `userId` (number, required): The unique identifier of the user.
+  - `chatId` (number, required): The unique identifier of the chat.
+  ```json
+  {
+    "userId": 84375302,
+    "chatId": 43645659,
+  }
+  ```
+
+- **Responses**:
+  - **200 OK**: Returns OK.
+    ```json
+    {
+      "message": "ok"
+    }
+    ```
+  - **202 Accepted**: Returns if all users have agreed.
+    ```json
+    {
+      "success": "All users have agreed"
+    }
+    ```
+  - **400 Bad Request**: Returned if `userId` or `chatId` is missing from the request.
+    ```json
+    {
+      "message": "userId is missing"
     }
     ```
   - **500 Internal Server Error**: Returned if there is an internal error.

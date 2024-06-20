@@ -43,6 +43,7 @@ async def check_session_expiry():
         # Iterate over user_clients to check each session
         for phone_number, client_wrapper in list(user_clients.items()):
             # Calculate the difference between current time and session creation time
+            # TODO: check if user didn't manually logged us out
             print(f"Session for: {phone_number} is active")
             time_difference = datetime.now() - client_wrapper.created_at
             if time_difference >= timedelta(minutes=20):
@@ -70,6 +71,7 @@ async def get_sessions():
     print(len(user_clients))
     try:
         sessions = []
+        # TODO: send user_id too
         for phone_number, client_wrapper in user_clients.items():
             session_info = {
                 "phone_number": phone_number,
@@ -90,7 +92,6 @@ async def health():
 
 @app.route("/hello", methods=["GET"])
 async def hello_world():
-    print("hello endpoint!!")
     return jsonify({"message": "Hello, World!"})
 
 
