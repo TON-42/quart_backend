@@ -66,24 +66,6 @@ async def shutdown():
         task.cancel()
 
 
-@app.route("/get-sessions", methods=["GET"])
-async def get_sessions():
-    print(len(user_clients))
-    try:
-        sessions = []
-        # TODO: send user_id too
-        for phone_number, client_wrapper in user_clients.items():
-            session_info = {
-                "phone_number": phone_number,
-                "created_at": client_wrapper.get_creation_time().isoformat()
-            }
-            sessions.append(session_info)
-
-        return jsonify(sessions), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
 @app.route("/health", methods=["GET"])
 async def health():
     app.logger.info("Health check endpoint called")

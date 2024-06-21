@@ -4,6 +4,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import IntegrityError
 from models import User, Chat, agreed_users_chats, users_chats
 from db import Session
+from shared import user_clients
 import requests
 import httpx
 import os
@@ -81,6 +82,23 @@ async def get_chats():
         session.close()
         return jsonify({"error": str(e)}), 500
 
+@debug_routes.route("/get-sessions", methods=["GET"])
+async def get_sessions():
+    print(len(user_clients))
+    try:
+        sessions = []
+        # TODO: send user_id too
+        for phone_number, client_wrapper in user_clients.items():
+            session_info = {
+                "phone_number": phone_number,
+                "user_id": client_wrapper.get_id(),
+                "created_at": client_wrapper.get_creation_time().isoformat()
+            }
+            sessions.append(session_info)
+
+        return jsonify(sessions), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @debug_routes.route("/delete-user", methods=["GET"])
 async def delete_user():
