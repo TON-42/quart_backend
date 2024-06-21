@@ -14,7 +14,7 @@ class ClientWrapper:
         return self.created_at
 
     def get_id(self):
-        return self.client
+        return self.id
 
     def set_id(self, new_id):
         self.id = new_id
