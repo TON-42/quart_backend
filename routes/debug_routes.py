@@ -114,6 +114,11 @@ async def delete_user():
             # Query the user by ID
             user = session.query(User).filter(User.id == user_id).one()
             
+            # Delete all connected chats
+            for chat_id in user.chats:
+                chat = session.query(Chat).filter(Chat.id == chat_id).one()
+                session.delete(chat)
+            
             # Delete the user
             session.delete(user)
             session.commit()
