@@ -87,7 +87,7 @@ async def get_sessions():
     print(len(user_clients))
     try:
         sessions = []
-        # TODO: send user_id too
+
         for phone_number, client_wrapper in user_clients.items():
             session_info = {
                 "phone_number": phone_number,
@@ -112,11 +112,15 @@ async def delete_user():
         
         try:
             # Query the user by ID
-            user = session.query(User).filter(User.id == user_id).one()
+            user = (
+                session.query(User)
+                .options(joinedload(User.chats).joinedload(Chat.users))
+                .filter(User.id == user_id)
+                .first()
+            )
             
             # Delete all connected chats
-            for chat_id in user.chats:
-                chat = session.query(Chat).filter(Chat.id == chat_id).one()
+            for chat in user.chats:
                 session.delete(chat)
             
             # Delete the user

@@ -27,7 +27,7 @@ async def get_user():
         
         session = Session()
         
-        # Query all users
+        # Query a user
         user = (
             session.query(User)
             .options(joinedload(User.chats).joinedload(Chat.users))
