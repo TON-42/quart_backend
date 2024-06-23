@@ -241,11 +241,11 @@
   ```
 
 - **Responses**:
-  - **200 OK**: Returns OK.
+  - **200 OK**: Returns a list of chats with status(sold, pending, declined, error).
     ```json
     {
-      "21214": True,
-      "545646": False
+      "21214": "pending",
+      "545646": "error"
     }
     ```
   - **400 Bad Request**: Returned if `userId` or `chatId` is missing from the request.
