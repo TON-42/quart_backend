@@ -76,6 +76,7 @@ class Chat(Base):
     full_text = Column(Text, nullable=False)
     status = Column(ENUM(ChatStatus), nullable=False)
     lead_id = Column(BigInteger, ForeignKey("users.id"))
+    lead_name = Column(String(100), nullable=False)
     lead = relationship("User", foreign_keys=[lead_id])
     agreed_users = relationship(
         "User", secondary=agreed_users_chats, back_populates="agreed_chats"
