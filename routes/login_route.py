@@ -93,19 +93,15 @@ async def send_code():
     if phone_number not in user_clients:
         # TODO: here we create a "user", but at this point the user is not logged on yet (confusing)
         user_clients[phone_number] = ClientWrapper(phone_number, Config.API_ID, Config.API_HASH)
-    
-    # Legacy
-    # return jsonify({"message": "user is already logged in"}), 409
+        # TODO: catch more exceptions (RTFM)
+        try:
+            await user_clients[phone_number].get_client().connect()
+        except Exception as e:
+            print(f"Error in connect(): {str(e)}")
+            del user_clients[phone_number]
+            return {"error": str(e)}, 500
 
-    # TODO: catch more exceptions (RTFM)
-    try:
-        await user_clients[phone_number].get_client().connect()
-
-    except OSError as e:
-        print(f"Error in connect(): {str(e)}")
-        del user_clients[phone_number]
-        return {"error": str(e)}, 500
-
+    # TODO: find out how to check that we are connected (connect())
     # TODO: test AuthRestartError and add more exceptions (RTFM)
     try:
         await user_clients[phone_number].get_client().send_code_request(phone_number)
