@@ -12,26 +12,31 @@ chat_route = Blueprint('chat_route', __name__)
 @chat_route.route("/send-message", methods=["POST"])
 async def send_message():
     data = await request.get_json()
+    
     phone_number = data.get("phone_number")
-    sender = await user_clients[phone_number].get_client().get_me()
-    sender_id = sender.id
-
+    if not phone_number:
+        return jsonify("No phone_number provided"), 400
+    
     message = data.get("message")
     if not message:
         message = "Hello! The owner of this chat wants to sell the data of this chat.\nPlease click the button below to accept the sale and proceed to the bot:"
+
+    selected_chats = data.get("chats", {})
+    if not selected_chats:
+        return jsonify("No chats were send"), 400
+
+    sender = await user_clients[phone_number].get_client().get_me()
     
+    # TODO: rename update_profile, it just sets has_profile
     status = await update_profile(sender.id, True)
     if (status == 1):
         return jsonify("Could not create a user"), 500
 
-    selected_chats = data.get("chats", {})
-    if not selected_chats:
-        print("No chats received from front-end.")
-        return jsonify("No chats were send"), 400
 
     print("received from front-end:")
     print(selected_chats)
 
+    # TODO: organize this mess
     b_users = []
     chat_users = []
     for chat_details, words in selected_chats.items():
@@ -76,11 +81,11 @@ async def send_message():
                 message + "\n\n"
                 "https://t.me/chatpayapp_bot/chatpayapp"
             )
-            await create_chat(chat_id, chat_name, words, sender_id, chat_users)
+            await create_chat(chat_id, chat_name, words, sender.id, chat_users)
             await user_clients[phone_number].get_client().send_message(
                 chat_id, message_for_second_user, parse_mode="html"
             )
-            await add_chat_to_users(chat_users + [sender_id], chat_id)
+            await add_chat_to_users(chat_users + [sender.id], chat_id)
             chat_users.clear()
         except Exception as e:
             print(f"Error: {str(e)}")
