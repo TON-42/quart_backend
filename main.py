@@ -40,15 +40,16 @@ app.register_blueprint(chat_route)
 
 async def check_session_expiry():
     while True:
-        # Iterate over user_clients to check each session
         for phone_number, client_wrapper in list(user_clients.items()):
-            # Calculate the difference between current time and session creation time
             # TODO: check if user didn't manually logged us out
             print(f"Session for: {phone_number} is active")
             time_difference = datetime.now() - client_wrapper.created_at
-            if time_difference >= timedelta(minutes=20):
+            if time_difference >= timedelta(minutes=15):
                 print(f"Session for {phone_number} has expired.")
-                await user_clients[phone_number].get_client().log_out()
+                try:
+                    await user_clients[phone_number].get_client().log_out()
+                except Exception as e:
+                    print(f"Error in log_out(): {str(e)}")
                 del user_clients[phone_number]
 
         # Wait for 5 minute before checking again

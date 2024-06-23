@@ -101,6 +101,7 @@ async def send_code():
         await user_clients[phone_number].get_client().connect()
 
     except OSError as e:
+        print(f"Error in connect(): {str(e)}")
         del user_clients[phone_number]
         return {"error": str(e)}, 500
 
@@ -109,14 +110,17 @@ async def send_code():
         await user_clients[phone_number].get_client().send_code_request(phone_number)
     except PhoneNumberInvalidError as e:
         # TODO: does it make sense to log out if log in is not success
+        print(f"phone number is invalid: {str(e)}")
         await user_clients[phone_number].get_client().log_out()
         del user_clients[phone_number]
         return {"error": str(e)}, 404
     except (AuthRestartError) as e:
         # TODO: what was this?
+        print(f"auth restart error: {str(e)}")
         await user_clients[phone_number].get_client().send_code_request(phone_number)
     except Exception as e:
         # TODO: does it make sense to log out if log in is not success
+        print(f"Error in send_code(): {str(e)}")
         await user_clients[phone_number].get_client().log_out()
         del user_clients[phone_number]
         return {"error": str(e)}, 500
