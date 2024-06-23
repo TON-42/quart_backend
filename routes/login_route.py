@@ -52,7 +52,7 @@ async def login():
                 count += 1
                 if count > 15:
                     break
-                print(dialog)
+
                 print(f"{dialog.name}, {dialog.id}")
                 # TODO: is there a better way to count words
                 async for message in (

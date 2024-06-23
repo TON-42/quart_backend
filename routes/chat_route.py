@@ -117,7 +117,7 @@ async def add_user_to_agreed():
             if chat_id is None:
                 return jsonify({"error": "No chatId"}), 400
 
-            chat_status[chat_id] = False
+            chat_status[chat_id] = "error"
 
             # get user
             try:
@@ -125,6 +125,7 @@ async def add_user_to_agreed():
                     joinedload(User.chats)).filter(User.id == user_id).one()
             except Exception as e:
                 print(f"Error: {str(e)}")
+                chat_status[chat_id] = "error"
                 continue
             
             # get chat
@@ -135,11 +136,12 @@ async def add_user_to_agreed():
                 ).filter(Chat.id == chat_id).one()
             except Exception as e:
                 print(f"Error: {str(e)}")
+                chat_status[chat_id] = "error"
                 continue
     
             # if chat is already sold
             if chat.status == ChatStatus.sold:
-                chat_status[chat_id] = True
+                chat_status[chat_id] = "sold"
                 continue
 
             # TODO: check logic if user does not exist in the chat
@@ -152,12 +154,13 @@ async def add_user_to_agreed():
                         if user_agreed.id == user_id:
                             break
                     chat.agreed_users.append(user)
+                    chat_status[chat_id] = "pending"
                     break
 
             # if all users have agreed
             if len(chat.agreed_users) == len(chat.users):
                 chat.status = ChatStatus.sold
-                chat_status[chat_id] = True
+                chat_status[chat_id] = "sold"
             session.commit()
         
         session.close()
