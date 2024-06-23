@@ -26,14 +26,10 @@ async def login():
         await user_clients[phone_number].get_client().sign_in(phone_number, auth_code)
     except SessionPasswordNeededError:
         print("two-steps verification is active")
-        # TODO: does it make sense to log out if log in is not success
-        await user_clients[phone_number].get_client().log_out()
         del user_clients[phone_number]
         return "two-steps verification is active", 401
     except Exception as e:
         print(f"Error in sign_in(): {str(e)}")
-        # TODO: does it make sense to log out if log in is not success
-        await user_clients[phone_number].get_client().log_out()
         del user_clients[phone_number]
         return {"error": str(e)}, 500
 
@@ -56,7 +52,7 @@ async def login():
                 count += 1
                 if count > 15:
                     break
-                
+                print(dialog)
                 print(f"{dialog.name}, {dialog.id}")
                 # TODO: is there a better way to count words
                 async for message in (
@@ -89,11 +85,9 @@ async def send_code():
     
     print(f"sending auth code to {phone_number}")
 
-    # TODO: Check this logic.
     if phone_number not in user_clients:
         # TODO: here we create a "user", but at this point the user is not logged on yet (confusing)
         user_clients[phone_number] = ClientWrapper(phone_number, Config.API_ID, Config.API_HASH)
-        # TODO: catch more exceptions (RTFM)
         try:
             await user_clients[phone_number].get_client().connect()
         except Exception as e:
