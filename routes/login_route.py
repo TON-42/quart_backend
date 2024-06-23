@@ -89,12 +89,13 @@ async def send_code():
     
     print(f"sending auth code to {phone_number}")
 
-    # User is already logged in
-    if phone_number in user_clients:
-        return jsonify({"message": "user is already logged in"}), 409
+    # TODO: Check this logic.
+    if phone_number not in user_clients:
+        # TODO: here we create a "user", but at this point the user is not logged on yet (confusing)
+        user_clients[phone_number] = ClientWrapper(phone_number, Config.API_ID, Config.API_HASH)
     
-    # TODO: here we create a "user", but at this point the user is not logged on yet (confusing)
-    user_clients[phone_number] = ClientWrapper(phone_number, Config.API_ID, Config.API_HASH)
+    # Legacy
+    # return jsonify({"message": "user is already logged in"}), 409
 
     # TODO: catch more exceptions (RTFM)
     try:
