@@ -105,6 +105,7 @@ async def add_user_to_agreed():
         if not isinstance(data, list):
             return jsonify({"error": "Input data should be an array"}), 400
         
+        chat_status = {}
         for entry in data:
             user_id = entry.get("userId")
             chat_id = entry.get("chatId")
@@ -121,6 +122,8 @@ async def add_user_to_agreed():
                 print(f"Error: {str(e)}")
                 continue
             
+            chat_status[chat_id] = False
+
             try:
                 chat = session.query(Chat).options(
                     joinedload(Chat.agreed_users),
@@ -137,18 +140,18 @@ async def add_user_to_agreed():
                     for user_agreed in chat.agreed_users:
                         # if user has already agreed
                         if user_agreed.id == user_id:
-                            session.close()
-                            return "User already agreed", 200
+                            break
                     chat.agreed_users.append(user)
                     break
-            # TODO: add tokens?
+
             # if all users have agreed
             if len(chat.agreed_users) == len(chat.users):
                 chat.status = ChatStatus.sold
+                chat_status[chat_id] = True
             session.commit()
         
         session.close()
-        return "ok", 200
+        return jsonify(chat_status), 200
     except Exception as e:
         session.close()
         return jsonify({"error": str(e)}), 500

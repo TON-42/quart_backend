@@ -244,13 +244,8 @@
   - **200 OK**: Returns OK.
     ```json
     {
-      "message": "ok"
-    }
-    ```
-  - **202 Accepted**: Returns if all users have agreed.
-    ```json
-    {
-      "success": "All users have agreed"
+      "21214": True,
+      "545646": False
     }
     ```
   - **400 Bad Request**: Returned if `userId` or `chatId` is missing from the request.
