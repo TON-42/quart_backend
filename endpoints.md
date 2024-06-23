@@ -235,8 +235,8 @@
   - `chatId` (number, required): The unique identifier of the chat.
   ```json
   {
-    "userId": 84375302,
-    "chatId": 43645659,
+    {"userId": 143545, "chatId": 153500},
+    {"userId": 243434, "chatId": 767601},
   }
   ```
 
