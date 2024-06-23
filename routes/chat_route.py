@@ -101,47 +101,50 @@ async def add_user_to_agreed():
     try:
         data = await request.get_json()
 
-        user_id = data.get("userId")
-        if user_id is None:
-            return jsonify({"error": "userId is missing"}), 400
+        if not isinstance(data, list):
+            return jsonify({"error": "Input data should be an array"}), 400
         
-        chat_id = data.get("chatId")
-        if chat_id is None:
-            return jsonify({"error": "chatId is missing"}), 400
+        for entry in data:
+            user_id = entry.get("userId")
+            chat_id = entry.get("chatId")
+            
+            if user_id is None:
+                return jsonify({"error": "No userId"}), 400
+            if chat_id is None:
+                return jsonify({"error": "No chatId"}), 400
+
+            # TODO: make 404 response for user not found
+            user = session.query(User).options(
+                joinedload(User.chats)).filter(User.id == user_id).one()
+
+            # TODO: make 404 response for chat not found
+            chat = session.query(Chat).options(
+                joinedload(Chat.agreed_users),
+                joinedload(Chat.users)
+            ).filter(Chat.id == chat_id).one()
+
+            # TODO: check logic if user does not exist in the chat
+            # TODO: check logic if the chat does not have any users
+            for chat_user in chat.users:
+                # if user exists in the chat 
+                if chat_user.id == user_id:
+                    for user_agreed in chat.agreed_users:
+                        # if user has already agreed
+                        if user_agreed.id == user_id:
+                            session.close()
+                            return "User already agreed", 200
+                    chat.agreed_users.append(user)
+                    break
+            # TODO: add tokens?
+            # if all users have agreed
+            if len(chat.agreed_users) == len(chat.users):
+                chat.status = ChatStatus.sold
+            session.commit()
         
-        # TODO: make 404 response for user not found
-        user = session.query(User).options(
-            joinedload(User.chats)).filter(User.id == user_id).one()
-
-        # TODO: make 404 response for chat not found
-        chat = session.query(Chat).options(
-            joinedload(Chat.agreed_users),
-            joinedload(Chat.users)
-        ).filter(Chat.id == chat_id).one()
-
-        # TODO: check logic if user does not exist in the chat
-        # TODO: check logic if the chat does not have any users
-        for chat_user in chat.users:
-            # if user exists in the chat 
-            if chat_user.id == user_id:
-                for user_agreed in chat.agreed_users:
-                    # if user has already agreed
-                    if user_agreed.id == user_id:
-                        session.close()
-                        return "User already agreed", 200
-                chat.agreed_users.append(user)
-                break
-        # TODO: add tokens?
-        # if all users have agreed
-        if len(chat.agreed_users) == len(chat.users):
-            chat.status = ChatStatus.sold
-            session.commit()
-            session.close()
-            return jsonify({"success": "All users have agreed"}), 202
-        else:
-            session.commit()
-            session.close()
-            return "ok", 200
+        session.close()
+        return "ok", 200
     except Exception as e:
         session.close()
         return jsonify({"error": str(e)}), 500
+                # session.close()
+                # return jsonify({"success": "All users have agreed"}), 202
