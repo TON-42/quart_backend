@@ -97,6 +97,7 @@ async def send_message():
 
 @chat_route.route("/add-user-to-agreed", methods=["POST"])
 async def add_user_to_agreed():
+    print("add-user-to-agreed")
     session = Session()
     try:
         data = await request.get_json()
@@ -113,16 +114,21 @@ async def add_user_to_agreed():
             if chat_id is None:
                 return jsonify({"error": "No chatId"}), 400
 
-            # TODO: make 404 response for user not found
-            user = session.query(User).options(
-                joinedload(User.chats)).filter(User.id == user_id).one()
-
-            # TODO: make 404 response for chat not found
-            chat = session.query(Chat).options(
-                joinedload(Chat.agreed_users),
-                joinedload(Chat.users)
-            ).filter(Chat.id == chat_id).one()
-
+            try:
+                user = session.query(User).options(
+                    joinedload(User.chats)).filter(User.id == user_id).one()
+            except Exception as e:
+                print(f"Error: {str(e)}")
+                continue
+            
+            try:
+                chat = session.query(Chat).options(
+                    joinedload(Chat.agreed_users),
+                    joinedload(Chat.users)
+                ).filter(Chat.id == chat_id).one()
+            except Exception as e:
+                print(f"Error: {str(e)}")
+                continue
             # TODO: check logic if user does not exist in the chat
             # TODO: check logic if the chat does not have any users
             for chat_user in chat.users:
