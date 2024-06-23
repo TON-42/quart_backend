@@ -97,6 +97,8 @@ async def send_message():
 
 @chat_route.route("/add-user-to-agreed", methods=["POST"])
 async def add_user_to_agreed():
+    # TODO: clean this mess
+    # TODO: think about respnse(what if one of the chats fails)
     print("add-user-to-agreed")
     session = Session()
     try:
@@ -115,6 +117,9 @@ async def add_user_to_agreed():
             if chat_id is None:
                 return jsonify({"error": "No chatId"}), 400
 
+            chat_status[chat_id] = False
+
+            # get user
             try:
                 user = session.query(User).options(
                     joinedload(User.chats)).filter(User.id == user_id).one()
@@ -122,8 +127,7 @@ async def add_user_to_agreed():
                 print(f"Error: {str(e)}")
                 continue
             
-            chat_status[chat_id] = False
-
+            # get chat
             try:
                 chat = session.query(Chat).options(
                     joinedload(Chat.agreed_users),
@@ -132,6 +136,12 @@ async def add_user_to_agreed():
             except Exception as e:
                 print(f"Error: {str(e)}")
                 continue
+    
+            # if chat is already sold
+            if chat.status == ChatStatus.sold:
+                chat_status[chat_id] = True
+                continue
+
             # TODO: check logic if user does not exist in the chat
             # TODO: check logic if the chat does not have any users
             for chat_user in chat.users:
@@ -155,5 +165,3 @@ async def add_user_to_agreed():
     except Exception as e:
         session.close()
         return jsonify({"error": str(e)}), 500
-                # session.close()
-                # return jsonify({"success": "All users have agreed"}), 202
