@@ -114,12 +114,6 @@
       "message": "ok"
     }
     ```
-  - **409 Conflict**: Returned if user is already logged in.
-    ```json
-    {
-      "message": "user is already logged in"
-    }
-    ```
   - **400 Bad Request**: Returned if `phone_number` is missing from the request.
     ```json
     {
