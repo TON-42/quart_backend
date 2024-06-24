@@ -262,6 +262,70 @@
     ```
 </details>
 
+<details>
+<summary><h3>/send-message</h3></summary>
+
+- **Method**: `POST`
+- **Description**: Sends a message to specified chats and updates user profiles.
+- **Request Body**:
+
+  - `phone_number` (string, required): The phone number of the user sending the message.
+  - `message` (string, optional): The message to be sent. If not provided, a default message will be used.
+  - `chats` (object, required): A dictionary where keys are chat details in the format `"(chat_id, 'chat_name')"` and values are the number of words associated with the chat.
+  
+  Example:
+  ```json
+  {
+    "phone_number": "1234567890",
+    "message": "Hello! This is a custom message.",
+    "chats": {
+      "(12345, 'Chat A')": 1000,
+      "(67890, 'Chat B')": 2000
+    }
+  }
+  ```
+
+- **Responses**:
+  - **200 OK**: Returns a list of users to whom the message was sent.
+    ```json
+    {
+      "userB": ["username1", "username2"]
+    }
+    ```
+  - **400 Bad Request**: Returned if `phone_number` or `chats` is missing from the request.
+    ```json
+    {
+      "message": "No phone_number provided"
+    }
+    ```
+    ```json
+    {
+      "message": "No chats were send"
+    }
+    ```
+  - **500 Internal Server Error**: Returned if there is an internal error or if user creation fails.
+    ```json
+    {
+      "error": "Could not create a user"
+    }
+    ```
+
+- **Details**:
+  1. The endpoint extracts `phone_number`, `message`, and `chats` from the request body.
+  2. If `phone_number` is missing, it returns a `400 Bad Request` response.
+  3. If `message` is not provided, a default message is used.
+  4. If `chats` is missing, it returns a `400 Bad Request` response.
+  5. The endpoint fetches the client associated with `phone_number` and updates the user profile.
+  6. For each chat in `chats`, it:
+     - Parses the chat details.
+     - Retrieves the participants of the chat.
+     - Creates users for the participants and sends the specified message.
+     - Adds the chat to the user's list of chats.
+  7. If an error occurs during processing, it logs out the user and deletes the client.
+  8. Finally, it returns the list of users to whom the message was sent.
+
+</details>
+
 
 <details>
 <summary><h2>Legacy</h2></summary>
