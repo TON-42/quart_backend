@@ -59,6 +59,7 @@ async def get_user():
                         "words": chat.words,
                         "status": chat.status.name,
                         "lead_id": chat.lead_id,
+                        "lead_name": chat.lead_name,
                         "agreed_users": [
                             agreed_user.id for agreed_user in chat.agreed_users
                         ],
