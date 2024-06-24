@@ -1,6 +1,7 @@
 from quart import Blueprint, jsonify, request
 from shared import user_clients
-from telethon.errors import SessionPasswordNeededError, PhoneNumberInvalidError, AuthRestartError
+from telethon.errors import SessionPasswordNeededError, PhoneNumberBannedError, PhoneNumberFloodError,
+PhoneNumberInvalidError, AuthRestartError, PhoneCodeExpiredError, PhoneCodeExpiredError
 from collections import defaultdict
 from client_wrapper import ClientWrapper
 from config import Config
@@ -13,25 +14,28 @@ async def login():
 
     auth_code = data.get("code")
     if not auth_code:
-        return jsonify("No code provided"), 400
+        return jsonify({"error": "No code provided"}), 400
     
     phone_number = data.get("phone_number")
     if not phone_number:
-        return jsonify("No phone_number provided"), 400
+        return jsonify({"error": "No phone_number provided"}), 400
     
     print(f"{phone_number} is trying to login with: {auth_code}")
 
-    # TODO: add more exceptions (RTFM)
     try:
         await user_clients[phone_number].get_client().sign_in(phone_number, auth_code)
     except SessionPasswordNeededError:
         print("two-steps verification is active")
-        del user_clients[phone_number]
-        return "two-steps verification is active", 401
+        return jsonify({"error": "two-steps verification is active"}), 401
+    except PhoneCodeExpiredError:
+        print("The confirmation code has expired")
+        return jsonify({"error": "The confirmation code has expired"}), 400
+    except PhoneCodeInvalidError:
+        print("The phone code entered was invalid")
+        return jsonify({"error": "The phone code entered was invalid"}), 400
     except Exception as e:
         print(f"Error in sign_in(): {str(e)}")
-        del user_clients[phone_number]
-        return {"error": str(e)}, 500
+        return jsonify({"error": str(e)}), 500
 
     print(f"{phone_number} is logged in")
     # save user id in the session
@@ -65,9 +69,7 @@ async def login():
                             break
     except Exception as e:
         print(f"Error in get_dialogs(): {str(e)}")
-        await user_clients[phone_number].get_client().log_out()
-        del user_clients[phone_number]
-        return {"error": str(e)}, 500
+        return jsonify({"error": str(e)}), 500
 
     res_json_serializable = {str(key): value for key, value in res.items()}
 
@@ -93,27 +95,24 @@ async def send_code():
         except Exception as e:
             print(f"Error in connect(): {str(e)}")
             del user_clients[phone_number]
-            return {"error": str(e)}, 500
+            return jsonify({"error": str(e)}), 500
 
-    # TODO: find out how to check that we are connected (connect())
-    # TODO: test AuthRestartError and add more exceptions (RTFM)
     try:
         await user_clients[phone_number].get_client().send_code_request(phone_number)
+    except PhoneNumberBannedError as e:
+        print(f"The used phone number has been banned from Telegram: {str(e)}")
+        return jsonify({"error": str(e)}), 403
+    except PhoneNumberFloodError as e:
+        print(f"You asked for the code too many times: {str(e)}")
+        return jsonify({"error": str(e)}), 429
     except PhoneNumberInvalidError as e:
-        # TODO: does it make sense to log out if log in is not success
         print(f"phone number is invalid: {str(e)}")
-        await user_clients[phone_number].get_client().log_out()
-        del user_clients[phone_number]
-        return {"error": str(e)}, 404
-    except (AuthRestartError) as e:
-        # TODO: what was this?
+        return jsonify({"error": str(e)}), 404
+    except AuthRestartError as e:
         print(f"auth restart error: {str(e)}")
         await user_clients[phone_number].get_client().send_code_request(phone_number)
     except Exception as e:
-        # TODO: does it make sense to log out if log in is not success
         print(f"Error in send_code(): {str(e)}")
-        await user_clients[phone_number].get_client().log_out()
-        del user_clients[phone_number]
-        return {"error": str(e)}, 500
+        return jsonify({"error": str(e)}), 500
 
     return "ok", 200
