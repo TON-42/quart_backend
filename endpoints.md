@@ -120,10 +120,22 @@
       "error": "phone_number is missing"
     }
     ```
+  - **403 Forbidden**: Returned if `phone number` has been banned from Telegram
+    ```json
+    {
+      "error": "phone_number has been banned"
+    }
+    ```
   - **404 Not Found**: Returned if phone number is invalid.
     ```json
     {
       "error": "PhoneNumberInvalidError"
+    }
+    ```
+    - **429 Too Many Requests**: Returned if asked for the code too many times.
+    ```json
+    {
+      "error": "asked for the code too many times"
     }
     ```
   - **500 Internal Server Error**: Returned if there is an internal error.
@@ -157,7 +169,8 @@
       "message": {"(122493869, 'stefano')": 1825}
     }
     ```
-  - **400 Bad Request**: Returned if `phone_number` or `code` is missing from the request.
+  - **400 Bad Request**: Returned if `phone_number` or `code` is missing from the request or the confirmation `code` has expired
+  or `code` is invalid.
     ```json
     {
       "error": "phone_number is missing"
