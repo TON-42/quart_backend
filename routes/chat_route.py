@@ -81,7 +81,7 @@ async def send_message():
                 message + "\n\n"
                 "https://t.me/chatpayapp_bot/chatpayapp"
             )
-            await create_chat(chat_id, chat_name, words, sender.id, chat_users)
+            await create_chat(chat_id, chat_name, words, sender.id, sender.username, chat_users)
             await user_clients[phone_number].get_client().send_message(
                 chat_id, message_for_second_user, parse_mode="html"
             )
@@ -97,8 +97,6 @@ async def send_message():
 
 @chat_route.route("/add-user-to-agreed", methods=["POST"])
 async def add_user_to_agreed():
-    # TODO: clean this mess
-    # TODO: think about respnse(what if one of the chats fails)
     print("add-user-to-agreed")
     session = Session()
     try:
@@ -106,16 +104,14 @@ async def add_user_to_agreed():
 
         if not isinstance(data, list):
             return jsonify({"error": "Input data should be an array"}), 400
-        
         chat_status = {}
         for entry in data:
             user_id = entry.get("userId")
             chat_id = entry.get("chatId")
             
-            if user_id is None:
-                return jsonify({"error": "No userId"}), 400
-            if chat_id is None:
-                return jsonify({"error": "No chatId"}), 400
+            if user_id is None or chat_id is None:
+                chat_status[chat_id] = "error"
+                continue
 
             chat_status[chat_id] = "error"
 
@@ -125,9 +121,8 @@ async def add_user_to_agreed():
                     joinedload(User.chats)).filter(User.id == user_id).one()
             except Exception as e:
                 print(f"Error: {str(e)}")
-                chat_status[chat_id] = "error"
                 continue
-            
+
             # get chat
             try:
                 chat = session.query(Chat).options(
@@ -136,16 +131,13 @@ async def add_user_to_agreed():
                 ).filter(Chat.id == chat_id).one()
             except Exception as e:
                 print(f"Error: {str(e)}")
-                chat_status[chat_id] = "error"
                 continue
-    
+
             # if chat is already sold
             if chat.status == ChatStatus.sold:
                 chat_status[chat_id] = "sold"
                 continue
 
-            # TODO: check logic if user does not exist in the chat
-            # TODO: check logic if the chat does not have any users
             for chat_user in chat.users:
                 # if user exists in the chat 
                 if chat_user.id == user_id:
@@ -162,7 +154,7 @@ async def add_user_to_agreed():
                 chat.status = ChatStatus.sold
                 chat_status[chat_id] = "sold"
             session.commit()
-        
+
         session.close()
         return jsonify(chat_status), 200
     except Exception as e:
