@@ -4,6 +4,7 @@ from telethon.errors import SessionPasswordNeededError, PhoneNumberBannedError, 
 from collections import defaultdict
 from client_wrapper import ClientWrapper
 from config import Config
+from services.user_service import set_has_profile
 
 login_route = Blueprint('login_route', __name__)
 
@@ -37,9 +38,14 @@ async def login():
         return jsonify({"error": str(e)}), 500
 
     print(f"{phone_number} is logged in")
+    
     # save user id in the session
     sender = await user_clients[phone_number].get_client().get_me()
     user_clients[phone_number].set_id(sender.id)
+
+    status = await set_has_profile(sender.id, True)
+    if status == 1:
+        return jsonify({"error": "couldn't set has_profile to True"}), 500
 
     count = 0
     res = defaultdict(int)

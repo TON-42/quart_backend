@@ -28,16 +28,13 @@ async def create_user(user_id, username, profile):
     finally:
         session.close()
 
-async def update_profile(user_id, has_profile):
+async def set_has_profile(user_id, has_profile):
     session = Session()
     status = 0
     try:
         user = session.query(User).filter(User.id == user_id).one()
         user.has_profile = has_profile
         session.commit()
-    except NoResultFound:
-        print(f"User with ID {user_id} not found")
-        status = 1
     except Exception as e:
         print(f"Error updating username or profile: {str(e)}")
         status = 1
