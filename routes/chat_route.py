@@ -3,7 +3,7 @@ from db import Session
 from sqlalchemy.orm import joinedload
 from models import User, Chat, ChatStatus
 from shared import user_clients
-from services.user_service import create_user, update_profile
+from services.user_service import create_user
 from services.chat_service import create_chat, add_chat_to_users
 
 
@@ -25,16 +25,9 @@ async def send_message():
     if not selected_chats:
         return jsonify("No chats were send"), 400
 
+    print(f"received from front-end: {selected_chats}")
+
     sender = await user_clients[phone_number].get_client().get_me()
-    
-    # TODO: rename update_profile, it just sets has_profile
-    status = await update_profile(sender.id, True)
-    if (status == 1):
-        return jsonify("Could not create a user"), 500
-
-
-    print("received from front-end:")
-    print(selected_chats)
 
     # TODO: organize this mess
     b_users = []
