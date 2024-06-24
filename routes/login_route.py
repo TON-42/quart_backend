@@ -1,7 +1,6 @@
 from quart import Blueprint, jsonify, request
 from shared import user_clients
-from telethon.errors import SessionPasswordNeededError, PhoneNumberBannedError, PhoneNumberFloodError,
-PhoneNumberInvalidError, AuthRestartError, PhoneCodeExpiredError, PhoneCodeExpiredError, PhoneCodeInvalidError
+from telethon.errors import SessionPasswordNeededError, PhoneNumberBannedError, PhoneNumberFloodError, PhoneNumberInvalidError, AuthRestartError, PhoneCodeExpiredError, PhoneCodeExpiredError, PhoneCodeInvalidError
 from collections import defaultdict
 from client_wrapper import ClientWrapper
 from config import Config
