@@ -97,11 +97,10 @@ async def send_message():
 
 @chat_route.route("/add-user-to-agreed", methods=["POST"])
 async def add_user_to_agreed():
-    print("add-user-to-agreed")
     session = Session()
     try:
         data = await request.get_json()
-
+        print(f"add-user-to-agreed: {data}")
         if not isinstance(data, list):
             return jsonify({"error": "Input data should be an array"}), 400
         chat_status = {}
