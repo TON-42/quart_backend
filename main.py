@@ -20,12 +20,6 @@ from shared import user_clients
 
 commands = (
     "📝 /start - Start the bot\n"
-    "❓ /help - Get help on how to use the bot\n"
-    "📷 /image - Send an image\n"
-    "📦 /package - Example command for package\n"
-    "🔄 /update - Update command\n"
-    "❌ /delete - Delete command\n"
-    "⚙️ /settings - Settings command\n"
 )
 
 bot = AsyncTeleBot(Config.TOKEN)
@@ -41,8 +35,10 @@ app.register_blueprint(chat_route)
 async def check_session_expiry():
     while True:
         for phone_number, client_wrapper in list(user_clients.items()):
-            # TODO: check if user didn't manually logged us out
-            print(f"Session for: {phone_number} is active")
+            
+            if user_clients[phone_number].get_client().get_me() is None:
+                print(f"{phone_number} manually logged out")
+            
             time_difference = datetime.now() - client_wrapper.created_at
             if time_difference >= timedelta(minutes=15):
                 print(f"Session for {phone_number} has expired.")
@@ -51,6 +47,9 @@ async def check_session_expiry():
                 except Exception as e:
                     print(f"Error in log_out(): {str(e)}")
                 del user_clients[phone_number]
+            else:
+                print(f"Session for: {phone_number} is active")
+
 
         # Wait for 5 minute before checking again
         await asyncio.sleep(300)

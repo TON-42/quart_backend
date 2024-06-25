@@ -11,6 +11,7 @@ chat_route = Blueprint('chat_route', __name__)
 
 @chat_route.route("/send-message", methods=["POST"])
 async def send_message():
+    # TODO: check if we are still logged in here
     data = await request.get_json()
     
     phone_number = data.get("phone_number")
@@ -82,6 +83,7 @@ async def send_message():
             chat_users.clear()
         except Exception as e:
             print(f"Error: {str(e)}")
+            # TODO: user may have manually logged out
             await user_clients[phone_number].get_client().log_out()
             del user_clients[phone_number]
             return {"error": str(e)}, 500
