@@ -21,6 +21,12 @@ async def login():
         return jsonify({"error": "No phone_number provided"}), 400
     
     print(f"{phone_number} is trying to login with: {auth_code}")
+    
+    # TODO: test this
+    if phone_number in user_clients:
+        if user_clients[phone_number].get_client().get_logged_in() == True and user_clients[phone_number].get_client().get_me() is not None:
+            print(f"{phone_number} is already logged in")
+            return jsonify({"message": "user is already logged in"}), 409
 
     try:
         await user_clients[phone_number].get_client().sign_in(phone_number, auth_code)
@@ -42,6 +48,7 @@ async def login():
     # save user id in the session
     sender = await user_clients[phone_number].get_client().get_me()
     user_clients[phone_number].set_id(sender.id)
+    user_clients[phone_number].set_logged_in(True)
 
     status = await set_has_profile(sender.id, True)
     if status == 1:
@@ -90,10 +97,17 @@ async def send_code():
     if phone_number is None:
         return jsonify({"error": "phone_number is missing"}), 400
     
+    # TODO: test this
+    if phone_number in user_clients:
+        if user_clients[phone_number].get_client().get_logged_in() == True and user_clients[phone_number].get_client().get_me() is not None:
+            print(f"{phone_number} is already logged in")
+            return jsonify({"message": "user is already logged in"}), 409
+        # TODO: is this neccessary?
+        del user_clients[phone_number]
+
     print(f"sending auth code to {phone_number}")
 
     if phone_number not in user_clients:
-        # TODO: here we create a "user", but at this point the user is not logged on yet (confusing)
         user_clients[phone_number] = ClientWrapper(phone_number, Config.API_ID, Config.API_HASH)
         try:
             await user_clients[phone_number].get_client().connect()

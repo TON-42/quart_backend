@@ -132,6 +132,12 @@
       "error": "PhoneNumberInvalidError"
     }
     ```
+   - **409 Conflict**: Returned if user is already logged in.
+    ```json
+    {
+      "message": "user is already logged in"
+    }
+    ```
     - **429 Too Many Requests**: Returned if asked for the code too many times.
     ```json
     {
@@ -186,6 +192,12 @@
     ```json
     {
       "error": "PhoneNumberInvalidError"
+    }
+    ```
+  - **409 Conflict**: Returned if user is already logged in.
+    ```json
+    {
+      "message": "user is already logged in"
     }
     ```
   - **500 Internal Server Error**: Returned if there is an internal error.
