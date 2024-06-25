@@ -17,12 +17,12 @@ class ClientWrapper:
     def get_id(self):
         return self.id
 
-    def get_logged_in(self)
+    def get_logged_in(self):
         return self.logged_in
 
     def set_id(self, new_id):
         self.id = new_id
     
-    def set_logged_in(self, state)
+    def set_logged_in(self, state):
         self.logged_in = state
     
