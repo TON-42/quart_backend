@@ -24,7 +24,7 @@ async def login():
     
     # TODO: test this
     if phone_number in user_clients:
-        if user_clients[phone_number].get_client().get_logged_in() == True and user_clients[phone_number].get_client().get_me() is not None:
+        if user_clients[phone_number].get_logged_in() == True and user_clients[phone_number].get_client().get_me() is not None:
             print(f"{phone_number} is already logged in")
             return jsonify({"message": "user is already logged in"}), 409
 
@@ -99,7 +99,7 @@ async def send_code():
     
     # TODO: test this
     if phone_number in user_clients:
-        if user_clients[phone_number].get_client().get_logged_in() == True and user_clients[phone_number].get_client().get_me() is not None:
+        if user_clients[phone_number].get_logged_in() == True and user_clients[phone_number].get_client().get_me() is not None:
             print(f"{phone_number} is already logged in")
             return jsonify({"message": "user is already logged in"}), 409
         # TODO: is this neccessary?
