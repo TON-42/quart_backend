@@ -38,6 +38,8 @@ async def check_session_expiry():
             
             if await user_clients[phone_number].get_client().get_me() is None:
                 print(f"{phone_number} manually logged out")
+                del user_clients[phone_number]
+                continue
             
             time_difference = datetime.now() - client_wrapper.created_at
             if time_difference >= timedelta(minutes=15):
