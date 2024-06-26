@@ -3,7 +3,7 @@ from db import Session
 from sqlalchemy.orm import joinedload
 from models import User, Chat, ChatStatus
 from shared import user_clients
-from services.user_service import create_user
+from services.user_service import create_user, set_auth_status
 from services.chat_service import create_chat, add_chat_to_users
 
 
@@ -87,6 +87,11 @@ async def send_message():
             await user_clients[phone_number].get_client().log_out()
             del user_clients[phone_number]
             return {"error": str(e)}, 500
+    
+    # TODO: handle this error properly
+    status = await set_auth_status(sender.id, "default")
+    if status == 1:
+        return jsonify({"error": "couldn't update auth_status"}), 500
 
     return jsonify({"userB": b_users if b_users else None}), 200
 

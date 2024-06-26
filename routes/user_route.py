@@ -45,13 +45,14 @@ async def get_user():
         # Close the session
         session.close()
 
-        # TODO: return creation time too
         return jsonify(
             {
                 "id": user.id,
                 "name": user.name,
                 "has_profile": user.has_profile,
                 "words": user.words,
+                "registation_date": user.registration_date,
+                "auth_status": auth_status,
                 "chats": [
                     {
                         "id": chat.id,
