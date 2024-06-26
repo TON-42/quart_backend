@@ -61,7 +61,7 @@ class User(Base):
     has_profile = Column(Boolean, default=False)
     words = Column(BigInteger, default=0)
     chats = relationship("Chat", secondary=users_chats, back_populates="users")
-    reg_date = Column(DateTime, default=datetime.utcnow, nullable=True)
+    registr_date = Column(DateTime, default=datetime.utcnow, nullable=True)
     auth_status = Column(String(20), default="default", nullable=True)
     agreed_chats = relationship(
         "Chat", secondary=agreed_users_chats, back_populates="agreed_users"
