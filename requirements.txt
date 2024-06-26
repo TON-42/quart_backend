@@ -44,6 +44,6 @@ asyncio
 quart-jwt-extended
 requests
 httpx
-psycopg2
+psycopg2-binary
 telebot
 aiohttp

@@ -29,7 +29,6 @@ class ChatStatus(enum.Enum):
     sold = "sold"
     declined = "declined"
 
-
 # Association table for many-to-many relationship between users and chats
 users_chats = Table(
     "users_chats",
@@ -62,7 +61,8 @@ class User(Base):
     has_profile = Column(Boolean, default=False)
     words = Column(BigInteger, default=0)
     chats = relationship("Chat", secondary=users_chats, back_populates="users")
-    registration_date = Column(DateTime, default=datetime.utcnow, nullable=False)
+    registration_date = Column(DateTime, default=datetime.utcnow, nullable=True)
+    auth_status = Column(String(20), default="default", nullable=True)
     agreed_chats = relationship(
         "Chat", secondary=agreed_users_chats, back_populates="agreed_users"
     )
