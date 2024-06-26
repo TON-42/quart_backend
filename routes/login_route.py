@@ -140,8 +140,8 @@ async def send_code():
         print(f"Error in send_code(): {str(e)}")
         return jsonify({"error": str(e)}), 500
     
-    status = await set_auth_status(sender.id, "auth_code")
-    if status == 1:
-        return jsonify({"error": "couldn't update auth_status"}), 500
+    # status = await set_auth_status(sender.id, "auth_code")
+    # if status == 1:
+    #     return jsonify({"error": "couldn't update auth_status"}), 500
     
     return "ok", 200
