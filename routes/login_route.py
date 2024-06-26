@@ -4,7 +4,7 @@ from telethon.errors import SessionPasswordNeededError, PhoneNumberBannedError, 
 from collections import defaultdict
 from client_wrapper import ClientWrapper
 from config import Config
-from services.user_service import set_has_profile
+from services.user_service import set_has_profile, set_auth_status
 
 login_route = Blueprint('login_route', __name__)
 
@@ -50,6 +50,7 @@ async def login():
     user_clients[phone_number].set_id(sender.id)
     user_clients[phone_number].set_logged_in(True)
 
+    # TODO: handle this error properly
     status = await set_has_profile(sender.id, True)
     if status == 1:
         return jsonify({"error": "couldn't set has_profile to True"}), 500
@@ -82,6 +83,11 @@ async def login():
     except Exception as e:
         print(f"Error in get_dialogs(): {str(e)}")
         return jsonify({"error": str(e)}), 500
+    
+    # TODO: handle this error properly
+    status = await set_auth_status(sender.id, "choose_chat")
+    if status == 1:
+        return jsonify({"error": "couldn't update auth_status"}), 500
 
     res_json_serializable = {str(key): value for key, value in res.items()}
 
@@ -133,5 +139,9 @@ async def send_code():
     except Exception as e:
         print(f"Error in send_code(): {str(e)}")
         return jsonify({"error": str(e)}), 500
-
+    
+    status = await set_auth_status(sender.id, "auth_code")
+    if status == 1:
+        return jsonify({"error": "couldn't update auth_status"}), 500
+    
     return "ok", 200

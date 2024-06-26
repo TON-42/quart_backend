@@ -41,3 +41,17 @@ async def set_has_profile(user_id, has_profile):
     finally:
         session.close()
         return status
+
+async def set_auth_status(user_id, status):
+    session = Session()
+    status = 0
+    try:
+        user = session.query(User).filter(User.id == user_id).one()
+        user.auth_status = status
+        session.commit()
+    except Exception as e:
+        print(f"Error updating auth_status: {str(e)}")
+        status = 1
+    finally:
+        session.close()
+        return status
