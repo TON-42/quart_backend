@@ -35,7 +35,8 @@ async def get_users():
                 "has_profile": user.has_profile,
                 "words": user.words,
                 "chats": [chat.id for chat in user.chats],
-                "registraition date": user.registration_date
+                "registraition date": user.registration_date,
+                "auth_status": user.auth_status
             }
             for user in users
         ]
