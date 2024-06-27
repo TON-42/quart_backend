@@ -33,6 +33,11 @@ async def send_message():
 
     print(f"received from front-end: {selected_chats}")
 
+    # TODO:  evaluate this
+    if phone_number not in user_clients:
+        return jsonify("Session has expired"), 500
+    
+    # TODO: user may log out and it gonna throw exception
     sender = await user_clients[phone_number].get_client().get_me()
 
     # TODO: organize this mess
@@ -79,7 +84,7 @@ async def send_message():
             chat_users.append(sender.id)
             
             # Convert each string to integer, sort, and concatenate with '_'
-            new_chat_id = sorted_numbers_str = '_'.join(str(num) for num in sorted(int(num) for num in numbers_str))
+            new_chat_id = '_'.join(str(num) for num in sorted(int(num) for num in numbers_str))
             
             # TODO: do we have to save chat_id in db too?
             print(f"Creating {chat_name} chat")
