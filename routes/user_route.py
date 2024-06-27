@@ -58,7 +58,7 @@ async def get_user():
                 "has_profile": user.has_profile,
                 "words": user.words,
                 "registration_date": user.registration_date,
-                "auth_status": auth_status,
+                "auth_status": user.auth_status,
                 "chats": [
                     {
                         "id": chat.id,
