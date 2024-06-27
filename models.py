@@ -34,7 +34,7 @@ users_chats = Table(
     "users_chats",
     Base.metadata,
     Column("user_id", BigInteger, ForeignKey("users.id"), primary_key=True),
-    Column("chat_id", BigInteger, ForeignKey("chats.id"), primary_key=True),
+    Column("chat_id", String(255), ForeignKey("chats.id"), primary_key=True),
 )
 
 # Association table for many-to-many relationship between agreed users and chats
@@ -42,7 +42,7 @@ agreed_users = Table(
     "agreed_users",
     Base.metadata,
     Column("user_id", BigInteger, ForeignKey("users.id"), primary_key=True),
-    Column("chat_id", BigInteger, ForeignKey("chats.id"), primary_key=True),
+    Column("chat_id", String(255), ForeignKey("chats.id"), primary_key=True),
 )
 
 # Association table for many-to-many relationship between agreed users and chats
@@ -50,13 +50,13 @@ agreed_users_chats = Table(
     "agreed_users_chats",
     Base.metadata,
     Column("user_id", BigInteger, ForeignKey("users.id"), primary_key=True),
-    Column("chat_id", BigInteger, ForeignKey("chats.id"), primary_key=True),
+    Column("chat_id", String(255), ForeignKey("chats.id"), primary_key=True),
 )
 
 
 class User(Base):
     __tablename__ = "users"
-    id = Column(String(200), primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     name = Column(String(100), nullable=False)
     has_profile = Column(Boolean, default=False)
     words = Column(BigInteger, default=0)
@@ -70,12 +70,9 @@ class User(Base):
 
 class Chat(Base):
     __tablename__ = "chats"
-    id = Column(BigInteger, primary_key=True)
-    is_private = Column(Boolean, default=False)
-    private_id = Column(String(200), default="None")
+    id = Column(String(255), primary_key=True)
     name = Column(String(100), nullable=False)
     words = Column(BigInteger, default=0)
-    full_text = Column(Text, nullable=False)
     status = Column(ENUM(ChatStatus), nullable=False)
     lead_id = Column(BigInteger, ForeignKey("users.id"))
     lead_name = Column(String(100), nullable=False)
