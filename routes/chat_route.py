@@ -35,6 +35,7 @@ async def send_message():
 
     # TODO:  evaluate this
     if phone_number not in user_clients:
+        print("Session is expired")
         return jsonify("Session has expired"), 500
     
     # TODO: user may log out and it gonna throw exception
