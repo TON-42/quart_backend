@@ -16,10 +16,7 @@ async def create_chat(chat_id, chat_name, words_number, sender_id, sender_name, 
             words=words_number,
             status=ChatStatus.pending,
             lead_id=sender_id,
-            lead_name=sender_name,
-            is_private=is_priv,
-            private_id=priv_id,
-            full_text="None",
+            lead_name=sender_name
         )
 
         lead = session.query(User).filter(User.id == sender_id).one()
@@ -37,7 +34,7 @@ async def create_chat(chat_id, chat_name, words_number, sender_id, sender_name, 
         session.add(new_chat)
         session.commit()
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"Error in create_chat: {str(e)}")
         status = 1
     finally:
         session.close()
