@@ -71,6 +71,8 @@ class User(Base):
 class Chat(Base):
     __tablename__ = "chats"
     id = Column(BigInteger, primary_key=True)
+    is_private = Column(Boolean, default=False)
+    private_id = Column(String(200), default="None")
     name = Column(String(100), nullable=False)
     words = Column(BigInteger, default=0)
     full_text = Column(Text, nullable=False)

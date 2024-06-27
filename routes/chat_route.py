@@ -83,16 +83,21 @@ async def send_message():
                     b_users.append(user.username)
             
             chat_users.append(sender.id)
+            print(f"chat users: {len(chat_users)}")
             
-            new_chat_id = '_'.join(str(num) for num in sorted(chat_users))
-            
-            # TODO: do we have to save chat_id in db too?
+            is_private = False
+            private_chat_id = '_'.join(str(num) for num in sorted(chat_users))
+            printf(f"private_id {private_chat_id}")
+            if (len(chat_users) > 2)
+                private_chat_id = "None"
+                is_private = True
+
             print(f"Creating {chat_name} chat")
-            await create_chat(new_chat_id, chat_name, words, sender.id, sender.username, chat_users)
+            await create_chat(chat_id, chat_name, words, sender.id, sender.username, chat_users, private_chat_id, is_private)
             print(f"Sending message to {chat_name}")
             await user_clients[phone_number].get_client().send_message(chat_id, message_for_second_user, parse_mode="html")
             print(f"Adding {chat_name} to {', '.join(chat_users)}")
-            await add_chat_to_users(chat_users, new_chat_id)
+            await add_chat_to_users(chat_users, chat_id)
             chat_users.clear()
         except Exception as e:
             print(f"Error: {str(e)}")
