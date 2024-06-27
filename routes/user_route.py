@@ -28,25 +28,27 @@ async def get_user():
         except Exception as e:
             print(f"Error creating user: {str(e)}")
             return jsonify({"error": "Internal error"}), 500
-        
-        session = Session()
-        
-        # Query a user
-        user = (
-            session.query(User)
-            .options(joinedload(User.chats).joinedload(Chat.users))
-            .filter(User.id == user_id)
-            .first()
-        )
+        try:
+            session = Session()
+            
+            user = (
+                session.query(User)
+                .options(joinedload(User.chats).joinedload(Chat.users))
+                .filter(User.id == user_id)
+                .first()
+            )
 
-        if user is None:
+            if user is None:
+                session.close()
+                return jsonify({"message": f"User with id {user_id} does not exist"}), 404
+
+            for chat in user.chats:
+                chat.agreed_users
+            
+        except Exception as e:
             session.close()
-            return jsonify({"message": f"User with id {user_id} does not exist"}), 404
+            return jsonify({"error": str(e)}), 500
 
-        for chat in user.chats:
-            chat.agreed_users
-
-        # Close the session
         session.close()
 
         return jsonify(
@@ -76,7 +78,6 @@ async def get_user():
         )
 
     except Exception as e:
-        session.close()
         return jsonify({"error": str(e)}), 500
     
 @user_route.route("/is-active", methods=["POST"])
