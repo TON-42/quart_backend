@@ -70,7 +70,6 @@ async def get_chats():
                 "words": chat.words,
                 "status": chat.status.name,  # Convert enum to string
                 "lead": chat.lead_id,
-                "full_text": chat.full_text,
                 "agreed_users": [user.id for user in chat.agreed_users],
                 "users": [user.id for user in chat.users]
             }
