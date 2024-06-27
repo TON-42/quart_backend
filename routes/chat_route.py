@@ -88,7 +88,7 @@ async def send_message():
             is_private = False
             private_chat_id = '_'.join(str(num) for num in sorted(chat_users))
             printf(f"private_id {private_chat_id}")
-            if (len(chat_users) > 2)
+            if (len(chat_users) > 2):
                 private_chat_id = "None"
                 is_private = True
 
