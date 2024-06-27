@@ -92,11 +92,11 @@ async def send_message():
             await create_chat(private_chat_id, chat_name, words, sender.id, sender.username, chat_users)
             print(f"Sending message to {chat_name}")
             await user_clients[phone_number].get_client().send_message(chat_id, message_for_second_user, parse_mode="html")
-            print(f"Adding {chat_name} to {', '.join(chat_users)}")
+            print(f"Adding {chat_name} to {chat_users}")
             await add_chat_to_users(chat_users, private_chat_id)
             chat_users.clear()
         except Exception as e:
-            print(f"Error: {str(e)}")
+            print(f"Error in send_message(): {str(e)}")
             # TODO: user may have manually logged out
             await user_clients[phone_number].get_client().log_out()
             del user_clients[phone_number]
