@@ -2,7 +2,7 @@ from db import Session
 from models import User, Chat, ChatStatus
 from sqlalchemy.orm.exc import NoResultFound
 
-async def create_chat(chat_id, chat_name, words_number, sender_id, sender_name, chat_users, priv_id, is_priv):
+async def create_chat(chat_id, chat_name, words_number, sender_id, sender_name, chat_users):
     session = Session()
     status = 0
     try:
