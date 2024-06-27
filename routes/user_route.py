@@ -10,6 +10,10 @@ user_route = Blueprint('user_route', __name__)
 @user_route.route("/get-user", methods=["POST"])
 async def get_user():
     try:
+        # Check if request is JSON
+        if not request.is_json:
+            return jsonify({"error": "Request data must be JSON"}), 400
+
         data = await request.get_json()
         username = data.get("username", "None")
         user_id = data.get("userId")
