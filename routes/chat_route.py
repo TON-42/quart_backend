@@ -81,6 +81,7 @@ async def send_message():
             # Convert each string to integer, sort, and concatenate with '_'
             new_chat_id = sorted_numbers_str = '_'.join(str(num) for num in sorted(int(num) for num in numbers_str))
             
+            # TODO: do we have to save chat_id in db too?
             print(f"Creating {chat_name} chat")
             await create_chat(new_chat_id, chat_name, words, sender.id, sender.username, chat_users)
             print(f"Sending message to {chat_name}")

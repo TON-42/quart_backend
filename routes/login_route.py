@@ -22,7 +22,7 @@ async def login():
     
     print(f"{phone_number} is trying to login with: {auth_code}")
     
-    # TODO: test this
+    # TODO: test if it works
     if phone_number in user_clients:
         if user_clients[phone_number].get_logged_in() == True and await user_clients[phone_number].get_client().get_me() is not None:
             print(f"{phone_number} is already logged in")
@@ -98,50 +98,61 @@ async def login():
 
 @login_route.route("/send-code", methods=["POST"])
 async def send_code():
-    data = await request.get_json()
-    phone_number = data.get("phone_number")
-    if phone_number is None:
-        return jsonify({"error": "phone_number is missing"}), 400
-    
-    # TODO: test this
-    if phone_number in user_clients:
-        if user_clients[phone_number].get_logged_in() == True and await user_clients[phone_number].get_client().get_me() is not None:
-            print(f"{phone_number} is already logged in")
-            return jsonify({"message": "user is already logged in"}), 409
-        # TODO: is this neccessary?
-        del user_clients[phone_number]
-
-    print(f"sending auth code to {phone_number}")
-
-    if phone_number not in user_clients:
-        user_clients[phone_number] = ClientWrapper(phone_number, Config.API_ID, Config.API_HASH)
-        try:
-            await user_clients[phone_number].get_client().connect()
-        except Exception as e:
-            print(f"Error in connect(): {str(e)}")
-            del user_clients[phone_number]
-            return jsonify({"error": str(e)}), 500
-
     try:
-        await user_clients[phone_number].get_client().send_code_request(phone_number)
-    except PhoneNumberBannedError as e:
-        print(f"The used phone number has been banned from Telegram: {str(e)}")
-        return jsonify({"error": str(e)}), 403
-    except PhoneNumberFloodError as e:
-        print(f"You asked for the code too many times: {str(e)}")
-        return jsonify({"error": str(e)}), 429
-    except PhoneNumberInvalidError as e:
-        print(f"phone number is invalid: {str(e)}")
-        return jsonify({"error": str(e)}), 404
-    except AuthRestartError as e:
-        print(f"auth restart error: {str(e)}")
-        await user_clients[phone_number].get_client().send_code_request(phone_number)
+        data = await request.get_json()
+
+        phone_number = data.get("phone_number")
+        if phone_number is None:
+            return jsonify({"error": "phone_number is missing"}), 400
+        
+        user_id = data.get("user_id")
+        if user_id is None:
+            # user entered from browser
+            print(f"{phone_number} entered from browser")
+
+        if phone_number in user_clients:
+            if user_clients[phone_number].get_logged_in() == True and await user_clients[phone_number].get_client().get_me() is not None:
+                print(f"{phone_number} is already logged in")
+                return jsonify({"message": "user is already logged in"}), 409
+            # TODO: here we delete session to send code again but this could lead to spam
+            del user_clients[phone_number]
+
+        print(f"sending auth code to {phone_number}")
+
+        if phone_number not in user_clients:
+            user_clients[phone_number] = ClientWrapper(phone_number, Config.API_ID, Config.API_HASH)
+            try:
+                await user_clients[phone_number].get_client().connect()
+            except Exception as e:
+                print(f"Error in connect(): {str(e)}")
+                del user_clients[phone_number]
+                return jsonify({"error": str(e)}), 500
+
+        try:
+            await user_clients[phone_number].get_client().send_code_request(phone_number)
+        except PhoneNumberBannedError as e:
+            print(f"The used phone number has been banned from Telegram: {str(e)}")
+            return jsonify({"error": str(e)}), 403
+        except PhoneNumberFloodError as e:
+            print(f"You asked for the code too many times: {str(e)}")
+            return jsonify({"error": str(e)}), 429
+        except PhoneNumberInvalidError as e:
+            print(f"phone number is invalid: {str(e)}")
+            return jsonify({"error": str(e)}), 404
+        except AuthRestartError as e:
+            print(f"auth restart error: {str(e)}")
+            await user_clients[phone_number].get_client().send_code_request(phone_number)
+        except Exception as e:
+            print(f"Error in send_code(): {str(e)}")
+            return jsonify({"error": str(e)}), 500
+        
+        if user_id is not None:
+            status = await set_auth_status(user_id, "auth_code")
+            if status == 1:
+                return jsonify({"error": "couldn't update auth_status"}), 500
+        
+        return "ok", 200
+
     except Exception as e:
-        print(f"Error in send_code(): {str(e)}")
+        print(f"Error in send-code: {str(e)}")
         return jsonify({"error": str(e)}), 500
-    
-    # status = await set_auth_status(sender.id, "auth_code")
-    # if status == 1:
-    #     return jsonify({"error": "couldn't update auth_status"}), 500
-    
-    return "ok", 200

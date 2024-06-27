@@ -19,6 +19,7 @@ async def get_user():
         user_id = data.get("userId")
 
         if user_id is None:
+            # TODO: what if user entered from browser(maybe add tmp user_id)
             return jsonify({"error": "userId is missing"}), 400
         
         print(f"get-user: {username}")
