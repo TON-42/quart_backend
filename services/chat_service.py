@@ -2,7 +2,7 @@ from db import Session
 from models import User, Chat, ChatStatus
 from sqlalchemy.orm.exc import NoResultFound
 
-async def create_chat(chat_id, chat_name, words_number, sender_id, sender_name, chat_users):
+async def create_chat(chat_id, chat_name, words_number, sender_id, sender_name, chat_users, priv_id, is_priv):
     session = Session()
     status = 0
     try:
@@ -17,6 +17,8 @@ async def create_chat(chat_id, chat_name, words_number, sender_id, sender_name, 
             status=ChatStatus.pending,
             lead_id=sender_id,
             lead_name=sender_name,
+            is_private=is_priv,
+            private_id=priv_id,
             full_text="None",
         )
 
