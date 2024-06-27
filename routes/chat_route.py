@@ -21,6 +21,11 @@ async def send_message():
     message = data.get("message")
     if not message:
         message = "Hello! The owner of this chat wants to sell the data of this chat.\nPlease click the button below to accept the sale and proceed to the bot:"
+    else:
+        message_for_second_user = (
+            message + "\n\n"
+            "https://t.me/chatpayapp_bot/chatpayapp"
+        )
 
     selected_chats = data.get("chats", {})
     if not selected_chats:
@@ -66,20 +71,22 @@ async def send_message():
             )
             for user in users:
                 if user.username is not None:
+                    print(f"Creating {user.username} account")
                     await create_user(user.id, user.username, False)
                     chat_users.append(user.id)
                     b_users.append(user.username)
-                    print(user.username)
-
-            message_for_second_user = (
-                message + "\n\n"
-                "https://t.me/chatpayapp_bot/chatpayapp"
-            )
-            await create_chat(chat_id, chat_name, words, sender.id, sender.username, chat_users)
-            await user_clients[phone_number].get_client().send_message(
-                chat_id, message_for_second_user, parse_mode="html"
-            )
-            await add_chat_to_users(chat_users + [sender.id], chat_id)
+            
+            chat_users.append(sender.id)
+            
+            # Convert each string to integer, sort, and concatenate with '_'
+            new_chat_id = sorted_numbers_str = '_'.join(str(num) for num in sorted(int(num) for num in numbers_str))
+            
+            print(f"Creating {chat_name} chat")
+            await create_chat(new_chat_id, chat_name, words, sender.id, sender.username, chat_users)
+            print(f"Sending message to {chat_name}")
+            await user_clients[phone_number].get_client().send_message(chat_id, message_for_second_user, parse_mode="html")
+            print(f"Adding {chat_name} to {', '.join(chat_users)}")
+            await add_chat_to_users(chat_users, new_chat_id)
             chat_users.clear()
         except Exception as e:
             print(f"Error: {str(e)}")

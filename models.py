@@ -56,7 +56,7 @@ agreed_users_chats = Table(
 
 class User(Base):
     __tablename__ = "users"
-    id = Column(BigInteger, primary_key=True)
+    id = Column(String(200), primary_key=True)
     name = Column(String(100), nullable=False)
     has_profile = Column(Boolean, default=False)
     words = Column(BigInteger, default=0)

@@ -28,7 +28,7 @@ async def create_chat(chat_id, chat_name, words_number, sender_id, sender_name, 
         new_chat.agreed_users.extend(agreed_users)
 
         all_users = (
-            session.query(User).filter(User.id.in_([sender_id] + chat_users)).all()
+            session.query(User).filter(User.id.in_(chat_users)).all()
         )
         new_chat.users.extend(all_users)
 
