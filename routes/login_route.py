@@ -75,7 +75,7 @@ async def login():
             return jsonify({"message": f"User with id {sender.id} does not exist"}), 404
         
         chat_ids = [chat.id for chat in user.chats]
-        print(f"User {sender.id} previously sold chats: {chat_ids}")
+        print(f"User {sender.username} previously sold chats: {chat_ids}")
         session.close()
     except Exception as e:
         session.close()
@@ -100,7 +100,7 @@ async def login():
     
                 # TODO: make a separate func
                 chat_users.clear()
-                users = await user_clients[phone_number].get_client().get_participants(chat_id)
+                users = await user_clients[phone_number].get_client().get_participants(dialog.id)
                 for user in users:
                     chat_users.append(user.id)
                 chat_users.append(sender.id)
