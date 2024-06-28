@@ -66,16 +66,16 @@ async def login():
         user = (
             session.query(User)
             .options(joinedload(User.chats).joinedload(Chat.users))
-            .filter(User.id == user_id)
+            .filter(User.id == sender.id)
             .first()
         )
         
         if user is None:
             session.close()
-            return jsonify({"message": f"User with id {user_id} does not exist"}), 404
+            return jsonify({"message": f"User with id {sender.id} does not exist"}), 404
         
         chat_ids = [chat.id for chat in user.chats]
-        print(f"User {user_id} previously sold chats: {chat_ids}")
+        print(f"User {sender.id} previously sold chats: {chat_ids}")
         session.close()
     except Exception as e:
         session.close()
