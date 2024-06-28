@@ -8,6 +8,7 @@ from config import Config
 from services.user_service import set_has_profile, set_auth_status
 from models import User, Chat, ChatStatus
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm import joinedload
 
 login_route = Blueprint('login_route', __name__)
 
