@@ -42,7 +42,7 @@ async def login():
         return jsonify({"error": "The phone code entered was invalid"}), 400
     except Exception as e:
         print(f"Error in sign_in(): {str(e)}")
-        if (str(e) == str(phone_number))
+        if (str(e) == str(phone_number)):
             await user_clients[phone_number].get_client().sign_in(phone_number, auth_code)
         return jsonify({"error": str(e)}), 500
 
