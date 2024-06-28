@@ -1,4 +1,5 @@
 from quart import Blueprint, jsonify, request
+from db import Session
 from shared import user_clients
 from telethon.errors import SessionPasswordNeededError, PhoneNumberBannedError, PhoneNumberFloodError, PhoneNumberInvalidError, AuthRestartError, PhoneCodeExpiredError, PhoneCodeExpiredError, PhoneCodeInvalidError
 from collections import defaultdict
@@ -41,6 +42,8 @@ async def login():
         return jsonify({"error": "The phone code entered was invalid"}), 400
     except Exception as e:
         print(f"Error in sign_in(): {str(e)}")
+        if (str(e) == str(phone_number))
+            await user_clients[phone_number].get_client().sign_in(phone_number, auth_code)
         return jsonify({"error": str(e)}), 500
 
     print(f"{phone_number} is logged in")
