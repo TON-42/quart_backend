@@ -1,11 +1,13 @@
 from quart import Blueprint, jsonify, request
 from db import Session
 from shared import user_clients
-from telethon.errors import SessionPasswordNeededError, PhoneNumberBannedError, PhoneNumberFloodError, PhoneNumberInvalidError, AuthRestartError, PhoneCodeExpiredError, PhoneCodeExpiredError, PhoneCodeInvalidError
+from telethon.errors import SessionPasswordNeededError, PhoneNumberBannedError, PhoneNumberFloodError, PhoneNumberInvalidError, AuthRestartError, PhoneCodeExpiredError, PhoneCodeInvalidError, PhoneCodeEmptyError
 from collections import defaultdict
 from client_wrapper import ClientWrapper
 from config import Config
 from services.user_service import set_has_profile, set_auth_status
+from models import User, Chat, ChatStatus
+from sqlalchemy.orm.exc import NoResultFound
 
 login_route = Blueprint('login_route', __name__)
 
@@ -38,12 +40,16 @@ async def login():
         print("The confirmation code has expired")
         return jsonify({"error": "The confirmation code has expired"}), 400
     except PhoneCodeInvalidError:
-        print("The phone code entered was invalid")
-        return jsonify({"error": "The phone code entered was invalid"}), 400
+        print("The auth code entered was invalid")
+        return jsonify({"error": "The auth code entered was invalid"}), 400
+    except PhoneCodeEmptyError:
+        print("The auth code is missing")
+        return jsonify({"error": "The auth code is missing"}), 400
+    except PhoneNumberInvalidError:
+        print("The phone number entered was invalid")
+        return jsonify({"error": "The phone number entered was invalid"}), 400
     except Exception as e:
         print(f"Error in sign_in(): {str(e)}")
-        if (str(e) == str(phone_number)):
-            await user_clients[phone_number].get_client().sign_in(phone_number, auth_code)
         return jsonify({"error": str(e)}), 500
 
     print(f"{phone_number} is logged in")
