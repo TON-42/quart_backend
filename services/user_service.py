@@ -45,15 +45,15 @@ async def set_has_profile(user_id, has_profile):
 
 async def set_auth_status(user_id, status):
     session = Session()
-    status = 0
+    exit_code = 0
     try:
         user = session.query(User).filter(User.id == user_id).one()
         user.auth_status = status
         session.commit()
-        print(f"Updating auth_status to {auth_status}")
+        print(f"Updating auth_status to {user.auth_status}")
     except Exception as e:
         print(f"Error updating auth_status: {str(e)}")
-        status = 1
+        exit_code = 1
     finally:
         session.close()
-        return status
+        return exit_code
