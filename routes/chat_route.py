@@ -55,7 +55,7 @@ async def send_message():
             return jsonify({"message": f"User with id {user_id} does not exist"}), 404
         
         chat_ids = [chat.id for chat in user.chats]
-        print(f"Chat IDs for user {user_id}: {chat_ids}")
+        print(f"User {user_id} previously sold chats: {chat_ids}")
     except Exception as e:
         print(f"Error before sign_in() {str(e)}")
         return {"error": str(e)}, 500
@@ -107,7 +107,7 @@ async def send_message():
 
             # TODO: do it before creating users for a chat
             # check if chat was already sold
-            if private_chat_id is in chat_ids:
+            if private_chat_id in chat_ids:
                 print(f"Chat {private_chat_id} is already sold")
                 continue
     
