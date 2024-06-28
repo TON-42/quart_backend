@@ -41,25 +41,6 @@ async def send_message():
     # TODO: user may log out and it gonna throw exception
     sender = await user_clients[phone_number].get_client().get_me()
 
-    # TODO: make it as a separate function
-    try:
-        user = (
-            session.query(User)
-            .options(joinedload(User.chats).joinedload(Chat.users))
-            .filter(User.id == user_id)
-            .first()
-        )
-        
-        if user is None:
-            session.close()
-            return jsonify({"message": f"User with id {user_id} does not exist"}), 404
-        
-        chat_ids = [chat.id for chat in user.chats]
-        print(f"User {user_id} previously sold chats: {chat_ids}")
-    except Exception as e:
-        print(f"Error before sign_in() {str(e)}")
-        return {"error": str(e)}, 500
-
     # TODO: organize this mess
     b_users = []
     chat_users = []
@@ -104,12 +85,6 @@ async def send_message():
             
             private_chat_id = '_'.join(str(num) for num in sorted(chat_users))
             print(f"private_id {private_chat_id}")
-
-            # TODO: do it before creating users for a chat
-            # check if chat was already sold
-            if private_chat_id in chat_ids:
-                print(f"Chat {private_chat_id} is already sold")
-                continue
     
             print(f"Creating {chat_name} chat")
             await create_chat(private_chat_id, chat_name, words, sender.id, sender.username, chat_users)

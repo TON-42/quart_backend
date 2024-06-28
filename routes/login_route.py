@@ -50,21 +50,55 @@ async def login():
     user_clients[phone_number].set_id(sender.id)
     user_clients[phone_number].set_logged_in(True)
 
+    # TODO: make it as a separate function
+    try:
+        session = Session()
+        user = (
+            session.query(User)
+            .options(joinedload(User.chats).joinedload(Chat.users))
+            .filter(User.id == user_id)
+            .first()
+        )
+        
+        if user is None:
+            session.close()
+            return jsonify({"message": f"User with id {user_id} does not exist"}), 404
+        
+        chat_ids = [chat.id for chat in user.chats]
+        print(f"User {user_id} previously sold chats: {chat_ids}")
+        session.close()
+    except Exception as e:
+        session.close()
+        print(f"Error before sign_in() {str(e)}")
+        return {"error": str(e)}, 500
+
     # TODO: handle this error properly
     status = await set_has_profile(sender.id, True)
     if status == 1:
         return jsonify({"error": "couldn't set has_profile to True"}), 500
-
+    
     count = 0
     res = defaultdict(int)
+    chat_users = []
 
     try:
         if await user_clients[phone_number].get_client().is_user_authorized():
             dialogs = await user_clients[phone_number].get_client().get_dialogs()
             for dialog in dialogs:
-                # TODO: check if chat was already sold
                 if dialog.id < 0 or dialog.entity.bot == True or dialog.id == 777000:
                     continue
+    
+                # TODO: make a separate func
+                chat_users.clear()
+                users = await user_clients[phone_number].get_client().get_participants(chat_id)
+                for user in users:
+                    chat_users.append(user.id)
+                chat_users.append(sender.id)
+                private_chat_id = '_'.join(str(num) for num in sorted(chat_users))
+                if private_chat_id in chat_ids:
+                    print(f"Chat {dialog.name} is already sold")
+                    continue
+        
                 # TODO: think about the limit of chats
                 count += 1
                 if count > 15:
