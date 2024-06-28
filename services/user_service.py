@@ -11,13 +11,14 @@ async def create_user(user_id, username, profile):
         # print("User already exists")
     except NoResultFound:
         new_user = User(
-            id=user_id, name=username, has_profile=profile, words=0
+            id=user_id, name=username, has_profile=profile, words=0, auth_status="default"
         )
         user_data = {
             "id": new_user.id,
             "name": new_user.name,
             "has_profile": new_user.has_profile,
             "words": new_user.words,
+            "auth_status": new_user.auth_status
         }
 
         print(user_data)
@@ -49,6 +50,7 @@ async def set_auth_status(user_id, status):
         user = session.query(User).filter(User.id == user_id).one()
         user.auth_status = status
         session.commit()
+        print(f"Updating auth_status to {auth_status}")
     except Exception as e:
         print(f"Error updating auth_status: {str(e)}")
         status = 1

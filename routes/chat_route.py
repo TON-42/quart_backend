@@ -41,11 +41,31 @@ async def send_message():
     # TODO: user may log out and it gonna throw exception
     sender = await user_clients[phone_number].get_client().get_me()
 
+    # TODO: make it as a separate function
+    try:
+        user = (
+            session.query(User)
+            .options(joinedload(User.chats).joinedload(Chat.users))
+            .filter(User.id == user_id)
+            .first()
+        )
+        
+        if user is None:
+            session.close()
+            return jsonify({"message": f"User with id {user_id} does not exist"}), 404
+        
+        chat_ids = [chat.id for chat in user.chats]
+        print(f"Chat IDs for user {user_id}: {chat_ids}")
+    except Exception as e:
+        print(f"Error before sign_in() {str(e)}")
+        return {"error": str(e)}, 500
+
     # TODO: organize this mess
     b_users = []
     chat_users = []
     for chat_details, words in selected_chats.items():
         try:
+            # TODO: make data parsing as separate func or remove tuples
             # Extract chat_id and chat_name from 'id' field
             id_field = str(chat_details)
             
@@ -72,22 +92,25 @@ async def send_message():
                 print("words is not defined")
                 words = 123
 
-            users = (
-                await user_clients[phone_number].get_client().get_participants(chat_id)
-            )
+            users = await user_clients[phone_number].get_client().get_participants(chat_id)
             for user in users:
-                if user.username is not None:
-                    print(f"Creating {user.username} account")
-                    await create_user(user.id, user.username, False)
-                    chat_users.append(user.id)
-                    b_users.append(user.username)
-            
+                print(f"Creating {user.username} account")
+                await create_user(user.id, user.username, False)
+                chat_users.append(user.id)
+                b_users.append(user.username)
+        
             chat_users.append(sender.id)
             print(f"chat users: {chat_users}")
             
             private_chat_id = '_'.join(str(num) for num in sorted(chat_users))
             print(f"private_id {private_chat_id}")
 
+            # TODO: do it before creating users for a chat
+            # check if chat was already sold
+            if private_chat_id is in chat_ids:
+                print(f"Chat {private_chat_id} is already sold")
+                continue
+    
             print(f"Creating {chat_name} chat")
             await create_chat(private_chat_id, chat_name, words, sender.id, sender.username, chat_users)
             print(f"Sending message to {chat_name}")
