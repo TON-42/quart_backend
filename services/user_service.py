@@ -2,6 +2,7 @@ from db import Session
 from models import User
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
+from models import User, Chat, agreed_users_chats, users_chats
 
 
 async def create_user(user_id, username, profile):
