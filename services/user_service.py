@@ -57,3 +57,23 @@ async def set_auth_status(user_id, status):
     finally:
         session.close()
         return exit_code
+
+async def get_user_chats(sender_id, sender_name):
+    session = Session()
+    chat_ids = []
+    try:
+        user = (
+            session.query(User)
+            .options(joinedload(User.chats).joinedload(Chat.users))
+            .filter(User.id == sender_id)
+            .first()
+        )
+        
+        chat_ids = [chat.id for chat in user.chats]
+        print(f"User {sender_name} previously sold chats: {chat_ids}")
+        session.close()
+        return chat_ids
+    except Exception as e:
+        print(f"Error before sign_in() {str(e)}")
+        session.close()
+        return 1
