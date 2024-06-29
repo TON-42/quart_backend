@@ -9,7 +9,8 @@ from services.user_service import set_has_profile, set_auth_status
 from models import User, Chat, ChatStatus
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
-from utils import get_chat_id
+from utils import get_chat_id, count_words
+from services.user_service import get_user_chats
 
 login_route = Blueprint('login_route', __name__)
 
@@ -69,28 +70,10 @@ async def login():
         print(f"{phone_number} manually logged out")
         return jsonify({"message": "manually logged out"}), 500
 
-    # TODO: make it as a separate function
-    try:
-        session = Session()
-        user = (
-            session.query(User)
-            .options(joinedload(User.chats).joinedload(Chat.users))
-            .filter(User.id == sender.id)
-            .first()
-        )
-        
-        if user is None:
-            session.close()
-            return jsonify({"message": f"User with id {sender.id} does not exist"}), 404
-        
-        chat_ids = [chat.id for chat in user.chats]
-        print(f"User {sender.username} previously sold chats: {chat_ids}")
-        session.close()
-    except Exception as e:
-        session.close()
-        print(f"Error before sign_in() {str(e)}")
-        return {"error": str(e)}, 500
-
+    chat_ids = await get_user_chats(sender.id, sender.username)
+    if chat_ids == 1:
+        return jsonify({"message": "error while retrieving user's chats"}), 500
+    
     # TODO: handle this error properly
     status = await set_has_profile(sender.id, True)
     if status == 1:
@@ -115,16 +98,9 @@ async def login():
             if count > 15:
                 break
 
-            print(f"{dialog.name}, {dialog.id}")
-            # TODO: is there a better way to count words
-            async for message in (
-                user_clients[phone_number].get_client().iter_messages(dialog.id)
-            ):
-                if message.text is not None:
-                    words = message.text.split()
-                    res[(dialog.id, dialog.name)] += len(words)
-                    if res[(dialog.id, dialog.name)] > 2000:
-                        break
+            print(f"{dialog.name}")
+            word_count = await count_words(dialog.id, phone_number)
+            res[(dialog.id, dialog.name)] = word_count
     except Exception as e:
         print(f"Error in get_dialogs(): {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -152,7 +128,6 @@ async def send_code():
         
         user_id = data.get("user_id")
         if user_id is None:
-            # user entered from browser
             print(f"{phone_number} entered from browser")
 
         if phone_number in user_clients:
