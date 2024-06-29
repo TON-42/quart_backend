@@ -1,6 +1,7 @@
 from db import Session
 from models import User
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm import joinedload
 
 
 async def create_user(user_id, username, profile):

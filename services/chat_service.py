@@ -1,6 +1,7 @@
 from db import Session
 from models import User, Chat, ChatStatus
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm import joinedload
 
 async def create_chat(chat_id, chat_name, words_number, sender_id, sender_name, chat_users):
     session = Session()
