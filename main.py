@@ -22,7 +22,7 @@ commands = "📝 /start - Start the bot\n"
 
 bot = AsyncTeleBot(Config.TOKEN)
 app = Quart(__name__)
-# app = cors(app, allow_origin="https://new-vite-frontend.vercel.app")
+app = cors(app, allow_origin="*")
 
 app.register_blueprint(debug_routes)
 app.register_blueprint(login_route)
