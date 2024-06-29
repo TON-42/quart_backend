@@ -98,7 +98,6 @@ async def login():
     
     count = 0
     res = defaultdict(int)
-    chat_users = []
 
     try:
         dialogs = await user_clients[phone_number].get_client().get_dialogs()
