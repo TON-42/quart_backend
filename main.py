@@ -18,13 +18,11 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from config import Config
 from shared import user_clients
 
-commands = (
-    "📝 /start - Start the bot\n"
-)
+commands = "📝 /start - Start the bot\n"
 
 bot = AsyncTeleBot(Config.TOKEN)
 app = Quart(__name__)
-app = cors(app, allow_origin="https://new-vite-frontend.vercel.app")
+# app = cors(app, allow_origin="https://new-vite-frontend.vercel.app")
 
 app.register_blueprint(debug_routes)
 app.register_blueprint(login_route)
@@ -35,12 +33,15 @@ app.register_blueprint(chat_route)
 async def check_session_expiry():
     while True:
         for phone_number, client_wrapper in list(user_clients.items()):
-            
-            if user_clients[phone_number].get_logged_in() == True and await user_clients[phone_number].get_client().get_me() is None:
+
+            if (
+                user_clients[phone_number].get_logged_in() == True
+                and await user_clients[phone_number].get_client().get_me() is None
+            ):
                 print(f"{phone_number} manually logged out")
                 del user_clients[phone_number]
                 continue
-            
+
             time_difference = datetime.now() - client_wrapper.created_at
             if time_difference >= timedelta(minutes=15):
                 print(f"Session for {phone_number} has expired.")
@@ -51,7 +52,6 @@ async def check_session_expiry():
                 del user_clients[phone_number]
             else:
                 print(f"Session for: {phone_number} is active")
-
 
         # Wait for 5 minute before checking again
         await asyncio.sleep(300)
@@ -88,9 +88,12 @@ async def webhook():
         await bot.process_new_updates([update])
     return "ok"
 
-@bot.message_handler(commands=['start'])
+
+@bot.message_handler(commands=["start"])
 async def start(message):
-    image_url = 'https://magnumtravel-bucket.s3.amazonaws.com/static/images/bot-banner.png'
+    image_url = (
+        "https://magnumtravel-bucket.s3.amazonaws.com/static/images/bot-banner.png"
+    )
     caption = (
         "Welcome to ChatPay 💬\n\n"
         "1️⃣ Enter your phone number (don't forget your country code!). 📱\n\n"
@@ -105,13 +108,14 @@ async def start(message):
     markup.row_width = 2
     webUrl = WebAppInfo("https://new-vite-frontend.vercel.app/")
     markup.add(InlineKeyboardButton("Let's go", web_app=webUrl))
-    markup.add(InlineKeyboardButton("Follow us", url='https://x.com/chatpay_app'))
+    markup.add(InlineKeyboardButton("Follow us", url="https://x.com/chatpay_app"))
 
-    await bot.send_photo(message.chat.id, image_url, caption,  reply_markup=markup)
+    await bot.send_photo(message.chat.id, image_url, caption, reply_markup=markup)
 
-@bot.message_handler(content_types=['text'])
+
+@bot.message_handler(content_types=["text"])
 async def message_reply(message):
-    await bot.send_message(message.chat.id, 'List of avaliable commands:\n' + commands)
+    await bot.send_message(message.chat.id, "List of avaliable commands:\n" + commands)
 
 
 if __name__ == "__main__":
@@ -127,11 +131,11 @@ if __name__ == "__main__":
 #     data = await request.get_json()
 #     username = data.get('username', None)
 #     password = data.get('password', None)
-    
+
 #     # Replace with your user authentication logic
 #     if username != API_USERNAME or password != API_PASSWORD:
 #         return jsonify({"msg": "Bad username or password"}), 401
-    
+
 #     access_token = create_access_token(identity=username)
 #     return jsonify(access_token=access_token), 200
 
