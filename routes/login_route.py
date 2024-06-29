@@ -50,8 +50,9 @@ async def login():
         print("The phone number entered was invalid")
         return jsonify({"error": "The phone number entered was invalid"}), 400
     except Exception as e:
-        print(f"Error in sign_in(): {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        exception_type = type(e).__name__
+        print(f"Error in sign_in(): {exception_type} - {str(e)}")
+        return jsonify({"error": f"{exception_type}: {str(e)}"}), 500
 
     print(f"{phone_number} is logged in")
     
