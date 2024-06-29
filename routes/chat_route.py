@@ -38,8 +38,13 @@ async def send_message():
         print("Session is expired")
         return jsonify("Session has expired"), 500
     
-    # TODO: user may log out and it gonna throw exception
-    sender = await user_clients[phone_number].get_client().get_me()
+    sender = None
+
+    if await user_clients[phone_number].get_client().is_user_authorized() == True:
+        sender = await user_clients[phone_number].get_client().get_me()
+    else:
+        print("User manually logged out")
+        return jsonify("User manually logged out"), 500
 
     # TODO: organize this mess
     b_users = []
@@ -95,8 +100,8 @@ async def send_message():
             chat_users.clear()
         except Exception as e:
             print(f"Error in send_message(): {str(e)}")
-            # TODO: user may have manually logged out
-            await user_clients[phone_number].get_client().log_out()
+            if await user_clients[phone_number].get_client().is_user_authorized() == True:
+                await user_clients[phone_number].get_client().log_out()
             del user_clients[phone_number]
             return {"error": str(e)}, 500
     

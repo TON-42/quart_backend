@@ -9,6 +9,7 @@ from services.user_service import set_has_profile, set_auth_status
 from models import User, Chat, ChatStatus
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
+from utils import get_chat_id
 
 login_route = Blueprint('login_route', __name__)
 
@@ -25,12 +26,14 @@ async def login():
         return jsonify({"error": "No phone_number provided"}), 400
     
     print(f"{phone_number} is trying to login with: {auth_code}")
-    
-    # TODO: test if it works
+
     if phone_number in user_clients:
-        if user_clients[phone_number].get_logged_in() == True and await user_clients[phone_number].get_client().get_me() is not None:
+        if await user_clients[phone_number].get_client().is_user_authorized() == True:
             print(f"{phone_number} is already logged in")
             return jsonify({"message": "user is already logged in"}), 409
+    else:
+        print(f"{phone_number} session does not exist")
+        return jsonify({"message": "session does not exist"}), 500
 
     try:
         await user_clients[phone_number].get_client().sign_in(phone_number, auth_code)
@@ -56,10 +59,15 @@ async def login():
 
     print(f"{phone_number} is logged in")
     
-    # save user id in the session
-    sender = await user_clients[phone_number].get_client().get_me()
-    user_clients[phone_number].set_id(sender.id)
-    user_clients[phone_number].set_logged_in(True)
+    sender = None
+
+    if await user_clients[phone_number].get_client().is_user_authorized() == True:
+        sender = await user_clients[phone_number].get_client().get_me()
+        user_clients[phone_number].set_id(sender.id)
+        user_clients[phone_number].set_logged_in(True)
+    else:
+        print(f"{phone_number} manually logged out")
+        return jsonify({"message": "manually logged out"}), 500
 
     # TODO: make it as a separate function
     try:
@@ -93,38 +101,31 @@ async def login():
     chat_users = []
 
     try:
-        if await user_clients[phone_number].get_client().is_user_authorized():
-            dialogs = await user_clients[phone_number].get_client().get_dialogs()
-            for dialog in dialogs:
-                if dialog.id < 0 or dialog.entity.bot == True or dialog.id == 777000:
-                    continue
-    
-                # TODO: make a separate func
-                chat_users.clear()
-                users = await user_clients[phone_number].get_client().get_participants(dialog.id)
-                for user in users:
-                    chat_users.append(user.id)
-                chat_users.append(sender.id)
-                private_chat_id = '_'.join(str(num) for num in sorted(chat_users))
-                if private_chat_id in chat_ids:
-                    print(f"Chat {dialog.name} is already sold")
-                    continue
-        
-                # TODO: think about the limit of chats
-                count += 1
-                if count > 15:
-                    break
+        dialogs = await user_clients[phone_number].get_client().get_dialogs()
+        for dialog in dialogs:
+            if dialog.id < 0 or dialog.entity.bot == True:
+                continue
 
-                print(f"{dialog.name}, {dialog.id}")
-                # TODO: is there a better way to count words
-                async for message in (
-                    user_clients[phone_number].get_client().iter_messages(dialog.id)
-                ):
-                    if message.text is not None:
-                        words = message.text.split()
-                        res[(dialog.id, dialog.name)] += len(words)
-                        if res[(dialog.id, dialog.name)] > 2000:
-                            break
+            private_chat_id = await get_chat_id(dialog.id, sender.id, phone_number)
+            if private_chat_id in chat_ids:
+                print(f"Chat {dialog.name} is already sold")
+                continue
+    
+            # TODO: think about the limit of chats
+            count += 1
+            if count > 15:
+                break
+
+            print(f"{dialog.name}, {dialog.id}")
+            # TODO: is there a better way to count words
+            async for message in (
+                user_clients[phone_number].get_client().iter_messages(dialog.id)
+            ):
+                if message.text is not None:
+                    words = message.text.split()
+                    res[(dialog.id, dialog.name)] += len(words)
+                    if res[(dialog.id, dialog.name)] > 2000:
+                        break
     except Exception as e:
         print(f"Error in get_dialogs(): {str(e)}")
         return jsonify({"error": str(e)}), 500
