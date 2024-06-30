@@ -5,6 +5,9 @@ from models import User, Chat, ChatStatus
 from shared import user_clients
 from services.user_service import create_user, set_auth_status
 from services.chat_service import create_chat, add_chat_to_users
+from services.session_service import create_session, session_exists, delete_session
+from telethon.sessions import StringSession
+from telethon.sync import TelegramClient
 
 
 chat_route = Blueprint('chat_route', __name__)
@@ -32,15 +35,18 @@ async def send_message():
 
     print(f"received from front-end: {selected_chats}")
 
-    # TODO: why it sometimes enters here eventhough session is active
-    if phone_number not in user_clients:
-        print("Session is expired")
-        return jsonify("Session has expired"), 500
+    client = await session_exists(phone_number)
+    if client is None:
+        print("Session does not exist")
+        return jsonify("Session does not exist"), 500
+    if client.is_user_authorized() == False:
+        print("Session is expired or user manually logged out")
+        return jsonify("Session is expired or user manually logged out"), 500
     
     sender = None
 
-    if await user_clients[phone_number].get_client().is_user_authorized() == True:
-        sender = await user_clients[phone_number].get_client().get_me()
+    if await client.is_user_authorized() == True:
+        sender = await client.get_me()
     else:
         print("User manually logged out")
         return jsonify("User manually logged out"), 500
@@ -77,7 +83,7 @@ async def send_message():
                 print("words is not defined")
                 words = 123
 
-            users = await user_clients[phone_number].get_client().get_participants(chat_id)
+            users = await client.get_participants(chat_id)
             for user in users:
                 print(f"Creating {user.username} account")
                 await create_user(user.id, user.username, False)
@@ -93,15 +99,15 @@ async def send_message():
             print(f"Creating {chat_name} chat")
             await create_chat(private_chat_id, chat_name, words, sender.id, chat_users, chat_id)
             print(f"Sending message to {chat_name}")
-            await user_clients[phone_number].get_client().send_message(chat_id, message_for_second_user, parse_mode="html")
+            await client.send_message(chat_id, message_for_second_user, parse_mode="html")
             print(f"Adding {chat_name} to {chat_users}")
             await add_chat_to_users(chat_users, private_chat_id)
             chat_users.clear()
         except Exception as e:
             print(f"Error in send_message(): {str(e)}")
-            if await user_clients[phone_number].get_client().is_user_authorized() == True:
-                await user_clients[phone_number].get_client().log_out()
-            del user_clients[phone_number]
+            if await client.is_user_authorized() == True:
+                await client.log_out()
+            await delete_session(phone_number)
             return {"error": str(e)}, 500
     
     status = await set_auth_status(sender.id, "default")

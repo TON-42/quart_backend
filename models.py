@@ -82,6 +82,13 @@ class Chat(Base):
     )
     users = relationship("User", secondary=users_chats, back_populates="chats")
 
+class Session(Base):
+    __tablename__ = "sessions"
+    id = Column(Text, primary_key=True)
+    phone_number = Column(String(100), nullable=False)
+    user_id = Column(String(100), nullable=True)
+    creation_date = Column(DateTime, default=datetime.utcnow, nullable=True)
+    send_code_date = Column(DateTime, default=datetime.utcnow, nullable=True)
 
 # Database URL from environment variable or fallback
 DATABASE_URL = os.getenv("DATABASE_URL")
