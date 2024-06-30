@@ -34,7 +34,11 @@ async def get_user():
             
             user = (
                 session.query(User)
-                .options(joinedload(User.chats).joinedload(Chat.users).joinedload(Chat.lead))
+                .options(
+                    joinedload(User.chats).joinedload(Chat.users),
+                    joinedload(User.chats).joinedload(Chat.lead),
+                    joinedload(User.chats).joinedload(Chat.agreed_users)
+                )
                 .filter(User.id == user_id)
                 .first()
             )
