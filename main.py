@@ -16,7 +16,6 @@ from telebot.async_telebot import AsyncTeleBot
 from telebot import types
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from config import Config
-from shared import user_clients
 
 commands = "📝 /start - Start the bot\n"
 
@@ -30,42 +29,42 @@ app.register_blueprint(user_route)
 app.register_blueprint(chat_route)
 
 
-async def check_session_expiry():
-    while True:
-        for phone_number, client_wrapper in list(user_clients.items()):
+# async def check_session_expiry():
+#     while True:
+#         for phone_number, client_wrapper in list(user_clients.items()):
 
-            if (
-                user_clients[phone_number].get_logged_in() == True
-                and await user_clients[phone_number].get_client().is_user_authorized() == False
-            ):
-                print(f"{phone_number} manually logged out")
-                del user_clients[phone_number]
-                continue
+#             if (
+#                 user_clients[phone_number].get_logged_in() == True
+#                 and await user_clients[phone_number].get_client().is_user_authorized() == False
+#             ):
+#                 print(f"{phone_number} manually logged out")
+#                 del user_clients[phone_number]
+#                 continue
 
-            time_difference = datetime.now() - client_wrapper.created_at
-            if time_difference >= timedelta(minutes=15):
-                print(f"Session for {phone_number} has expired.")
-                try:
-                    await user_clients[phone_number].get_client().log_out()
-                except Exception as e:
-                    print(f"Error in log_out(): {str(e)}")
-                del user_clients[phone_number]
-            else:
-                print(f"Session for: {phone_number} is active")
+#             time_difference = datetime.now() - client_wrapper.created_at
+#             if time_difference >= timedelta(minutes=15):
+#                 print(f"Session for {phone_number} has expired.")
+#                 try:
+#                     await user_clients[phone_number].get_client().log_out()
+#                 except Exception as e:
+#                     print(f"Error in log_out(): {str(e)}")
+#                 del user_clients[phone_number]
+#             else:
+#                 print(f"Session for: {phone_number} is active")
 
-        # Wait for 5 minute before checking again
-        await asyncio.sleep(300)
-
-
-@app.before_serving
-async def startup():
-    app.add_background_task(check_session_expiry)
+#         # Wait for 5 minute before checking again
+#         await asyncio.sleep(300)
 
 
-@app.after_serving
-async def shutdown():
-    for task in app.background_tasks:
-        task.cancel()
+# @app.before_serving
+# async def startup():
+#     app.add_background_task(check_session_expiry)
+
+
+# @app.after_serving
+# async def shutdown():
+#     for task in app.background_tasks:
+#         task.cancel()
 
 
 @app.route("/health", methods=["GET"])
