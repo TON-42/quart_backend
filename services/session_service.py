@@ -8,12 +8,12 @@ import os
 
 API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")
-async def create_session(client, number):
+async def create_session(client, number, phone_hash):
     session_id = client.session.save()
     session = S()
     exit_code = 0
     try:
-        new_session = Session(id=session_id, phone_number=number)
+        new_session = Session(id=session_id, phone_number=number, phone_code_hash=phone_hash)
         session.add(new_session)
         session.commit()
         print(f"Creating new session")

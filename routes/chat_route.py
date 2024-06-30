@@ -8,6 +8,10 @@ from services.chat_service import create_chat, add_chat_to_users
 from services.session_service import create_session, session_exists, delete_session
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
+import os
+
+API_ID = os.getenv("API_ID")
+API_HASH = os.getenv("API_HASH")
 
 
 chat_route = Blueprint('chat_route', __name__)
@@ -35,11 +39,24 @@ async def send_message():
 
     print(f"received from front-end: {selected_chats}")
 
-    client = await session_exists(phone_number)
-    if client is None:
+    saved_client = await session_exists(phone_number)
+    if saved_client is None:
         print("Session does not exist")
         return jsonify("Session does not exist"), 500
-    if client.is_user_authorized() == False:
+    
+    client = TelegramClient(StringSession(saved_client.id), API_ID, API_HASH)
+
+    # TODO: separate func in utils
+    try:
+        await client.connect()
+    except Exception as e:
+        print(f"Error in connect(): {str(e)}")
+        # TODO: handle return False from delete session
+        # TODO: should we really delete a session?
+        await delete_session(phone_number)
+        return jsonify({"error": str(e)}), 500
+
+    if await client.is_user_authorized() == False:
         print("Session is expired or user manually logged out")
         return jsonify("Session is expired or user manually logged out"), 500
     
