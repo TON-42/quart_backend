@@ -11,7 +11,6 @@ chat_route = Blueprint('chat_route', __name__)
 
 @chat_route.route("/send-message", methods=["POST"])
 async def send_message():
-    # TODO: check if we are still logged in here
     data = await request.get_json()
     
     phone_number = data.get("phone_number")
@@ -92,7 +91,7 @@ async def send_message():
             print(f"private_id {private_chat_id}")
     
             print(f"Creating {chat_name} chat")
-            await create_chat(private_chat_id, chat_name, words, sender.id, sender.username, chat_users)
+            await create_chat(private_chat_id, chat_name, words, sender.id, chat_users, chat_id)
             print(f"Sending message to {chat_name}")
             await user_clients[phone_number].get_client().send_message(chat_id, message_for_second_user, parse_mode="html")
             print(f"Adding {chat_name} to {chat_users}")
@@ -105,7 +104,6 @@ async def send_message():
             del user_clients[phone_number]
             return {"error": str(e)}, 500
     
-    # TODO: handle this error properly
     status = await set_auth_status(sender.id, "default")
     if status == 1:
         return jsonify({"error": "couldn't update auth_status"}), 500

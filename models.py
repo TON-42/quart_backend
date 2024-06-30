@@ -71,11 +71,11 @@ class User(Base):
 class Chat(Base):
     __tablename__ = "chats"
     id = Column(String(255), primary_key=True)
+    telegram_id = Column(BigInteger, nullable=True, default=0)
     name = Column(String(100), nullable=False)
     words = Column(BigInteger, default=0)
     status = Column(ENUM(ChatStatus), nullable=False)
     lead_id = Column(BigInteger, ForeignKey("users.id"))
-    lead_name = Column(String(100), nullable=False)
     lead = relationship("User", foreign_keys=[lead_id])
     agreed_users = relationship(
         "User", secondary=agreed_users_chats, back_populates="agreed_chats"
