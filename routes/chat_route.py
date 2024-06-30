@@ -33,7 +33,7 @@ async def send_message():
 
     print(f"received from front-end: {selected_chats}")
 
-    # TODO:  evaluate this
+    # TODO: why it sometimes enters here eventhough session is active
     if phone_number not in user_clients:
         print("Session is expired")
         return jsonify("Session has expired"), 500
