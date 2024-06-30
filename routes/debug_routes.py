@@ -5,7 +5,6 @@ from sqlalchemy.exc import IntegrityError
 from models import User, Chat, agreed_users_chats, users_chats
 from models import Session as MySession
 from db import Session
-from shared import user_clients
 import requests
 import httpx
 import os

@@ -3,7 +3,6 @@ from db import Session
 from sqlalchemy.orm import joinedload
 from models import User, Chat
 from services.user_service import create_user
-from shared import user_clients
 
 user_route = Blueprint('user_route', __name__)
 
@@ -87,18 +86,18 @@ async def get_user():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-@user_route.route("/is-active", methods=["POST"])
-async def is_active():
-    try:
-        data = await request.get_json()
-        user_id = data.get("userId")
+# @user_route.route("/is-active", methods=["POST"])
+# async def is_active():
+#     try:
+#         data = await request.get_json()
+#         user_id = data.get("userId")
         
-        if user_id is None:
-            return jsonify({"error": "userId is missing"}), 400
+#         if user_id is None:
+#             return jsonify({"error": "userId is missing"}), 400
 
-        for phone_number, client_wrapper in user_clients.items():
-            if user_id == client_wrapper.get_id():
-                return "ok", 200
-        return "Not found", 404
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+#         for phone_number, client_wrapper in user_clients.items():
+#             if user_id == client_wrapper.get_id():
+#                 return "ok", 200
+#         return "Not found", 404
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500

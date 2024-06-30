@@ -2,7 +2,6 @@ from quart import Blueprint, jsonify, request
 from db import Session
 from sqlalchemy.orm import joinedload
 from models import User, Chat, ChatStatus
-from shared import user_clients
 from services.user_service import create_user, set_auth_status
 from services.chat_service import create_chat, add_chat_to_users
 from services.session_service import create_session, session_exists, delete_session

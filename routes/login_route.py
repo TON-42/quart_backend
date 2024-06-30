@@ -1,6 +1,5 @@
 from quart import Blueprint, jsonify, request
 from db import Session
-from shared import user_clients
 from telethon.errors import SessionPasswordNeededError, PhoneNumberBannedError, PhoneNumberFloodError, PhoneNumberInvalidError, AuthRestartError, PhoneCodeExpiredError, PhoneCodeInvalidError, PhoneCodeEmptyError
 from collections import defaultdict
 from client_wrapper import ClientWrapper
@@ -58,7 +57,7 @@ async def login():
         return jsonify({"message": "user is already logged in"}), 409
     
     try:
-        await client.sign_in(phone_number, auth_code)
+        await client.sign_in(phone=phone_number, code=auth_code, phone_code_hash=saved_client.phone_code_hash)
     except SessionPasswordNeededError:
         print("two-steps verification is active")
         return jsonify({"error": "two-steps verification is active"}), 401
@@ -107,7 +106,7 @@ async def login():
             if dialog.id < 0 or dialog.entity.bot == True or dialog.id == 777000:
                 continue
 
-            private_chat_id = await get_chat_id(dialog.id, sender.id, phone_number)
+            private_chat_id = await get_chat_id(dialog.id, sender.id, client)
             if private_chat_id in chat_ids:
                 print(f"Chat {dialog.name} is already sold")
                 continue
@@ -118,7 +117,7 @@ async def login():
                 break
 
             print(f"{dialog.name}")
-            word_count = await count_words(dialog.id, phone_number)
+            word_count = await count_words(dialog.id, client)
             res[(dialog.id, dialog.name)] = word_count
     except Exception as e:
         print(f"Error in get_dialogs(): {str(e)}")
