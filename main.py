@@ -36,7 +36,7 @@ async def check_session_expiry():
 
             if (
                 user_clients[phone_number].get_logged_in() == True
-                and await user_clients[phone_number].get_client().get_me() is None
+                and await user_clients[phone_number].get_client().is_user_authorized() == False
             ):
                 print(f"{phone_number} manually logged out")
                 del user_clients[phone_number]

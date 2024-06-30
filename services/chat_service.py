@@ -3,7 +3,7 @@ from models import User, Chat, ChatStatus
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 
-async def create_chat(chat_id, chat_name, words_number, sender_id, sender_name, chat_users):
+async def create_chat(chat_id, chat_name, words_number, sender_id, chat_users, teleg_id):
     session = Session()
     status = 0
     try:
@@ -17,7 +17,7 @@ async def create_chat(chat_id, chat_name, words_number, sender_id, sender_name, 
             words=words_number,
             status=ChatStatus.pending,
             lead_id=sender_id,
-            lead_name=sender_name
+            telegram_id=teleg_id
         )
 
         lead = session.query(User).filter(User.id == sender_id).one()

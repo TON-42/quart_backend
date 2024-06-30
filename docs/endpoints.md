@@ -55,21 +55,31 @@
   - **200 OK**: Returns user data including profile and chat information.
     ```json
     {
-      "id": 1,
-      "name": "John Doe",
-      "has_profile": true,
-      "words": [],
+      "auth_status": "default",
       "chats": [
-        {
-          "id": 1,
-          "name": "Chat with Team",
-          "words": 120,
-          "status": "active",
-          "lead_id": 1,
-          "agreed_users": [2, 3],
-          "users": [1, 2, 3]
-        }
-      ]
+          {
+              "agreed_users": [
+                  843373640
+              ],
+              "id": "122493869_843373640",
+              "lead": {
+                  "id": 843373640,
+                  "name": "dantol"
+              },
+              "name": "stefano",
+              "status": "pending",
+              "users": [
+                  122493869,
+                  843373640
+              ],
+              "words": 2005
+          }
+      ],
+      "has_profile": true,
+      "id": 843373640,
+      "name": "dantol",
+      "registration_date": "Sat, 29 Jun 2024 20:49:31 GMT",
+      "words": 0
     }
     ```
   - **400 Bad Request**: Returned if `userId` is missing from the request.
