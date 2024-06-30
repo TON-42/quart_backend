@@ -69,7 +69,7 @@ async def get_user():
                         "lead": {
                             "id": chat.lead.id,
                             "name": chat.lead.name
-                        } if chat.lead else None
+                        } if chat.lead else None,
                         "agreed_users": [
                             agreed_user.id for agreed_user in chat.agreed_users
                         ],
