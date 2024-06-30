@@ -3,6 +3,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import IntegrityError
 from models import User, Chat, agreed_users_chats, users_chats
+from models import Session as MySession
 from db import Session
 from shared import user_clients
 import requests
@@ -85,21 +86,75 @@ async def get_chats():
 
 @debug_routes.route("/get-sessions", methods=["GET"])
 async def get_sessions():
-    print(len(user_clients))
     try:
-        sessions = []
+        # Create a session
+        session = Session()
+        
+        # Query all chats
+        sessions = session.query(MySession).all()
 
-        for phone_number, client_wrapper in user_clients.items():
-            session_info = {
-                "phone_number": phone_number,
-                "user_id": client_wrapper.get_id(),
-                "created_at": client_wrapper.get_creation_time().isoformat()
+        # Close the session
+        session.close()
+        
+        sessions_json = [
+            {
+                "id": session.id,
+                "phone_number": session.phone_number,
+                "user_id": session.user_id,   
             }
-            sessions.append(session_info)
-
-        return jsonify(sessions), 200
+            for session in sessions
+        ]
+        
+        return jsonify(sessions_json)
+    
     except Exception as e:
+        session.close()
         return jsonify({"error": str(e)}), 500
+
+@debug_routes.route("/delete-session", methods=["POST"])
+async def delete_session():
+    data = await request.get_json()
+
+    phone_number = data.get("phone_number")
+    if phone_number is None:
+        return jsonify({"error": "phone_number is missing"}), 400
+    try:
+        # Create a session
+        session = Session()
+        
+        try:
+            # Query the user by ID
+            found_session = (
+                session.query(MySession)
+                .filter(MySession.phone_number == phone_number)
+                .first()
+            )
+            
+            # Delete the session
+            session.delete(found_session)
+            session.commit()
+            
+            response = {"message": f"Session has been deleted."}
+            status_code = 200
+
+        except NoResultFound:
+            response = {"error": f"No session found."}
+            status_code = 404
+
+        except IntegrityError as e:
+            session.rollback()
+            response = {"error": f"Integrity error occurred: {str(e)}"}
+            status_code = 500
+
+    except Exception as e:
+        session.rollback()
+        response = {"error": f"An error occurred: {str(e)}"}
+        status_code = 500
+
+    finally:
+        session.close()
+        
+    return jsonify(response), status_code
 
 @debug_routes.route("/delete-user", methods=["GET"])
 async def delete_user():

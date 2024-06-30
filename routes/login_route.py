@@ -11,6 +11,13 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 from utils import get_chat_id, count_words
 from services.user_service import get_user_chats
+from services.session_service import create_session, session_exists, delete_session
+from telethon.sessions import StringSession
+from telethon.sync import TelegramClient
+import os
+
+API_ID = os.getenv("API_ID")
+API_HASH = os.getenv("API_HASH")
 
 login_route = Blueprint('login_route', __name__)
 
@@ -28,16 +35,30 @@ async def login():
     
     print(f"{phone_number} is trying to login with: {auth_code}")
 
-    if phone_number in user_clients:
-        if await user_clients[phone_number].get_client().is_user_authorized() == True:
-            print(f"{phone_number} is already logged in")
-            return jsonify({"message": "user is already logged in"}), 409
-    else:
+    saved_client = await session_exists(phone_number)
+    
+    if saved_client is None:
         print(f"{phone_number} session does not exist")
         return jsonify({"message": "session does not exist"}), 500
+    
+    client = TelegramClient(StringSession(saved_client.id), API_ID, API_HASH)
 
+    # TODO: separate func in utils
     try:
-        await user_clients[phone_number].get_client().sign_in(phone_number, auth_code)
+        await client.connect()
+    except Exception as e:
+        print(f"Error in connect(): {str(e)}")
+        # TODO: handle return False from delete session
+        # TODO: should we really delete a session?
+        await delete_session(phone_number)
+        return jsonify({"error": str(e)}), 500
+    
+    if await client.is_user_authorized() == True:
+        print(f"{phone_number} is already logged in")
+        return jsonify({"message": "user is already logged in"}), 409
+    
+    try:
+        await client.sign_in(phone_number, auth_code)
     except SessionPasswordNeededError:
         print("two-steps verification is active")
         return jsonify({"error": "two-steps verification is active"}), 401
@@ -59,13 +80,11 @@ async def login():
         return jsonify({"error": f"{exception_type}: {str(e)}"}), 500
 
     print(f"{phone_number} is logged in")
-    
+
     sender = None
 
-    if await user_clients[phone_number].get_client().is_user_authorized() == True:
-        sender = await user_clients[phone_number].get_client().get_me()
-        user_clients[phone_number].set_id(sender.id)
-        user_clients[phone_number].set_logged_in(True)
+    if await client.is_user_authorized() == True:
+        sender = await client.get_me()
     else:
         print(f"{phone_number} manually logged out")
         return jsonify({"message": "manually logged out"}), 500
@@ -83,7 +102,7 @@ async def login():
     res = defaultdict(int)
 
     try:
-        dialogs = await user_clients[phone_number].get_client().get_dialogs()
+        dialogs = await client.get_dialogs()
         for dialog in dialogs:
             if dialog.id < 0 or dialog.entity.bot == True or dialog.id == 777000:
                 continue
@@ -129,27 +148,32 @@ async def send_code():
         user_id = data.get("user_id")
         if user_id is None:
             print(f"{phone_number} entered from browser")
-
-        if phone_number in user_clients:
-            if user_clients[phone_number].get_logged_in() == True and await user_clients[phone_number].get_client().get_me() is not None:
-                print(f"{phone_number} is already logged in")
-                return jsonify({"message": "user is already logged in"}), 409
-            # TODO: here we delete session to send code again but this could lead to spam
-            del user_clients[phone_number]
-
-        print(f"sending auth code to {phone_number}")
-
-        if phone_number not in user_clients:
-            user_clients[phone_number] = ClientWrapper(phone_number, Config.API_ID, Config.API_HASH)
-            try:
-                await user_clients[phone_number].get_client().connect()
-            except Exception as e:
-                print(f"Error in connect(): {str(e)}")
-                del user_clients[phone_number]
-                return jsonify({"error": str(e)}), 500
+        
+        # if session exists but not logged in => deletes the session
+        # TODO: check how long ago we send previous code
+        client = None
+        saved_client = await session_exists(phone_number)
+        
+        if saved_client is None:
+            client = TelegramClient(StringSession(), API_ID, API_HASH)
+        
+        if saved_client is not None:
+            client = TelegramClient(StringSession(saved_client.id), API_ID, API_HASH)
 
         try:
-            await user_clients[phone_number].get_client().send_code_request(phone_number)
+            await client.connect()
+        except Exception as e:
+            print(f"Error in connect(): {str(e)}")
+            # TODO: handle return False from delete session
+            await delete_session(phone_number)
+            return jsonify({"error": str(e)}), 500
+
+        if await client.is_user_authorized() == True:
+            print(f"{phone_number} is already logged in")
+            return jsonify({"message": "user is already logged in"}), 409
+        
+        try:
+            await client.send_code_request(phone_number)
         except PhoneNumberBannedError as e:
             print(f"The used phone number has been banned from Telegram: {str(e)}")
             return jsonify({"error": str(e)}), 403
@@ -161,11 +185,18 @@ async def send_code():
             return jsonify({"error": str(e)}), 404
         except AuthRestartError as e:
             print(f"auth restart error: {str(e)}")
-            await user_clients[phone_number].get_client().send_code_request(phone_number)
+            await client.send_code_request(phone_number)
         except Exception as e:
             print(f"Error in send_code(): {str(e)}")
             return jsonify({"error": str(e)}), 500
         
+        print(f"sending auth code to {phone_number}")
+
+        if saved_client is None:
+            status = await create_session(client, phone_number)
+            if status == -1:
+                return jsonify({"message": "error creating session"}), 500
+
         if user_id is not None:
             status = await set_auth_status(user_id, "auth_code")
             if status == 1:
