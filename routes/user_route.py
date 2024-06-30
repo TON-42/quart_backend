@@ -34,7 +34,7 @@ async def get_user():
             
             user = (
                 session.query(User)
-                .options(joinedload(User.chats).joinedload(Chat.users))
+                .options(joinedload(User.chats).joinedload(Chat.users).joinedload(Chat.lead))
                 .filter(User.id == user_id)
                 .first()
             )
@@ -66,8 +66,10 @@ async def get_user():
                         "name": chat.name,
                         "words": chat.words,
                         "status": chat.status.name,
-                        "lead_id": chat.lead_id,
-                        "lead_name": chat.lead_name,
+                        "lead": {
+                            "id": chat.lead.id,
+                            "name": chat.lead.name
+                        } if chat.lead else None
                         "agreed_users": [
                             agreed_user.id for agreed_user in chat.agreed_users
                         ],

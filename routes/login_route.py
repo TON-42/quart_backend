@@ -85,7 +85,7 @@ async def login():
     try:
         dialogs = await user_clients[phone_number].get_client().get_dialogs()
         for dialog in dialogs:
-            if dialog.id < 0 or dialog.entity.bot == True:
+            if dialog.id < 0 or dialog.entity.bot == True or dialog.id == 777000:
                 continue
 
             private_chat_id = await get_chat_id(dialog.id, sender.id, phone_number)
