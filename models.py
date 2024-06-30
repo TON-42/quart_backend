@@ -87,6 +87,7 @@ class Session(Base):
     id = Column(Text, primary_key=True)
     phone_number = Column(String(100), nullable=False)
     user_id = Column(String(100), nullable=True)
+    phone_code_hash = Column(Text, nullable=True)
     creation_date = Column(DateTime, default=datetime.utcnow, nullable=True)
     send_code_date = Column(DateTime, default=datetime.utcnow, nullable=True)
 

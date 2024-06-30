@@ -173,7 +173,8 @@ async def send_code():
             return jsonify({"message": "user is already logged in"}), 409
         
         try:
-            await client.send_code_request(phone_number)
+            result = await client.send_code_request(phone_number)
+            phone_code_hash = result.phone_code_hash
         except PhoneNumberBannedError as e:
             print(f"The used phone number has been banned from Telegram: {str(e)}")
             return jsonify({"error": str(e)}), 403
@@ -193,7 +194,7 @@ async def send_code():
         print(f"sending auth code to {phone_number}")
 
         if saved_client is None:
-            status = await create_session(client, phone_number)
+            status = await create_session(client, phone_number, phone_code_hash)
             if status == -1:
                 return jsonify({"message": "error creating session"}), 500
 
