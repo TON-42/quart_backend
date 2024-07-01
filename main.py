@@ -41,7 +41,7 @@ async def check_session_expiry():
 
         for my_session in all_sessions:
             time_difference = datetime.now() - my_session.creation_date
-            if time_difference >= timedelta(minutes=5):
+            if time_difference >= timedelta(minutes=7):
                 print(f"Session for {my_session.phone_number} has expired.")
                 try:
                     client = TelegramClient(StringSession(my_session.id), API_ID, API_HASH)
@@ -53,9 +53,10 @@ async def check_session_expiry():
                 await delete_session(my_session.phone_number)
             else:
                 print(f"Session for: {my_session.phone_number} is active")
-
+        
+        session.close()
         # Wait for 5 minute before checking again
-        await asyncio.sleep(100)
+        await asyncio.sleep(300)
 
 
 @app.before_serving
