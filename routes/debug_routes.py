@@ -111,7 +111,7 @@ async def get_sessions():
         return jsonify({"error": str(e)}), 500
 
 @debug_routes.route("/delete-session", methods=["POST"])
-async def delete_session():
+async def delete_one_session():
     data = await request.get_json()
 
     phone_number = data.get("phone_number")
