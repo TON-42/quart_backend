@@ -60,12 +60,13 @@ async def delete_session(number):
         session.close()
         return False
 
-async def set_session_is_logged(number):
+async def set_session_is_logged_and_user_id(number, sender_id):
     session = S()
     exit_code = 0
     try:
         found_session = session.query(Session).filter(Session.phone_number == number).one()
         found_session.is_logged = True
+        found_session.user_id = sender_id
         session.commit()
         session.close()
         return True
@@ -74,5 +75,22 @@ async def set_session_is_logged(number):
         return False
     except Exception as e:
         print(f"Error setting is logged in session: {str(e)}")
+        session.close()
+        return False
+
+async def set_session_chats(number, all_chats):
+    session = S()
+    exit_code = 0
+    try:
+        found_session = session.query(Session).filter(Session.phone_number == number).one()
+        found_session.chats = all_chats
+        session.commit()
+        session.close()
+        return True
+    except NoResultFound:
+        session.close()
+        return False
+    except Exception as e:
+        print(f"Error saving chats in session: {str(e)}")
         session.close()
         return False

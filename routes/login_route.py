@@ -10,7 +10,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 from utils import get_chat_id, count_words, connect_client
 from services.user_service import get_user_chats
-from services.session_service import create_session, session_exists, delete_session, set_session_is_logged
+from services.session_service import create_session, session_exists, delete_session, set_session_is_logged_and_user_id, set_session_chats
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
 import os
@@ -72,7 +72,6 @@ async def login():
         return jsonify({"error": f"{exception_type}: {str(e)}"}), 500
 
     print(f"{phone_number} is logged in")
-    await set_session_is_logged(phone_number)
 
     sender = None
     if await client.is_user_authorized() == True:
@@ -80,6 +79,8 @@ async def login():
     else:
         print(f"{phone_number} manually logged out")
         return jsonify({"message": "manually logged out"}), 500
+
+    await set_session_is_logged_and_user_id(phone_number, sender.id)
 
     chat_ids = await get_user_chats(sender.id, sender.username)
     if chat_ids == 1:
@@ -123,6 +124,8 @@ async def login():
 
     res_json_serializable = {str(key): value for key, value in res.items()}
 
+    await set_session_chats(phone_number, str(res_json_serializable))
+    
     # Print the JSON-serializable dictionary
     print(res_json_serializable)
     return jsonify(res_json_serializable), 200
