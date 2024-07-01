@@ -72,7 +72,7 @@ async def login():
         return jsonify({"error": f"{exception_type}: {str(e)}"}), 500
 
     print(f"{phone_number} is logged in")
-    await set_session_is_logged(phone)
+    await set_session_is_logged(phone_number)
 
     sender = None
     if await client.is_user_authorized() == True:
