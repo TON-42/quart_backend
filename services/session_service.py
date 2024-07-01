@@ -43,9 +43,11 @@ async def delete_session(number):
     session = S()
     exit_code = 0
     try:
-        found_session = session.query(Session).filter(Session.phone_number == number).one()
+        found_session = session.query(Session).filter(Session.phone_number == number).all()
 
-        session.delete(found_session)
+        for one_session in found_session:
+            session.delete(one_session)
+    
         session.commit()
         session.close()
         return True
@@ -54,7 +56,7 @@ async def delete_session(number):
         session.close()
         return False
     except Exception as e:
-        print(f"Error while looking for a session: {str(e)}")
+        print(f"Error while deleting for a session: {str(e)}")
         session.close()
         return False
 
@@ -71,6 +73,6 @@ async def set_session_is_logged(number):
         session.close()
         return False
     except Exception as e:
-        print(f"Error while looking for a session: {str(e)}")
+        print(f"Error setting is logged in session: {str(e)}")
         session.close()
         return False
