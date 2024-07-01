@@ -8,7 +8,7 @@ from services.user_service import set_has_profile, set_auth_status
 from models import User, Chat, ChatStatus
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
-from utils import get_chat_id, count_words
+from utils import get_chat_id, count_words, connect_client
 from services.user_service import get_user_chats
 from services.session_service import create_session, session_exists, delete_session
 from telethon.sessions import StringSession
@@ -38,19 +38,12 @@ async def login():
     
     if saved_client is None:
         print(f"{phone_number} session does not exist")
-        return jsonify({"message": "session does not exist"}), 500
+        return jsonify({"error": "session does not exist"}), 500
     
     client = TelegramClient(StringSession(saved_client.id), API_ID, API_HASH)
 
-    # TODO: separate func in utils
-    try:
-        await client.connect()
-    except Exception as e:
-        print(f"Error in connect(): {str(e)}")
-        # TODO: handle return False from delete session
-        # TODO: should we really delete a session?
-        await delete_session(phone_number)
-        return jsonify({"error": str(e)}), 500
+    if await connect_client(client, phone_number) == -1:
+        return jsonify({"error": "error in connecting to Telegram"}), 500
     
     if await client.is_user_authorized() == True:
         print(f"{phone_number} is already logged in")
@@ -159,14 +152,9 @@ async def send_code():
         if saved_client is not None:
             client = TelegramClient(StringSession(saved_client.id), API_ID, API_HASH)
 
-        try:
-            await client.connect()
-        except Exception as e:
-            print(f"Error in connect(): {str(e)}")
-            # TODO: handle return False from delete session
-            await delete_session(phone_number)
-            return jsonify({"error": str(e)}), 500
-
+        if await connect_client(client, phone_number) == -1:
+            return jsonify({"error": "error in connecting to Telegram"}), 500
+    
         if await client.is_user_authorized() == True:
             print(f"{phone_number} is already logged in")
             return jsonify({"message": "user is already logged in"}), 409

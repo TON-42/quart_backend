@@ -1,3 +1,5 @@
+from services.session_service import create_session, session_exists, delete_session
+
 async def get_chat_id(dialog_id, sender_id, client):
     chat_users = []
     users = await client.get_participants(dialog_id)
@@ -16,3 +18,13 @@ async def count_words(dialog_id, client):
             if word_count > 2000:
                 break
     return word_count
+
+async def connect_client(client, phone_number):
+    try:
+        await client.connect()
+    except Exception as e:
+        print(f"Error in connect(): {str(e)}")
+        # TODO: should we really delete a session?
+        await delete_session(phone_number)
+        return -1
+    return 1
