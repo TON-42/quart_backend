@@ -55,6 +55,8 @@ async def check_session_expiry():
                             await client.log_out()
                     except Exception as e:
                         print(f"Error in log_out(): {str(e)}")
+                    finally:
+                        await client.disconnect()
                 await delete_session(my_session.phone_number)
             else:
                 print(f"Session for: {my_session.phone_number} is active")
