@@ -20,6 +20,10 @@ from models import Session
 from services.session_service import create_session, session_exists, delete_session
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
+import os
+
+API_ID = os.getenv("API_ID")
+API_HASH = os.getenv("API_HASH")
 
 commands = "📝 /start - Start the bot\n"
 
@@ -112,6 +116,7 @@ async def start(message):
     markup.add(InlineKeyboardButton("Let's go", web_app=webUrl))
     markup.add(InlineKeyboardButton("Follow us", url="https://x.com/chatpay_app"))
 
+    print(f"chat-id: {message.chat.id}")
     await bot.send_photo(message.chat.id, image_url, caption, reply_markup=markup)
 
 

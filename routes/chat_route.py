@@ -7,6 +7,7 @@ from services.chat_service import create_chat, add_chat_to_users
 from services.session_service import create_session, session_exists, delete_session
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
+from utils import get_chat_id, count_words, connect_client
 import os
 
 API_ID = os.getenv("API_ID")
@@ -45,16 +46,9 @@ async def send_message():
     
     client = TelegramClient(StringSession(saved_client.id), API_ID, API_HASH)
 
-    # TODO: separate func in utils
-    try:
-        await client.connect()
-    except Exception as e:
-        print(f"Error in connect(): {str(e)}")
-        # TODO: handle return False from delete session
-        # TODO: should we really delete a session?
-        await delete_session(phone_number)
-        return jsonify({"error": str(e)}), 500
-
+    if await connect_client(client, phone_number) == -1:
+        return jsonify({"error": "error in connecting to Telegram"}), 500
+    
     if await client.is_user_authorized() == False:
         print("Session is expired or user manually logged out")
         return jsonify("Session is expired or user manually logged out"), 500
