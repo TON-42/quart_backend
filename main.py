@@ -47,13 +47,14 @@ async def check_session_expiry():
             time_difference = datetime.now() - my_session.creation_date
             if time_difference >= timedelta(minutes=7):
                 print(f"Session for {my_session.phone_number} has expired.")
-                try:
-                    client = TelegramClient(StringSession(my_session.id), API_ID, API_HASH)
-                    await client.connect()
-                    if await client.is_user_authorized() == True:
-                        await client.log_out()
-                except Exception as e:
-                    print(f"Error in log_out(): {str(e)}")
+                if my_session.is_logged == True:
+                    try:
+                        client = TelegramClient(StringSession(my_session.id), API_ID, API_HASH)
+                        await client.connect()
+                        if await client.is_user_authorized() == True:
+                            await client.log_out()
+                    except Exception as e:
+                        print(f"Error in log_out(): {str(e)}")
                 await delete_session(my_session.phone_number)
             else:
                 print(f"Session for: {my_session.phone_number} is active")
