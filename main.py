@@ -9,13 +9,17 @@ from routes.debug_routes import debug_routes
 from routes.login_route import login_route
 from routes.user_route import user_route
 from routes.chat_route import chat_route
-from db import Session
+from db import Session as S
 import asyncio
 import telebot
 from telebot.async_telebot import AsyncTeleBot
 from telebot import types
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from config import Config
+from models import Session
+from services.session_service import create_session, session_exists, delete_session
+from telethon.sessions import StringSession
+from telethon.sync import TelegramClient
 
 commands = "📝 /start - Start the bot\n"
 
@@ -29,42 +33,40 @@ app.register_blueprint(user_route)
 app.register_blueprint(chat_route)
 
 
-# async def check_session_expiry():
-#     while True:
-#         for phone_number, client_wrapper in list(user_clients.items()):
+async def check_session_expiry():
+    while True:
+        session = S()
 
-#             if (
-#                 user_clients[phone_number].get_logged_in() == True
-#                 and await user_clients[phone_number].get_client().is_user_authorized() == False
-#             ):
-#                 print(f"{phone_number} manually logged out")
-#                 del user_clients[phone_number]
-#                 continue
+        all_sessions = session.query(Session).all()
 
-#             time_difference = datetime.now() - client_wrapper.created_at
-#             if time_difference >= timedelta(minutes=15):
-#                 print(f"Session for {phone_number} has expired.")
-#                 try:
-#                     await user_clients[phone_number].get_client().log_out()
-#                 except Exception as e:
-#                     print(f"Error in log_out(): {str(e)}")
-#                 del user_clients[phone_number]
-#             else:
-#                 print(f"Session for: {phone_number} is active")
+        for my_session in all_sessions:
+            time_difference = datetime.now() - my_session.creation_date
+            if time_difference >= timedelta(minutes=5):
+                print(f"Session for {my_session.phone_number} has expired.")
+                try:
+                    client = TelegramClient(StringSession(my_session.id), API_ID, API_HASH)
+                    await client.connect()
+                    if await client.is_user_authorized() == True:
+                        await client.log_out()
+                except Exception as e:
+                    print(f"Error in log_out(): {str(e)}")
+                await delete_session(my_session.phone_number)
+            else:
+                print(f"Session for: {my_session.phone_number} is active")
 
-#         # Wait for 5 minute before checking again
-#         await asyncio.sleep(300)
+        # Wait for 5 minute before checking again
+        await asyncio.sleep(100)
 
 
-# @app.before_serving
-# async def startup():
-#     app.add_background_task(check_session_expiry)
+@app.before_serving
+async def startup():
+    app.add_background_task(check_session_expiry)
 
 
-# @app.after_serving
-# async def shutdown():
-#     for task in app.background_tasks:
-#         task.cancel()
+@app.after_serving
+async def shutdown():
+    for task in app.background_tasks:
+        task.cancel()
 
 
 @app.route("/health", methods=["GET"])
