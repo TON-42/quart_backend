@@ -12,6 +12,8 @@ async def create_user(user_id, username, profile):
         existing_user = session.query(User).filter(User.id == user_id).one()
         # print("User already exists")
     except NoResultFound:
+        if username is None:
+            username = "Unknown"
         new_user = User(
             id=user_id, name=username, has_profile=profile, words=0, auth_status="default"
         )
