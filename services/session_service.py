@@ -29,6 +29,7 @@ async def session_exists(number):
     exit_code = 0
     try:
         found_session = session.query(Session).filter(Session.phone_number == number).one()
+        session.close()
         return found_session
     except NoResultFound:
         session.close()
@@ -50,6 +51,23 @@ async def delete_session(number):
         return True
     except NoResultFound:
         print("Session in delete_session is not found")
+        session.close()
+        return False
+    except Exception as e:
+        print(f"Error while looking for a session: {str(e)}")
+        session.close()
+        return False
+
+async def set_session_is_logged(number):
+    session = S()
+    exit_code = 0
+    try:
+        found_session = session.query(Session).filter(Session.phone_number == number).one()
+        found_session.is_logged = True
+        session.commit()
+        session.close()
+        return True
+    except NoResultFound:
         session.close()
         return False
     except Exception as e:

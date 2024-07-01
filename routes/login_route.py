@@ -10,7 +10,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 from utils import get_chat_id, count_words, connect_client
 from services.user_service import get_user_chats
-from services.session_service import create_session, session_exists, delete_session
+from services.session_service import create_session, session_exists, delete_session, set_session_is_logged
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
 import os
@@ -72,9 +72,9 @@ async def login():
         return jsonify({"error": f"{exception_type}: {str(e)}"}), 500
 
     print(f"{phone_number} is logged in")
+    await set_session_is_logged(phone)
 
     sender = None
-
     if await client.is_user_authorized() == True:
         sender = await client.get_me()
     else:
