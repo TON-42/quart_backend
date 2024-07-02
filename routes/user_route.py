@@ -46,7 +46,7 @@ async def get_user():
             
             # if session does not exist(expired, never logged in) -> auth_status becomes default
             try:
-                user_session = session.query(MySession).filter(MySession.user_id == user_id).first()
+                user_session = session.query(MySession).filter(MySession.user_id == str(user_id)).first()
             except NoResultFound:
                 if user.auth_status != "default":
                     user.auth_status = "default"
