@@ -29,70 +29,70 @@ async def chat_sale(users):
             continue
         print(f"sending to {user.name}")
         try:
-            await bot.send_message(user.id, f"**Congratulations**! 🎉\nEvery user has agreed to sell the chat\nYour $WORD is on the way!\nJoin the community on Discord and X and let your friends know about ChatPay 💬 = 💰", reply_markup=markup, parse_mode='MarkdownV2')
+            await bot.send_message(user.id, f"Congratulations! 🎉\nEvery user has agreed to sell the chat\nYour $WORD is on the way!\nJoin the community on Discord and X and let your friends know about ChatPay 💬 = 💰", reply_markup=markup)
         except Exception:
             print(f"error on {user.id}")
             continue
 
-@bot.message_handler(commands=["faq"])
-async def faq(message):
-    caption = """
-    ## General
+# @bot.message_handler(commands=["faq"])
+# async def faq(message):
+#     caption = """
+#     ## General
 
-    **What is ChatPay?**
-    ChatPay is a platform that allows users to monetize their Telegram chats by bundling them into AI training datasets. Users can earn tokens by choosing which chats to submit and receiving payouts once their data is used.
+#     **What is ChatPay?**
+#     ChatPay is a platform that allows users to monetize their Telegram chats by bundling them into AI training datasets. Users can earn tokens by choosing which chats to submit and receiving payouts once their data is used.
 
-    **How does ChatPay work?**
-    Users select the Telegram chats they want to monetize. If all chat group members consent, the chats are anonymized, tagged, and bundled into datasets. These datasets are then sold to AI and chatbot model vendors, and users receive a share of the revenue.
+#     **How does ChatPay work?**
+#     Users select the Telegram chats they want to monetize. If all chat group members consent, the chats are anonymized, tagged, and bundled into datasets. These datasets are then sold to AI and chatbot model vendors, and users receive a share of the revenue.
 
-    ## Data and Privacy
+#     ## Data and Privacy
 
-    **What type of data does ChatPay collect?**
-    Initially, ChatPay collects text data from Telegram chats. In the future, it will also include audio, video, and photos.
+#     **What type of data does ChatPay collect?**
+#     Initially, ChatPay collects text data from Telegram chats. In the future, it will also include audio, video, and photos.
 
-    **How is my data protected?**
-    All data is anonymized by stripping it of any identifiers before it is tagged and bundled into datasets. This ensures that your personal information remains private.
+#     **How is my data protected?**
+#     All data is anonymized by stripping it of any identifiers before it is tagged and bundled into datasets. This ensures that your personal information remains private.
 
-    **Do all chat members need to give consent?**
-    Yes, chats are only monetized if all group members give their full consent.
+#     **Do all chat members need to give consent?**
+#     Yes, chats are only monetized if all group members give their full consent.
 
-    ## Earnings and Payouts
+#     ## Earnings and Payouts
 
-    **How do I earn money with ChatPay?**
-    You earn money by submitting eligible chats for monetization. Once the datasets are sold, you receive a share of the revenue. You can view your estimated payout per chat directly in the Telegram mini-app.
+#     **How do I earn money with ChatPay?**
+#     You earn money by submitting eligible chats for monetization. Once the datasets are sold, you receive a share of the revenue. You can view your estimated payout per chat directly in the Telegram mini-app.
 
-    **How will I receive my payouts?**
-    Payouts will be made using a utility token, $WORD, which will be available soon. Users can receive higher payouts by staking $WORD tokens, undergoing user verification, or becoming active community members.
+#     **How will I receive my payouts?**
+#     Payouts will be made using a utility token, $WORD, which will be available soon. Users can receive higher payouts by staking $WORD tokens, undergoing user verification, or becoming active community members.
 
-    ## Tokens and Staking
+#     ## Tokens and Staking
 
-    **What is the $WORD token?**
-    The $WORD token is a utility token that will be used for payouts to users. It will also be part of the token allocation for the team, early supporters, and testers.
+#     **What is the $WORD token?**
+#     The $WORD token is a utility token that will be used for payouts to users. It will also be part of the token allocation for the team, early supporters, and testers.
 
-    **How can I earn higher payouts?**
-    You can earn higher payouts by staking $WORD tokens, undergoing user verification, or becoming an active member of the ChatPay community.
+#     **How can I earn higher payouts?**
+#     You can earn higher payouts by staking $WORD tokens, undergoing user verification, or becoming an active member of the ChatPay community.
 
-    ## Getting Started
+#     ## Getting Started
 
-    **How do I start using ChatPay?**
-    To get started, download the Telegram mini-app, choose the chats you want to monetize, and follow the prompts to submit your data. Make sure all chat members give their consent for monetization.
+#     **How do I start using ChatPay?**
+#     To get started, download the Telegram mini-app, choose the chats you want to monetize, and follow the prompts to submit your data. Make sure all chat members give their consent for monetization.
 
-    **Is there a roadmap for ChatPay?**
-    Yes, our roadmap includes the launch of the $WORD token, token allocation for the team and early supporters, and the addition of new data types such as audio, video, and photos.
+#     **Is there a roadmap for ChatPay?**
+#     Yes, our roadmap includes the launch of the $WORD token, token allocation for the team and early supporters, and the addition of new data types such as audio, video, and photos.
 
-    ## Support and Community
+#     ## Support and Community
 
-    **How can I get support if I have issues or questions?**
-    For support, you can contact our team directly through the Telegram mini-app or visit our website for more information.
+#     **How can I get support if I have issues or questions?**
+#     For support, you can contact our team directly through the Telegram mini-app or visit our website for more information.
 
-    **How can I become an active member of the ChatPay community?**
-    You can join our community by participating in discussions, providing feedback, and staying active in our Telegram groups and other social media channels.
+#     **How can I become an active member of the ChatPay community?**
+#     You can join our community by participating in discussions, providing feedback, and staying active in our Telegram groups and other social media channels.
 
-    **Where can I find more information about ChatPay?**
-    More information can be found on our website, within the Telegram mini-app, or by contacting our support team.
-    """
+#     **Where can I find more information about ChatPay?**
+#     More information can be found on our website, within the Telegram mini-app, or by contacting our support team.
+#     """
 
-    await bot.send_message(message.chat.id, caption, parse_mode='MarkdownV2')
+#     await bot.send_message(message.chat.id, caption, parse_mode='MarkdownV2')
 
 @bot.message_handler(commands=["start"])
 async def start(message):
