@@ -11,11 +11,6 @@ from routes.user_route import user_route
 from routes.chat_route import chat_route
 from db import Session as S
 import asyncio
-import telebot
-from telebot.async_telebot import AsyncTeleBot
-from telebot import types
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
-from config import Config
 from models import Session
 from services.session_service import create_session, session_exists, delete_session
 from telethon.sessions import StringSession
@@ -25,9 +20,6 @@ import os
 API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")
 
-commands = "📝 /start - Start the bot\n"
-
-bot = AsyncTeleBot(Config.TOKEN)
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
@@ -35,7 +27,6 @@ app.register_blueprint(debug_routes)
 app.register_blueprint(login_route)
 app.register_blueprint(user_route)
 app.register_blueprint(chat_route)
-
 
 async def check_session_expiry():
     while True:
@@ -65,28 +56,23 @@ async def check_session_expiry():
         # Wait for 5 minute before checking again
         await asyncio.sleep(300)
 
-
 @app.before_serving
 async def startup():
     app.add_background_task(check_session_expiry)
-
 
 @app.after_serving
 async def shutdown():
     for task in app.background_tasks:
         task.cancel()
 
-
 @app.route("/health", methods=["GET"])
 async def health():
     app.logger.info("Health check endpoint called")
     return "ok", 200
 
-
 @app.route("/hello", methods=["GET"])
 async def hello_world():
     return jsonify({"message": "Hello, World!"})
-
 
 @app.route("/webhook", methods=["POST"])
 async def webhook():
@@ -96,37 +82,6 @@ async def webhook():
         update = types.Update.de_json(data)
         await bot.process_new_updates([update])
     return "ok"
-
-
-@bot.message_handler(commands=["start"])
-async def start(message):
-    image_url = (
-        "https://magnumtravel-bucket.s3.amazonaws.com/static/images/bot-banner.png"
-    )
-    caption = (
-        "Welcome to ChatPay 💬\n\n"
-        "1️⃣ Enter your phone number (don't forget your country code!). 📱\n\n"
-        "2️⃣ Approve our terms & conditions. 📖\n\n"
-        "3️⃣ Choose the chats you want to sell based on our estimated reward. ✅\n\n"
-        "4️⃣ Send the consent approval to your chat partner. 📩\n\n"
-        "5️⃣ Hold on tight while your $WORD arrives. 💸\n\n\n"
-        "Empowering users one chat at the time! 💪"
-    )
-
-    markup = InlineKeyboardMarkup()
-    markup.row_width = 2
-    webUrl = WebAppInfo("https://new-vite-frontend.vercel.app/")
-    markup.add(InlineKeyboardButton("Let's go", web_app=webUrl))
-    markup.add(InlineKeyboardButton("Follow us", url="https://x.com/chatpay_app"))
-
-    print(f"chat-id: {message.chat.id}")
-    await bot.send_photo(message.chat.id, image_url, caption, reply_markup=markup)
-
-
-@bot.message_handler(content_types=["text"])
-async def message_reply(message):
-    await bot.send_message(message.chat.id, "List of avaliable commands:\n" + commands)
-
 
 if __name__ == "__main__":
     app.run(port=8080)
