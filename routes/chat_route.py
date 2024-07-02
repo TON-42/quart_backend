@@ -184,7 +184,7 @@ async def add_user_to_agreed():
             if len(chat.agreed_users) == len(chat.users):
                 chat.status = ChatStatus.sold
                 chat_status[chat_id] = "sold"
-                chat_sale(chat.users)
+                await chat_sale(chat.users)
             session.commit()
 
         session.close()

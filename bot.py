@@ -8,6 +8,10 @@ commands = "📝 /start - Start the bot\n"
 
 bot = AsyncTeleBot(Config.TOKEN)
 
+async def global_message(users, message):
+    for user in users:
+        await bot.send_message(user.id, message)
+
 async def chat_sale(users):
     for user in users:
         await bot.send_message(user.id, f"Congratulations! 🎉\nEvery user has agreed to sell the chat\nYour <b>$WORD</b> is on the way!")
