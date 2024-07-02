@@ -10,14 +10,26 @@ bot = AsyncTeleBot(Config.TOKEN)
 
 async def global_message(users, message):
     for user in users:
-        await bot.send_message(user.id, message)
+        if user.id < 100:
+            continue
+        print(f"sending to {user.name}")
+        try:
+            await bot.send_message(user.id, message)
+        except Exception:
+            print(f"error on {user.id}")
+            continue
 
 async def chat_sale(users):
     for user in users:
         if user.id < 100:
             continue
-        await bot.send_message(user.id, f"Congratulations! 🎉\nEvery user has agreed to sell the chat\nYour <b>$WORD</b> is on the way!")
-
+        print(f"sending to {user.name}")
+        try:
+            await bot.send_message(user.id, f"Congratulations! 🎉\nEvery user has agreed to sell the chat\nYour <b>$WORD</b> is on the way!")
+        except Exception:
+            print(f"error on {user.id}")
+            continue
+        
 @bot.message_handler(commands=["start"])
 async def start(message):
     image_url = (
