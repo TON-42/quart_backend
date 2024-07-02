@@ -2,7 +2,9 @@ from quart import Blueprint, jsonify, request
 from db import Session
 from sqlalchemy.orm import joinedload
 from models import User, Chat
+from models import Session as MySession
 from services.user_service import create_user
+from sqlalchemy.orm.exc import NoResultFound
 
 user_route = Blueprint('user_route', __name__)
 
@@ -41,14 +43,18 @@ async def get_user():
                 .filter(User.id == user_id)
                 .first()
             )
-
-            if user is None:
-                session.close()
-                return jsonify({"message": f"User with id {user_id} does not exist"}), 404
-
-            for chat in user.chats:
-                chat.agreed_users
             
+            # if session does not exist(expired, never logged in) -> auth_status becomes default
+            try:
+                user_session = session.query(MySession).filter(MySession.user_id == user_id).first()
+            except NoResultFound:
+                if user.auth_status != "default":
+                    user.auth_status = "default"
+                    session.commit()
+            except Exception as e:
+                session.close()
+                return jsonify({"error in looking for a session": str(e)}), 500
+
         except Exception as e:
             session.close()
             return jsonify({"error": str(e)}), 500
