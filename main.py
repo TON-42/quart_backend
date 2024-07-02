@@ -21,6 +21,7 @@ from services.session_service import create_session, session_exists, delete_sess
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
 import os
+from bot import bot
 
 API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")
