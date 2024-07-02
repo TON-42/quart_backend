@@ -99,7 +99,9 @@ async def get_sessions():
             {
                 "id": session.id,
                 "phone_number": session.phone_number,
-                "user_id": session.user_id,   
+                "user_id": session.user_id,  
+                "created_at": session.creation_date,
+                "chats": session.chats 
             }
             for session in sessions
         ]

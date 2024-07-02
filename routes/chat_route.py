@@ -8,6 +8,7 @@ from services.session_service import create_session, session_exists, delete_sess
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
 from utils import get_chat_id, count_words, connect_client
+from bot import chat_sale
 import os
 
 API_ID = os.getenv("API_ID")
@@ -183,6 +184,7 @@ async def add_user_to_agreed():
             if len(chat.agreed_users) == len(chat.users):
                 chat.status = ChatStatus.sold
                 chat_status[chat_id] = "sold"
+                chat_sale(chat.users)
             session.commit()
 
         session.close()
