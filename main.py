@@ -11,7 +11,11 @@ from routes.user_route import user_route
 from routes.chat_route import chat_route
 from db import Session as S
 import asyncio
+import telebot
+from telebot.async_telebot import AsyncTeleBot
 from telebot import types
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+from config import Config
 from models import Session
 from services.session_service import create_session, session_exists, delete_session
 from telethon.sessions import StringSession
