@@ -9,12 +9,32 @@ import requests
 import httpx
 import os
 from config import Config
+from bot import global_message
 
 debug_routes = Blueprint('debug_routes', __name__)
 
 API_USERNAME = os.getenv("API_USERNAME")
 API_PASSWORD = os.getenv("API_PASSWORD")
 
+
+@debug_routes.route("/send-global-message", methods=["POST"])
+async def send_global_message():
+    data = await request.get_json()
+
+    message = data.get("message")
+    if not message:
+        return jsonify({"error": "No message provided"}), 400
+    
+    try:
+        session = Session()
+        users = session.query(User).options(joinedload(User.chats)).all()
+        session.close()
+    except Exception as e:
+        session.close()
+        return jsonify({"error": str(e)}), 500
+
+    await global_message(users, message)
+    return "ok", 200
 
 @debug_routes.route("/get-users", methods=["GET"])
 async def get_users():
