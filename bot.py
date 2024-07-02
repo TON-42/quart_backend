@@ -14,6 +14,8 @@ async def global_message(users, message):
 
 async def chat_sale(users):
     for user in users:
+        if user.id < 100:
+            continue
         await bot.send_message(user.id, f"Congratulations! 🎉\nEvery user has agreed to sell the chat\nYour <b>$WORD</b> is on the way!")
 
 @bot.message_handler(commands=["start"])
