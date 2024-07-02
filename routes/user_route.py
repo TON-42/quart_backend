@@ -5,6 +5,13 @@ from models import User, Chat
 from models import Session as MySession
 from services.user_service import create_user
 from sqlalchemy.orm.exc import NoResultFound
+from utils import get_chat_id, count_words, connect_client
+from telethon.sessions import StringSession
+from telethon.sync import TelegramClient
+import os
+
+API_ID = os.getenv("API_ID")
+API_HASH = os.getenv("API_HASH")
 
 user_route = Blueprint('user_route', __name__)
 
@@ -45,10 +52,19 @@ async def get_user():
             )
             
             # if session does not exist(expired, never logged in) -> auth_status becomes default
+            is_logged_in = False
             try:
                 user_session = session.query(MySession).filter(MySession.user_id == str(user_id)).first()
             except NoResultFound:
-                if user.auth_status != "default":
+                if user_session.is_logged == True:
+                    # check if we are still logged in
+                    client = TelegramClient(StringSession(user_session.id), API_ID, API_HASH)
+                    if await connect_client(client, phone_number) == -1:
+                        # TODO: better to throw something
+                        return jsonify({"error": "error in connecting to Telegram"}), 500
+                    if await client.is_user_authorized() == True:
+                        is_logged_in = True
+                if is_logged_in == False and user.auth_status != "default":
                     user.auth_status = "default"
                     session.commit()
             except Exception as e:

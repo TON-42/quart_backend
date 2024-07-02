@@ -20,16 +20,22 @@ async def global_message(users, message):
             continue
 
 async def chat_sale(users):
+    markup = InlineKeyboardMarkup()
+    markup.row_width = 2
+    markup.add(InlineKeyboardButton("Discord", url="https://discord.com/channels/1249074503007600731/"))
+    markup.add(InlineKeyboardButton("X", url="https://x.com/chatpay_app"))
     for user in users:
         if user.id < 100:
             continue
         print(f"sending to {user.name}")
         try:
-            await bot.send_message(user.id, f"Congratulations! 🎉\nEvery user has agreed to sell the chat\nYour <b>$WORD</b> is on the way!")
+            await bot.send_message(user.id, f"Congratulations! 🎉\nEvery user has agreed to sell the chat\nYour $WORD is on the way!\nJoin the community on Discord and X and let your friends know about ChatPay 💬 = 💰", reply_markup=markup)
         except Exception:
             print(f"error on {user.id}")
             continue
-        
+# Both you and XXX agreed to sell the chat
+# Every user of the XXX chat agreed to sell the chat.
+# We saved your points on our database, $WORD coming soon, join the community[DISCORD] 
 @bot.message_handler(commands=["start"])
 async def start(message):
     image_url = (
