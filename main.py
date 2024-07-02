@@ -11,6 +11,7 @@ from routes.user_route import user_route
 from routes.chat_route import chat_route
 from db import Session as S
 import asyncio
+from telebot import types
 from models import Session
 from services.session_service import create_session, session_exists, delete_session
 from telethon.sessions import StringSession
