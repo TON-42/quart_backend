@@ -53,7 +53,7 @@ async def get_user():
                     session.commit()
             except Exception as e:
                 session.close()
-                print(f"error in looking for a session": {str(e)}"")
+                print(f"error in looking for a session: {str(e)}")
                 return jsonify({"error in looking for a session": str(e)}), 500
 
         except Exception as e:
