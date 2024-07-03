@@ -142,7 +142,7 @@ async def send_code():
         if phone_number is None:
             return jsonify({"error": "phone_number is missing"}), 400
         
-        user_id = data.get("user_id")
+        user_id = data.get("userId")
         if user_id is None:
             print(f"{phone_number} entered from browser")
         
