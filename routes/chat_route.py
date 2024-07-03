@@ -21,9 +21,11 @@ chat_route = Blueprint('chat_route', __name__)
 async def send_message():
     data = await request.get_json()
     
+    user_id = data.get("userId")
     phone_number = data.get("phone_number")
     if not phone_number:
-        return jsonify("No phone_number provided"), 400
+        if not user_id:
+            return jsonify("No phone_number and userId provided"), 400
     
     message = data.get("message")
     if not message:
@@ -38,16 +40,16 @@ async def send_message():
     if not selected_chats:
         return jsonify("No chats were send"), 400
 
-    print(f"received from front-end: {selected_chats}")
+    print(f"received: {phone_number}, {selected_chats}")
 
-    saved_client = await session_exists(phone_number, None)
+    saved_client = await session_exists(phone_number, user_id)
     if saved_client is None:
         print("Session does not exist")
         return jsonify("Session does not exist"), 500
     
     client = TelegramClient(StringSession(saved_client.id), API_ID, API_HASH)
 
-    if await connect_client(client, phone_number) == -1:
+    if await connect_client(client, phone_number, user_id) == -1:
         return jsonify({"error": "error in connecting to Telegram"}), 500
     
     if await client.is_user_authorized() == False:
@@ -118,7 +120,7 @@ async def send_message():
             print(f"Error in send_message(): {str(e)}")
             if await client.is_user_authorized() == True:
                 await client.log_out()
-            await delete_session(phone_number)
+            await delete_session(phone_number, user_id)
             return {"error": str(e)}, 500
     
     status = await set_auth_status(sender.id, "default")

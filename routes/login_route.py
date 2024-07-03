@@ -44,7 +44,7 @@ async def login():
     
     client = TelegramClient(StringSession(saved_client.id), API_ID, API_HASH)
 
-    if await connect_client(client, phone_number) == -1:
+    if await connect_client(client, phone_number, user_id) == -1:
         return jsonify({"error": "error in connecting to Telegram"}), 500
     
     if await client.is_user_authorized() == True:
@@ -157,7 +157,7 @@ async def send_code():
         if saved_client is not None:
             client = TelegramClient(StringSession(saved_client.id), API_ID, API_HASH)
 
-        if await connect_client(client, phone_number) == -1:
+        if await connect_client(client, phone_number, user_id) == -1:
             return jsonify({"error": "error in connecting to Telegram"}), 500
     
         if await client.is_user_authorized() == True:

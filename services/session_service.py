@@ -44,11 +44,14 @@ async def session_exists(number, userId):
         session.close()
         return None
 
-async def delete_session(number):
+async def delete_session(number, userId):
     session = S()
     exit_code = 0
     try:
-        found_session = session.query(Session).filter(Session.phone_number == number).all()
+        if number is None:
+            found_session = session.query(Session).filter(Session.user_id == userId).all()
+        else:
+            found_session = session.query(Session).filter(Session.phone_number == number).all()
 
         for one_session in found_session:
             session.delete(one_session)
