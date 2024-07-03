@@ -52,7 +52,7 @@ async def login():
         return jsonify({"message": "user is already logged in"}), 409
     
     try:
-        await client.sign_in(phone=phone_number, code=auth_code, phone_code_hash=saved_client.phone_code_hash)
+        await client.sign_in(phone=saved_client.phone_number, code=auth_code, phone_code_hash=saved_client.phone_code_hash)
     except SessionPasswordNeededError:
         print("two-steps verification is active")
         return jsonify({"error": "two-steps verification is active"}), 401
