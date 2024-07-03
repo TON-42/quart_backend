@@ -59,7 +59,7 @@ async def get_user():
                 if user_session.is_logged == True:
                     # check if we are still logged in
                     client = TelegramClient(StringSession(user_session.id), API_ID, API_HASH)
-                    if await connect_client(client, phone_number) == -1:
+                    if await connect_client(client, phone_number, None) == -1:
                         # TODO: better to throw something
                         return jsonify({"error": "error in connecting to Telegram"}), 500
                     if await client.is_user_authorized() == True:
