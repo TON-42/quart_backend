@@ -31,7 +31,7 @@ async def session_exists(number, userId):
     session = S()
     exit_code = 0
     try:
-        if number is None:
+        if userId is not None:
             print("number is None")
             found_session = session.query(Session).filter(Session.user_id == str(userId)).one()
         else:    
