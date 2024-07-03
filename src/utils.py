@@ -19,12 +19,13 @@ async def count_words(dialog_id, client):
                 break
     return word_count
 
-async def connect_client(client, phone_number):
+
+async def connect_client(client, phone_number, user_id):
     try:
         await client.connect()
     except Exception as e:
         print(f"Error in connect(): {str(e)}")
         # TODO: should we really delete a session?
-        await delete_session(phone_number)
+        await delete_session(phone_number, user_d)
         return -1
     return 1
