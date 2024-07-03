@@ -8,12 +8,14 @@ import os
 
 API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")
-async def create_session(client, number, phone_hash):
+async def create_session(client, number, phone_hash, userId):
     session_id = client.session.save()
     session = S()
     exit_code = 0
     try:
-        new_session = Session(id=session_id, phone_number=number, phone_code_hash=phone_hash)
+        if userId is None:
+            userId = "None"
+        new_session = Session(id=session_id, phone_number=number, phone_code_hash=phone_hash, user_id=userId)
         session.add(new_session)
         session.commit()
         print(f"Creating new session")
@@ -24,11 +26,14 @@ async def create_session(client, number, phone_hash):
         session.close()
         return exit_code
 
-async def session_exists(number):
+async def session_exists(number, userId):
     session = S()
     exit_code = 0
     try:
-        found_session = session.query(Session).filter(Session.phone_number == number).one()
+        if number is None:
+            found_session = session.query(Session).filter(Session.user_id == userId).one()
+        else:    
+            found_session = session.query(Session).filter(Session.phone_number == number).one()
         session.close()
         return found_session
     except NoResultFound:

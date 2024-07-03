@@ -40,7 +40,7 @@ async def send_message():
 
     print(f"received from front-end: {selected_chats}")
 
-    saved_client = await session_exists(phone_number)
+    saved_client = await session_exists(phone_number, None)
     if saved_client is None:
         print("Session does not exist")
         return jsonify("Session does not exist"), 500
