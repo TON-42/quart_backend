@@ -26,7 +26,7 @@ async def create_session(client, number, phone_hash, userId):
         session.close()
         return exit_code
 
-async def session_exists(number, userId):
+async def session_exists(number, user_id):
     session = S()
     exit_code = 0
     try:
