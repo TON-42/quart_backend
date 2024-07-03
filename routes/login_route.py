@@ -28,13 +28,15 @@ async def login():
     if not auth_code:
         return jsonify({"error": "No code provided"}), 400
     
+    user_id = data.get("userId")
     phone_number = data.get("phone_number")
     if not phone_number:
-        return jsonify({"error": "No phone_number provided"}), 400
+        if not userId
+            return jsonify({"error": "No phone_number or userId provided"}), 400
     
-    print(f"{phone_number} is trying to login with: {auth_code}")
+    print(f"{phone_number}({user_id}) is trying to login with: {auth_code}")
 
-    saved_client = await session_exists(phone_number)
+    saved_client = await session_exists(phone_number, user_id)
     
     if saved_client is None:
         print(f"{phone_number} session does not exist")
@@ -147,7 +149,7 @@ async def send_code():
         # if session exists but not logged in => deletes the session
         # TODO: check how long ago we send previous code
         client = None
-        saved_client = await session_exists(phone_number)
+        saved_client = await session_exists(phone_number, user_id)
         
         if saved_client is None:
             client = TelegramClient(StringSession(), API_ID, API_HASH)
@@ -184,7 +186,7 @@ async def send_code():
         print(f"sending auth code to {phone_number}")
 
         if saved_client is None:
-            status = await create_session(client, phone_number, phone_code_hash)
+            status = await create_session(client, phone_number, phone_code_hash, user_id)
             if status == -1:
                 return jsonify({"message": "error creating session"}), 500
 
