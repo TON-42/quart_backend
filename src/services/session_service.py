@@ -32,6 +32,7 @@ async def session_exists(number, userId):
     exit_code = 0
     try:
         if number is None:
+            print("number is None")
             found_session = session.query(Session).filter(Session.user_id == str(userId)).one()
         else:    
             found_session = session.query(Session).filter(Session.phone_number == number).one()
