@@ -92,6 +92,7 @@ class Session(Base):
     send_code_date = Column(DateTime, default=datetime.utcnow, nullable=True)
     is_logged = Column(Boolean, default=False, nullable=True)
     chats = Column(Text, nullable=True)
+
 # Database URL from environment variable or fallback
 DATABASE_URL = os.getenv("DATABASE_URL")
 print(f"DATABASE_URL: {DATABASE_URL}")  # Debugging line

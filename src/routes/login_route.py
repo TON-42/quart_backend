@@ -12,10 +12,7 @@ from services.user_service import get_user_chats
 from services.session_service import create_session, session_exists, delete_session, set_session_is_logged_and_user_id, set_session_chats
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
-import os
-
-API_ID = os.getenv("API_ID")
-API_HASH = os.getenv("API_HASH")
+from config import Config
 
 login_route = Blueprint('login_route', __name__)
 
@@ -36,12 +33,11 @@ async def login():
     print(f"{phone_number}({user_id}) is trying to login with: {auth_code}")
 
     saved_client = await session_exists(phone_number, user_id)
-    
     if saved_client is None:
         print(f"{phone_number} session does not exist")
         return jsonify({"error": "session does not exist"}), 500
     
-    client = TelegramClient(StringSession(saved_client.id), API_ID, API_HASH)
+    client = TelegramClient(StringSession(saved_client.id), Config.API_ID, Config.API_HASH)
 
     if await connect_client(client, phone_number, user_id) == -1:
         return jsonify({"error": "error in connecting to Telegram"}), 500
@@ -87,7 +83,6 @@ async def login():
     if chat_ids == 1:
         return jsonify({"message": "error while retrieving user's chats"}), 500
     
-    # TODO: handle this error properly
     status = await set_has_profile(sender.id, True)
     if status == 1:
         return jsonify({"error": "couldn't set has_profile to True"}), 500
@@ -118,7 +113,6 @@ async def login():
         print(f"Error in get_dialogs(): {str(e)}")
         return jsonify({"error": str(e)}), 500
     
-    # TODO: handle this error properly
     status = await set_auth_status(sender.id, "choose_chat")
     if status == 1:
         return jsonify({"error": "couldn't update auth_status"}), 500
@@ -143,16 +137,13 @@ async def send_code():
         
         user_id = data.get("userId")
         
-        # if session exists but not logged in => deletes the session
         # TODO: check how long ago we send previous code
         client = None
         saved_client = await session_exists(phone_number, user_id)
-        
         if saved_client is None:
-            client = TelegramClient(StringSession(), API_ID, API_HASH)
-        
-        if saved_client is not None:
-            client = TelegramClient(StringSession(saved_client.id), API_ID, API_HASH)
+            client = TelegramClient(StringSession(), Config.API_ID, Config.API_HASH)
+        else:
+            client = TelegramClient(StringSession(saved_client.id), Config.API_ID, Config.API_HASH)
 
         if await connect_client(client, phone_number, user_id) == -1:
             return jsonify({"error": "error in connecting to Telegram"}), 500

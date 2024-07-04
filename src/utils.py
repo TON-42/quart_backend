@@ -19,7 +19,6 @@ async def count_words(dialog_id, client):
                 break
     return word_count
 
-
 async def connect_client(client, phone_number, user_id):
     try:
         await client.connect()

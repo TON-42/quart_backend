@@ -4,13 +4,10 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 from models import User, Chat, agreed_users_chats, users_chats
 
-
 async def create_user(user_id, username, profile):
     session = Session()
     try:
-        # Query the database to check if a user with the provided ID exists
         existing_user = session.query(User).filter(User.id == user_id).one()
-        # print("User already exists")
     except NoResultFound:
         if username is None:
             username = "Unknown"
@@ -25,11 +22,11 @@ async def create_user(user_id, username, profile):
             "auth_status": new_user.auth_status
         }
 
-        print(user_data)
+        print(f"new user created: {user_data}")
         session.add(new_user)
         session.commit()
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"Error creating a user: {str(e)}")
     finally:
         session.close()
 
@@ -41,7 +38,7 @@ async def set_has_profile(user_id, has_profile):
         user.has_profile = has_profile
         session.commit()
     except Exception as e:
-        print(f"Error updating username or profile: {str(e)}")
+        print(f"Error updating profile: {str(e)}")
         status = 1
     finally:
         session.close()
@@ -54,7 +51,7 @@ async def set_auth_status(user_id, status):
         user = session.query(User).filter(User.id == user_id).one()
         user.auth_status = status
         session.commit()
-        print(f"Updating auth_status to {user.auth_status}")
+        print(f"auth_status => {user.auth_status}")
     except Exception as e:
         print(f"Error updating auth_status: {str(e)}")
         exit_code = 1
@@ -78,6 +75,6 @@ async def get_user_chats(sender_id, sender_name):
         session.close()
         return chat_ids
     except Exception as e:
-        print(f"Error before sign_in() {str(e)}")
+        print(f"Error in get_user_chats(): {str(e)}")
         session.close()
         return 1

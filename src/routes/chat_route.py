@@ -75,7 +75,7 @@ async def send_message():
             chat_id = int(chat_id_str)
             chat_name = chat_name_str[:-1]
 
-            print(f"id: {chat_id}, name: {chat_name}")
+            print(f"processing: (id: {chat_id}, name: {chat_name})")
             chat_id = chat_id or 123
             chat_name = chat_name or "Undefined"
             words = words or 123
@@ -90,7 +90,6 @@ async def send_message():
 
             users = await client.get_participants(entity)
             for user in users:
-                print(f"Creating {user.username} account")
                 await create_user(user.id, user.username, False)
                 chat_users.append(user.id)
                 b_users.append(user.username)
@@ -101,11 +100,9 @@ async def send_message():
             private_chat_id = '_'.join(str(num) for num in sorted(chat_users))
             print(f"private_id {private_chat_id}")
 
-            print(f"Creating {chat_name} chat")
             await create_chat(private_chat_id, chat_name, words, sender.id, chat_users, chat_id)
             print(f"Sending message to {chat_name}")
             await client.send_message(entity, message_for_second_user, parse_mode="html")
-            print(f"Adding {chat_name} to {chat_users}")
             await add_chat_to_users(chat_users, private_chat_id)
             chat_users.clear()
         except Exception as e:
@@ -127,7 +124,7 @@ async def add_user_to_agreed():
     session = Session()
     try:
         data = await request.get_json()
-        print(f"add-user-to-agreed: {data}")
+        print(f"/add-user-to-agreed received: {data}")
         if not isinstance(data, list):
             return jsonify({"error": "Input data should be an array"}), 400
         chat_status = {}
@@ -146,7 +143,7 @@ async def add_user_to_agreed():
                 user = session.query(User).options(
                     joinedload(User.chats)).filter(User.id == user_id).one()
             except Exception as e:
-                print(f"Error: {str(e)}")
+                print(f"Error in retrieving user from db: {str(e)}")
                 continue
 
             # get chat
@@ -156,7 +153,7 @@ async def add_user_to_agreed():
                     joinedload(Chat.users)
                 ).filter(Chat.id == chat_id).one()
             except Exception as e:
-                print(f"Error: {str(e)}")
+                print(f"Error in retrieving chats from db: {str(e)}")
                 continue
 
             # if chat is already sold
@@ -180,6 +177,7 @@ async def add_user_to_agreed():
                 chat.status = ChatStatus.sold
                 chat_status[chat_id] = "sold"
                 await chat_sale(chat.users)
+                print(f"chat {chat_id} is sold")
             session.commit()
 
         session.close()
