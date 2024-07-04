@@ -1,10 +1,6 @@
 from quart import Quart, jsonify, request
 from quart_cors import cors
 from datetime import datetime, timedelta
-from sqlalchemy.orm import joinedload
-from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.exc import IntegrityError
-from models import User, Chat, ChatStatus
 from routes.debug_routes import debug_routes
 from routes.login_route import login_route
 from routes.user_route import user_route
@@ -12,19 +8,13 @@ from routes.chat_route import chat_route
 from db import Session as S
 import asyncio
 import telebot
-from telebot.async_telebot import AsyncTeleBot
+from bot import bot
 from telebot import types
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from config import Config
 from models import Session
-from services.session_service import create_session, session_exists, delete_session
+from services.session_service import delete_session
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
-import os
-from bot import bot
-
-API_ID = os.getenv("API_ID")
-API_HASH = os.getenv("API_HASH")
 
 app = Quart(__name__)
 app = cors(app, allow_origin="*")
@@ -42,11 +32,11 @@ async def check_session_expiry():
 
         for my_session in all_sessions:
             time_difference = datetime.now() - my_session.creation_date
-            if time_difference >= timedelta(minutes=7):
+            if time_difference >= timedelta(minutes=4):
                 print(f"Session for {my_session.phone_number} has expired.")
                 if my_session.is_logged == True:
                     try:
-                        client = TelegramClient(StringSession(my_session.id), API_ID, API_HASH)
+                        client = TelegramClient(StringSession(my_session.id), Config.API_ID, Config.API_HASH)
                         await client.connect()
                         if await client.is_user_authorized() == True:
                             await client.log_out()
@@ -59,8 +49,8 @@ async def check_session_expiry():
                 print(f"Session for: {my_session.phone_number} is active")
         
         session.close()
-        # Wait for 5 minute before checking again
-        await asyncio.sleep(300)
+        # Wait for 2 minute before checking again
+        await asyncio.sleep(120)
 
 @app.before_serving
 async def startup():
@@ -83,7 +73,6 @@ async def hello_world():
 @app.route("/webhook", methods=["POST"])
 async def webhook():
     if request.method == "POST":
-        print("POST")
         data = await request.get_json()
         update = types.Update.de_json(data)
         await bot.process_new_updates([update])

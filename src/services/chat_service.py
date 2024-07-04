@@ -9,8 +9,9 @@ async def create_chat(chat_id, chat_name, words_number, sender_id, chat_users, t
     try:
         # Query the database to check if a chat with the provided ID exists
         existing_chat = session.query(Chat).filter(Chat.id == chat_id).one()
-        print("Chat already exists")
+        print(f"Chat {chat_name} already exists")
     except NoResultFound:
+        print(f"Creating {chat_name} chat")
         new_chat = Chat(
             id=chat_id,
             name=chat_name,
@@ -46,6 +47,7 @@ async def add_chat_to_users(users_id, chat_id):
     try:
         session = Session()
 
+        print(f"Adding chat:{chat_id} to users:{users_id}")
         # get 1 chat
         chat = session.query(Chat).filter(Chat.id == chat_id).one()
         # get all related users

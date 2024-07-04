@@ -7,15 +7,10 @@ from models import Session as MySession
 from db import Session
 import requests
 import httpx
-import os
 from config import Config
 from bot import global_message
 
 debug_routes = Blueprint('debug_routes', __name__)
-
-API_USERNAME = os.getenv("API_USERNAME")
-API_PASSWORD = os.getenv("API_PASSWORD")
-
 
 @debug_routes.route("/send-global-message", methods=["POST"])
 async def send_global_message():

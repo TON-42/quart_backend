@@ -8,10 +8,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from utils import get_chat_id, count_words, connect_client
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
-import os
-
-API_ID = os.getenv("API_ID")
-API_HASH = os.getenv("API_HASH")
+from config import Config
 
 user_route = Blueprint('user_route', __name__)
 
@@ -58,11 +55,11 @@ async def get_user():
             except NoResultFound:
                 if user_session.is_logged == True:
                     # check if we are still logged in
-                    client = TelegramClient(StringSession(user_session.id), API_ID, API_HASH)
+                    client = TelegramClient(StringSession(user_session.id), Config.API_ID, Config.API_HASH)
                     if await connect_client(client, phone_number, None) == -1:
                         # TODO: better to throw something
                         return jsonify({"error": "error in connecting to Telegram"}), 500
-                    if await client.is_user_authorized() == True:
+                    if await client.is_user_authorized():
                         is_logged_in = True
                 if is_logged_in == False and user.auth_status != "default":
                     user.auth_status = "default"
