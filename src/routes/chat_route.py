@@ -31,10 +31,11 @@ async def send_message():
     message = data.get("message")
     if not message:
         message = "Hello! The owner of this chat wants to sell the data of this chat.\nPlease click the button below to accept the sale and proceed to the bot:"
-    message_for_second_user = (
-        message + "\n\n"
-        "https://t.me/chatpayapp_bot/chatpayapp"
-    )
+    else:
+        message_for_second_user = (
+            message + "\n\n"
+            "https://t.me/chatpayapp_bot/chatpayapp"
+        )
 
     selected_chats = data.get("chats", {})
     if not selected_chats:
@@ -56,60 +57,52 @@ async def send_message():
         print("Session is expired or user manually logged out")
         return jsonify("Session is expired or user manually logged out"), 500
     
-    sender = await client.get_me()
-    if not sender:
+    sender = None
+
+    if await client.is_user_authorized():
+        sender = await client.get_me()
+    else:
         print("User manually logged out")
         return jsonify("User manually logged out"), 500
 
-    # TODO: organize this mess
     b_users = []
     chat_users = []
     for chat_details, words in selected_chats.items():
         try:
-            # TODO: make data parsing as separate func or remove tuples
-            # Extract chat_id and chat_name from 'id' field
-            id_field = str(chat_details)
-            id_field_clean = id_field.strip("()")
-            chat_id_str, chat_name_str = id_field_clean.split(", '", 1)
+            # Parse chat_id and chat_name
+            id_field = str(chat_details).strip("()")
+            chat_id_str, chat_name_str = id_field.split(", '", 1)
             chat_id = int(chat_id_str)
-            chat_name = chat_name_str[:-1]  # Remove the trailing single quote
-            
+            chat_name = chat_name_str[:-1]
+
             print(f"id: {chat_id}, name: {chat_name}")
-            if not chat_id:
-                print("Chat.id is not defined")
-                chat_id = 123
-
-            if not chat_name:
-                print("Chat.name is not defined")
-                chat_name = "Undefined"
-
-            if not words:
-                print("words is not defined")
-                words = 123
+            chat_id = chat_id or 123
+            chat_name = chat_name or "Undefined"
+            words = words or 123
 
             try:
-                chat_entity = await client.get_entity(PeerChat(chat_id))
-            except ValueError:
-                chat_entity = await client.get_entity(PeerChannel(chat_id))
-            
-            users = await client.get_participants(chat_entity)
-            
+                entity = await client.get_entity(chat_id)
+            except Exception as e:
+                print(f"Failed to fetch entity for chat {chat_id}: {str(e)}")
+                continue
+
+            users = await client.get_participants(entity)
             for user in users:
                 print(f"Creating {user.username} account")
                 await create_user(user.id, user.username, False)
                 chat_users.append(user.id)
                 b_users.append(user.username)
-        
+
             chat_users.append(sender.id)
             print(f"chat users: {chat_users}")
-            
+
             private_chat_id = '_'.join(str(num) for num in sorted(chat_users))
             print(f"private_id {private_chat_id}")
-    
+
             print(f"Creating {chat_name} chat")
             await create_chat(private_chat_id, chat_name, words, sender.id, chat_users, chat_id)
             print(f"Sending message to {chat_name}")
-            await client.send_message(chat_id, message_for_second_user, parse_mode="html")
+            await client.send_message(entity, message_for_second_user, parse_mode="html")
             print(f"Adding {chat_name} to {chat_users}")
             await add_chat_to_users(chat_users, private_chat_id)
             chat_users.clear()
