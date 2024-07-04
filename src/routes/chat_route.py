@@ -41,7 +41,7 @@ async def send_message():
     if not selected_chats:
         return jsonify("No chats were sent"), 400
 
-    print(f"received: {phone_number}, {selected_chats}")
+    print(f"received: {phone_number}, {user_id}, {selected_chats}")
 
     saved_client = await session_exists(phone_number, user_id)
     if saved_client is None:
