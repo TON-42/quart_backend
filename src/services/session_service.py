@@ -15,7 +15,7 @@ async def create_session(client, number, phone_hash, userId):
         new_session = Session(id=session_id, phone_number=number, phone_code_hash=phone_hash, user_id=userId)
         session.add(new_session)
         session.commit()
-        print(f"Creating new session for {number}({user_id})")
+        print(f"Creating new session for {number}({userId})")
     except Exception as e:
         print(f"Error creating new session: {str(e)}")
         exit_code = 1
