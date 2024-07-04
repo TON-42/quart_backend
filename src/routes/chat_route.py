@@ -7,7 +7,7 @@ from services.chat_service import create_chat, add_chat_to_users
 from services.session_service import create_session, session_exists, delete_session
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
-from telethon.tl.types import PeerChat  # Import PeerChat here
+from telethon.tl.types import PeerChat, PeerChannel
 from utils import get_chat_id, count_words, connect_client
 from bot import chat_sale
 import os
@@ -87,8 +87,11 @@ async def send_message():
                 print("words is not defined")
                 words = 123
 
-            # Fetch chat entity before getting participants
-            chat_entity = await client.get_entity(PeerChat(chat_id))
+            try:
+                chat_entity = await client.get_entity(PeerChat(chat_id))
+            except ValueError:
+                chat_entity = await client.get_entity(PeerChannel(chat_id))
+            
             users = await client.get_participants(chat_entity)
             
             for user in users:
