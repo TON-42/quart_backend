@@ -142,8 +142,6 @@ async def send_code():
             return jsonify({"error": "phone_number is missing"}), 400
         
         user_id = data.get("userId")
-        if user_id is None:
-            print(f"{phone_number} entered from browser")
         
         # if session exists but not logged in => deletes the session
         # TODO: check how long ago we send previous code
