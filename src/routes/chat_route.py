@@ -7,6 +7,7 @@ from services.chat_service import create_chat, add_chat_to_users
 from services.session_service import create_session, session_exists, delete_session
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
+from telethon.tl.types import PeerChat  # Import PeerChat here
 from utils import get_chat_id, count_words, connect_client
 from bot import chat_sale
 import os
@@ -30,8 +31,7 @@ async def send_message():
     message = data.get("message")
     if not message:
         message = "Hello! The owner of this chat wants to sell the data of this chat.\nPlease click the button below to accept the sale and proceed to the bot:"
-    else:
-        message_for_second_user = (
+    message_for_second_user = (
         message + "\n\n"
         "https://t.me/chatpayapp_bot/chatpayapp"
     )
