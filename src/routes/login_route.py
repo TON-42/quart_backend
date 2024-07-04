@@ -2,7 +2,6 @@ from quart import Blueprint, jsonify, request
 from db import Session
 from telethon.errors import SessionPasswordNeededError, PhoneNumberBannedError, PhoneNumberFloodError, PhoneNumberInvalidError, AuthRestartError, PhoneCodeExpiredError, PhoneCodeInvalidError, PhoneCodeEmptyError
 from collections import defaultdict
-from client_wrapper import ClientWrapper
 from config import Config
 from services.user_service import set_has_profile, set_auth_status
 from models import User, Chat, ChatStatus
