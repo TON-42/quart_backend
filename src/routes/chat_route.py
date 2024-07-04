@@ -39,7 +39,7 @@ async def send_message():
 
     selected_chats = data.get("chats", {})
     if not selected_chats:
-        return jsonify("No chats were send"), 400
+        return jsonify("No chats were sent"), 400
 
     print(f"received: {phone_number}, {selected_chats}")
 
@@ -80,11 +80,13 @@ async def send_message():
             chat_name = chat_name or "Undefined"
             words = words or 123
 
+            # Fetch the entity to ensure it's encountered by the library
             try:
                 entity = await client.get_entity(chat_id)
-            except Exception as e:
-                print(f"Failed to fetch entity for chat {chat_id}: {str(e)}")
-                continue
+            except ValueError as e:
+                # Fetch dialogs to ensure the entity is cached
+                await client.get_dialogs()
+                entity = await client.get_entity(chat_id)
 
             users = await client.get_participants(entity)
             for user in users:
