@@ -10,7 +10,7 @@
 
 - `/add-user-to-agreed` [POST]
 
-- `/is-active` [POST]
+- `/send-global-message` [POST]
 
 - `/health` [GET]
 
@@ -20,9 +20,9 @@
 
 - `/get-chats` [GET]
 
-- `/delete-all-users` [GET]
+- `get-sessions` [GET]
 
-- `/delete-all- chats` [GET]
+- `/delete-session` [POST]
 
 - `/delete-user?id=123` [GET]
 
@@ -219,47 +219,6 @@
 </details>
 
 <details>
-<summary><h3>/is-active</h3></summary>
-
-- **Method**: `POST`
-- **Description**: Checks if we are still logged in to the user account
-- **Request Body**:
-
-  - `userId` (number, required): The unique identifier of the user.
-  ```json
-  {
-    "userId": 84375302,
-  }
-  ```
-
-- **Responses**:
-  - **200 OK**: Returns OK.
-    ```json
-    {
-      "message": "ok"
-    }
-    ```
-  - **400 Bad Request**: Returned if `userId` is missing from the request.
-    ```json
-    {
-      "message": "userId is missing"
-    }
-    ```
-  - **404 Not Found**: Returned if session is not found.
-    ```json
-    {
-      "message": "Not Found"
-    }
-    ```
-  - **500 Internal Server Error**: Returned if there is an internal error.
-    ```json
-    {
-      "error": "Internal error"
-    }
-    ```
-</details>
-
-<details>
 <summary><h3>/add-user-to-agreed</h3></summary>
 
 - **Method**: `POST`
@@ -361,9 +320,45 @@
 
 </details>
 
+<details>
+<summary><h3>/send-global-message</h3></summary>
+
+- **Method**: `POST`
+- **Description**: Sends a message to all users of the app.
+- **Request Body**:
+
+  - `message` (string): The message to be sent
+  
+  Example:
+  ```json
+  {
+    "message": "Hello! This is a custom message."
+  }
+  ```
+
+- **Responses**:
+  - **200 OK**: Returns ok
+    ```json
+    {
+      "umessafe": "ok"
+    }
+    ```
+  - **500 Internal Server Error**: Returned if there is an internal error
+    ```json
+    {
+      "error": "Internal Server Error"
+    }
+    ```
+
+</details>
+
 
 <details>
 <summary><h2>Legacy</h2></summary>
+
+- `/delete-all-users` [GET]
+
+- `/delete-all- chats` [GET]
 
 - `/create-user` [GET]
 

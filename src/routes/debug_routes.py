@@ -267,65 +267,65 @@ async def delete_chat():
         
     return jsonify(response), status_code
 
-@debug_routes.route("/delete-all-chats", methods=["GET"])
-async def delete_chats():
-    try:
-        # Create a session
-        session = Session()
+# @debug_routes.route("/delete-all-chats", methods=["GET"])
+# async def delete_chats():
+#     try:
+#         # Create a session
+#         session = Session()
         
-        try:
-            session.query(agreed_users_chats).delete()
-            session.query(users_chats).delete()
-            session.query(Chat).delete()
-            session.commit()
+#         try:
+#             session.query(agreed_users_chats).delete()
+#             session.query(users_chats).delete()
+#             session.query(Chat).delete()
+#             session.commit()
             
-            response = {"message": f"Chats have been deleted."}
-            status_code = 200
+#             response = {"message": f"Chats have been deleted."}
+#             status_code = 200
     
-        except IntegrityError as e:
-            session.rollback()
-            response = {"error": f"Integrity error occurred: {str(e)}"}
-            status_code = 500
+#         except IntegrityError as e:
+#             session.rollback()
+#             response = {"error": f"Integrity error occurred: {str(e)}"}
+#             status_code = 500
 
-    except Exception as e:
-        session.rollback()
-        response = {"error": f"An error occurred: {str(e)}"}
-        status_code = 500
+#     except Exception as e:
+#         session.rollback()
+#         response = {"error": f"An error occurred: {str(e)}"}
+#         status_code = 500
 
-    finally:
-        session.close()
+#     finally:
+#         session.close()
         
-    return jsonify(response), status_code
+#     return jsonify(response), status_code
 
-@debug_routes.route("/delete-all-users", methods=["GET"])
-async def delete_users():
-    try:
-        # Create a session
-        session = Session()
+# @debug_routes.route("/delete-all-users", methods=["GET"])
+# async def delete_users():
+#     try:
+#         # Create a session
+#         session = Session()
         
-        try:
-            session.query(agreed_users_chats).delete()
-            session.query(users_chats).delete()
-            session.query(User).delete()
-            session.commit()
+#         try:
+#             session.query(agreed_users_chats).delete()
+#             session.query(users_chats).delete()
+#             session.query(User).delete()
+#             session.commit()
             
-            response = {"message": f"Users have been deleted."}
-            status_code = 200
+#             response = {"message": f"Users have been deleted."}
+#             status_code = 200
     
-        except IntegrityError as e:
-            session.rollback()
-            response = {"error": f"Integrity error occurred: {str(e)}"}
-            status_code = 500
+#         except IntegrityError as e:
+#             session.rollback()
+#             response = {"error": f"Integrity error occurred: {str(e)}"}
+#             status_code = 500
 
-    except Exception as e:
-        session.rollback()
-        response = {"error": f"An error occurred: {str(e)}"}
-        status_code = 500
+#     except Exception as e:
+#         session.rollback()
+#         response = {"error": f"An error occurred: {str(e)}"}
+#         status_code = 500
 
-    finally:
-        session.close()
+#     finally:
+#         session.close()
         
-    return jsonify(response), status_code
+#     return jsonify(response), status_code
 
 # ------------------ DEBUG routes ---------------------------
 
