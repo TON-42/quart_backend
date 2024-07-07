@@ -48,26 +48,28 @@ async def get_user():
                 .first()
             )
             
-            # if session does not exist(expired, never logged in) -> auth_status becomes default
+            if user is None:
+                session.close()
+                return jsonify({"error": "User not found"}), 404
+
             is_logged_in = False
-            auth_status = user.auth_status
             try:
                 user_session = session.query(MySession).filter(MySession.user_id == str(user_id)).first()
                 if user_session and user_session.is_logged:
-                    # check if we are still logged in
                     client = TelegramClient(StringSession(user_session.id), Config.API_ID, Config.API_HASH)
                     if await connect_client(client, None, user_id) == -1:
-                        # TODO: better to throw something
+                        print("error in connecting to Telegram")
                         return jsonify({"error": "error in connecting to Telegram"}), 500
                     if await client.is_user_authorized():
                         print(f"{username} is logged in")
                         is_logged_in = True
                     await client.disconnect()
                 if is_logged_in == False and user.auth_status != "default":
-                    if user.auth_status == "choose_chat":
-                        auth_status = "default"
+                    print("auth_status => default")
                     user.auth_status = "default"
                     session.commit()
+                    if user.auth_status == "auth_code":
+                        user.auth_status = "auth_code"
             except NoResultFound:
                 print(f"{username} session does not exist")
             except Exception as e:
@@ -77,7 +79,7 @@ async def get_user():
 
         except Exception as e:
             session.close()
-            print(f"error: {str(e)}")
+            print(f"error in fetching data from db: {str(e)}")
             return jsonify({"error": str(e)}), 500
 
         session.close()
@@ -89,7 +91,7 @@ async def get_user():
                 "has_profile": user.has_profile,
                 "words": user.words,
                 "registration_date": user.registration_date,
-                "auth_status": auth_status,
+                "auth_status": user.auth_status,
                 "chats": [
                     {
                         "id": chat.id,
@@ -111,7 +113,7 @@ async def get_user():
         )
 
     except Exception as e:
-        print(f"error: {str(e)}")
+        print(f"error in /get-user: {str(e)}")
         return jsonify({"error": str(e)}), 500
     
 # @user_route.route("/is-active", methods=["POST"])
