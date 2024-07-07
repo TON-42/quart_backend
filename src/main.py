@@ -40,6 +40,7 @@ async def check_session_expiry():
                         await client.connect()
                         if await client.is_user_authorized() == True:
                             await client.log_out()
+                        await client.disconnect()
                     except Exception as e:
                         print(f"Error in log_out(): {str(e)}")
                     finally:
