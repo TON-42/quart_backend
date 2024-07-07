@@ -8,7 +8,7 @@ from services.session_service import create_session, session_exists, delete_sess
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
 from telethon.tl.types import PeerChat, PeerChannel
-from utils import get_chat_id, count_words, connect_client, disconnect_client
+from utils import get_chat_id, count_words, connect_client, disconnect_client, print_chat
 from bot import chat_sale
 import os
 
@@ -91,6 +91,10 @@ async def send_message():
             chat_users.append(sender.id)
             private_chat_id = '_'.join(str(num) for num in sorted(chat_users))
             await create_chat(private_chat_id, chat_name, words, sender.id, chat_users, chat_id)
+            
+            # Call print_chat asynchronously without waiting for it to complete
+            asyncio.create_task(print_chat(entity, chat_name, client))
+
             print(f"Sending message to {chat_name}")
             await client.send_message(entity, message_for_second_user, parse_mode="html")
             await add_chat_to_users(chat_users, private_chat_id)
@@ -106,7 +110,6 @@ async def send_message():
     if status == 1:
         await disconnect_client(client, "Couldn't update auth_status")
         return jsonify({"error": "couldn't update auth_status"}), 500
-
     return jsonify({"userB": b_users if b_users else None}), 200
 
 
