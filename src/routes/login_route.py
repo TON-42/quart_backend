@@ -21,16 +21,18 @@ async def login():
     data = await request.get_json()
 
     auth_code = data.get("code")
+    password = data.get("password")
     if not auth_code:
-        return jsonify({"error": "No code provided"}), 400
+        if not password:
+            return jsonify({"error": "No code provided"}), 400
     
     user_id = data.get("userId")
     phone_number = data.get("phone_number")
     if not phone_number:
         if not user_id:
             return jsonify({"error": "No phone_number or userId provided"}), 400
-    
-    print(f"{phone_number}({user_id}) is trying to login with: {auth_code}")
+
+    print(f"{phone_number}({user_id}) is trying to login with: {auth_code}({password})")
 
     saved_client = await session_exists(phone_number, user_id)
     if saved_client is None:
@@ -47,7 +49,11 @@ async def login():
         return jsonify({"message": "user is already logged in"}), 409
     
     try:
-        await client.sign_in(phone=saved_client.phone_number, code=auth_code, phone_code_hash=saved_client.phone_code_hash)
+        if password is None:
+            await client.sign_in(phone=saved_client.phone_number, code=auth_code, phone_code_hash=saved_client.phone_code_hash)
+        else:
+            print("Signing in with password")
+            await client.sign_in(password=password)
     except SessionPasswordNeededError:
         print("two-steps verification is active")
         return jsonify({"error": "two-steps verification is active"}), 401
