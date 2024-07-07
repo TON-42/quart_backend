@@ -82,35 +82,34 @@ async def get_user():
             print(f"error in fetching data from db: {str(e)}")
             return jsonify({"error": str(e)}), 500
 
+        response = 
+        {
+            "id": user.id,
+            "name": user.name,
+            "has_profile": user.has_profile,
+            "words": user.words,
+            "registration_date": user.registration_date,
+            "auth_status": user.auth_status,
+            "chats": [
+                {
+                    "id": chat.id,
+                    "name": chat.name,
+                    "words": chat.words,
+                    "status": chat.status.name,
+                    "lead": {
+                        "id": chat.lead.id,
+                        "name": chat.lead.name
+                    } if chat.lead else None,
+                    "agreed_users": [
+                        agreed_user.id for agreed_user in chat.agreed_users
+                    ],
+                    "users": [user.id for user in chat.users],
+                }
+                for chat in user.chats
+            ],
+        }
         session.close()
-
-        return jsonify(
-            {
-                "id": user.id,
-                "name": user.name,
-                "has_profile": user.has_profile,
-                "words": user.words,
-                "registration_date": user.registration_date,
-                "auth_status": user.auth_status,
-                "chats": [
-                    {
-                        "id": chat.id,
-                        "name": chat.name,
-                        "words": chat.words,
-                        "status": chat.status.name,
-                        "lead": {
-                            "id": chat.lead.id,
-                            "name": chat.lead.name
-                        } if chat.lead else None,
-                        "agreed_users": [
-                            agreed_user.id for agreed_user in chat.agreed_users
-                        ],
-                        "users": [user.id for user in chat.users],
-                    }
-                    for chat in user.chats
-                ],
-            }
-        )
+        return jsonify(response_data), 200
 
     except Exception as e:
         print(f"error in /get-user: {str(e)}")
