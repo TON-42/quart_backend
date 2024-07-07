@@ -50,9 +50,10 @@ async def get_user():
             
             # if session does not exist(expired, never logged in) -> auth_status becomes default
             is_logged_in = False
+            auth_status = user.auth_status
             try:
                 user_session = session.query(MySession).filter(MySession.user_id == str(user_id)).first()
-                if user_session.is_logged == True:
+                if user_session and user_session.is_logged:
                     # check if we are still logged in
                     client = TelegramClient(StringSession(user_session.id), Config.API_ID, Config.API_HASH)
                     if await connect_client(client, phone_number, None) == -1:
@@ -62,6 +63,8 @@ async def get_user():
                         print(f"{username} is logged in")
                         is_logged_in = True
                 if is_logged_in == False and user.auth_status != "default":
+                    if user.auth_status == "choose_chat":
+                        auth_status = "default"
                     user.auth_status = "default"
                     session.commit()
             except NoResultFound:
@@ -84,7 +87,7 @@ async def get_user():
                 "has_profile": user.has_profile,
                 "words": user.words,
                 "registration_date": user.registration_date,
-                "auth_status": user.auth_status,
+                "auth_status": auth_status,
                 "chats": [
                     {
                         "id": chat.id,
