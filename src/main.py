@@ -27,29 +27,30 @@ app.register_blueprint(chat_route)
 async def check_session_expiry():
     while True:
         session = S()
+        try:
+            all_sessions = session.query(Session).all()
 
-        all_sessions = session.query(Session).all()
-
-        for my_session in all_sessions:
-            time_difference = datetime.now() - my_session.creation_date
-            if time_difference >= timedelta(minutes=4):
-                print(f"Session for {my_session.phone_number} has expired.")
-                if my_session.is_logged == True:
-                    try:
-                        client = TelegramClient(StringSession(my_session.id), Config.API_ID, Config.API_HASH)
-                        await client.connect()
-                        if await client.is_user_authorized() == True:
-                            await client.log_out()
-                        await client.disconnect()
-                    except Exception as e:
-                        print(f"Error in log_out(): {str(e)}")
-                    finally:
-                        await client.disconnect()
-                await delete_session(my_session.phone_number, None)
-            else:
-                print(f"Session for: {my_session.phone_number} is active")
-        
-        session.close()
+            for my_session in all_sessions:
+                time_difference = datetime.now() - my_session.creation_date
+                if time_difference >= timedelta(minutes=4):
+                    print(f"Session for {my_session.phone_number} has expired.")
+                    if my_session.is_logged:
+                        try:
+                            client = TelegramClient(StringSession(my_session.id), Config.API_ID, Config.API_HASH)
+                            await client.connect()
+                            if await client.is_user_authorized():
+                                await client.log_out()
+                        except Exception as e:
+                            print(f"Error in log_out(): {str(e)}")
+                        finally:
+                            await client.disconnect()
+                    await delete_session(my_session.phone_number, None)
+                else:
+                    print(f"Session for: {my_session.phone_number} is active")
+        except Exception as e:
+            print(f"Database error: {str(e)}")
+        finally:
+            session.close()
         # Wait for 1 minute before checking again
         await asyncio.sleep(60)
 

@@ -59,16 +59,13 @@ async def login():
         return jsonify({"error": "two-steps verification is active"}), 401
     except PhoneCodeExpiredError:
         await disconnect_client(client, "The confirmation code has expired")
-        return jsonify({"error": "The confirmation code has expired"}), 400
+        return jsonify({"error": "The confirmation code has expired"}), 410
     except PhoneCodeInvalidError:
-        await disconnect_client(client, "The auth code entered was invalid")
-        return jsonify({"error": "The auth code entered was invalid"}), 400
-    except PhoneCodeEmptyError:
-        await disconnect_client(client, "The auth code is missing")
-        return jsonify({"error": "The auth code is missing"}), 400
+        await disconnect_client(client, "The auth code is invalid")
+        return jsonify({"error": "The auth code is invalid"}), 403
     except PhoneNumberInvalidError:
-        await disconnect_client(client, "The phone number entered was invalid")
-        return jsonify({"error": "The phone number entered was invalid"}), 400
+        await disconnect_client(client, "The phone number is invalid")
+        return jsonify({"error": "The phone number is invalid"}), 422
     except Exception as e:
         exception_type = type(e).__name__
         await disconnect_client(client, f"Error in sign_in(): {exception_type} - {str(e)}")
