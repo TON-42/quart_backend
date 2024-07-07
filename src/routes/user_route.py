@@ -33,7 +33,7 @@ async def get_user():
             await create_user(user_id, username, False)
         except Exception as e:
             print(f"Error creating user: {str(e)}")
-            return jsonify({"error": "Internal error"}), 500
+            return jsonify({"error": str(e)}), 500
         try:
             session = Session()
             
@@ -56,12 +56,13 @@ async def get_user():
                 if user_session and user_session.is_logged:
                     # check if we are still logged in
                     client = TelegramClient(StringSession(user_session.id), Config.API_ID, Config.API_HASH)
-                    if await connect_client(client, phone_number, None) == -1:
+                    if await connect_client(client, None, user_id) == -1:
                         # TODO: better to throw something
                         return jsonify({"error": "error in connecting to Telegram"}), 500
                     if await client.is_user_authorized():
                         print(f"{username} is logged in")
                         is_logged_in = True
+                    await client.disconnect()
                 if is_logged_in == False and user.auth_status != "default":
                     if user.auth_status == "choose_chat":
                         auth_status = "default"
@@ -76,6 +77,7 @@ async def get_user():
 
         except Exception as e:
             session.close()
+            print(f"error: {str(e)}")
             return jsonify({"error": str(e)}), 500
 
         session.close()
@@ -109,6 +111,7 @@ async def get_user():
         )
 
     except Exception as e:
+        print(f"error: {str(e)}")
         return jsonify({"error": str(e)}), 500
     
 # @user_route.route("/is-active", methods=["POST"])
