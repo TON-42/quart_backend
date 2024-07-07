@@ -52,7 +52,6 @@ async def get_user():
             is_logged_in = False
             try:
                 user_session = session.query(MySession).filter(MySession.user_id == str(user_id)).first()
-            except NoResultFound:
                 if user_session.is_logged == True:
                     # check if we are still logged in
                     client = TelegramClient(StringSession(user_session.id), Config.API_ID, Config.API_HASH)
@@ -60,10 +59,13 @@ async def get_user():
                         # TODO: better to throw something
                         return jsonify({"error": "error in connecting to Telegram"}), 500
                     if await client.is_user_authorized():
+                        print(f"{username} is logged in")
                         is_logged_in = True
                 if is_logged_in == False and user.auth_status != "default":
                     user.auth_status = "default"
                     session.commit()
+            except NoResultFound:
+                print(f"{username} session does not exist")
             except Exception as e:
                 session.close()
                 print(f"error in looking for a session: {str(e)}")
