@@ -11,6 +11,7 @@ from telethon.tl.types import PeerChat, PeerChannel
 from utils import get_chat_id, count_words, connect_client, disconnect_client, print_chat
 from bot import chat_sale
 import os
+import asyncio
 
 API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")

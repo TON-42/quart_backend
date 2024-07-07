@@ -20,7 +20,7 @@
 
 - `/get-chats` [GET]
 
-- `get-sessions` [GET]
+- `/get-sessions` [GET]
 
 - `/delete-session` [POST]
 
@@ -198,6 +198,12 @@
       "error": "two-steps verification is enabled"
     }
     ```
+  - **403 Forbidden**: Returned if The auth code is invalid
+    ```json
+    {
+      "error": "The auth code is invalid"
+    }
+    ```
   - **404 Not Found**: Returned if phone number is invalid.
     ```json
     {
@@ -210,6 +216,18 @@
       "message": "user is already logged in"
     }
     ```
+  - **410 Gone**: Returned if the confirmation code has expired
+    ```json
+    {
+      "error": "The confirmation code has expired"
+    }
+    ```
+  - **422 Unprocessable Entity**: Returned if the phone number is invalid
+    ```json
+      {
+        "error": "Phone number is invalid"
+      }
+      ```
   - **500 Internal Server Error**: Returned if there is an internal error.
     ```json
     {

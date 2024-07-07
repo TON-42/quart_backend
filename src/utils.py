@@ -1,4 +1,5 @@
 from services.session_service import create_session, session_exists, delete_session
+import asyncio
 
 async def get_chat_id(dialog_id, sender_id, client):
     chat_users = []
