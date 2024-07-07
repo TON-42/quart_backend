@@ -82,8 +82,7 @@ async def get_user():
             print(f"error in fetching data from db: {str(e)}")
             return jsonify({"error": str(e)}), 500
 
-        response = 
-        {
+        response = {
             "id": user.id,
             "name": user.name,
             "has_profile": user.has_profile,
