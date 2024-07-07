@@ -49,8 +49,8 @@ async def check_session_expiry():
                 print(f"Session for: {my_session.phone_number} is active")
         
         session.close()
-        # Wait for 2 minute before checking again
-        await asyncio.sleep(120)
+        # Wait for 1 minute before checking again
+        await asyncio.sleep(60)
 
 @app.before_serving
 async def startup():
