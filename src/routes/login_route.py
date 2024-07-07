@@ -7,7 +7,7 @@ from services.user_service import set_has_profile, set_auth_status
 from models import User, Chat, ChatStatus
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
-from utils import get_chat_id, count_words, connect_client
+from utils import get_chat_id, count_words, connect_client, disconnect_client
 from services.user_service import get_user_chats
 from services.session_service import create_session, session_exists, delete_session, set_session_is_logged_and_user_id, set_session_chats
 from telethon.sessions import StringSession
@@ -45,7 +45,7 @@ async def login():
         return jsonify({"error": "error in connecting to Telegram"}), 500
     
     if await client.is_user_authorized() == True:
-        print(f"{phone_number} is already logged in")
+        await disconnect_client(client, f"{phone_number} is already logged in")
         return jsonify({"message": "user is already logged in"}), 409
     
     try:
@@ -55,23 +55,23 @@ async def login():
             print("Signing in with password")
             await client.sign_in(password=password)
     except SessionPasswordNeededError:
-        print("two-steps verification is active")
+        await disconnect_client(client, "two-steps verification is active")
         return jsonify({"error": "two-steps verification is active"}), 401
     except PhoneCodeExpiredError:
-        print("The confirmation code has expired")
+        await disconnect_client(client, "The confirmation code has expired")
         return jsonify({"error": "The confirmation code has expired"}), 400
     except PhoneCodeInvalidError:
-        print("The auth code entered was invalid")
+        await disconnect_client(client, "The auth code entered was invalid")
         return jsonify({"error": "The auth code entered was invalid"}), 400
     except PhoneCodeEmptyError:
-        print("The auth code is missing")
+        await disconnect_client(client, "The auth code is missing")
         return jsonify({"error": "The auth code is missing"}), 400
     except PhoneNumberInvalidError:
-        print("The phone number entered was invalid")
+        await disconnect_client(client, "The phone number entered was invalid")
         return jsonify({"error": "The phone number entered was invalid"}), 400
     except Exception as e:
         exception_type = type(e).__name__
-        print(f"Error in sign_in(): {exception_type} - {str(e)}")
+        await disconnect_client(client, f"Error in sign_in(): {exception_type} - {str(e)}")
         return jsonify({"error": f"{exception_type}: {str(e)}"}), 500
 
     print(f"{phone_number} is logged in")
@@ -87,10 +87,12 @@ async def login():
 
     chat_ids = await get_user_chats(sender.id, sender.username)
     if chat_ids == 1:
+        await disconnect_client(client, "Error while retrieving user's chats")
         return jsonify({"message": "error while retrieving user's chats"}), 500
     
     status = await set_has_profile(sender.id, True)
     if status == 1:
+        await disconnect_client(client, "Couldn't set has_profile to True")
         return jsonify({"error": "couldn't set has_profile to True"}), 500
     
     count = 0
@@ -114,13 +116,15 @@ async def login():
 
             print(f"{dialog.name}")
             word_count = await count_words(dialog.id, client)
+            # TODO: get rid of tuple
             res[(dialog.id, dialog.name)] = word_count
     except Exception as e:
-        print(f"Error in get_dialogs(): {str(e)}")
+        await disconnect_client(client, f"Error in get_dialogs(): {str(e)}")
         return jsonify({"error": str(e)}), 500
     
     status = await set_auth_status(sender.id, "choose_chat")
     if status == 1:
+        await disconnect_client(client, "couldn't update auth_status")
         return jsonify({"error": "couldn't update auth_status"}), 500
 
     res_json_serializable = {str(key): value for key, value in res.items()}
@@ -155,26 +159,26 @@ async def send_code():
             return jsonify({"error": "error in connecting to Telegram"}), 500
     
         if await client.is_user_authorized() == True:
-            print(f"{phone_number} is already logged in")
+            await disconnect_client(client, f"{phone_number} is already logged in")
             return jsonify({"message": "user is already logged in"}), 409
         
         try:
             result = await client.send_code_request(phone_number)
             phone_code_hash = result.phone_code_hash
         except PhoneNumberBannedError as e:
-            print(f"The used phone number has been banned from Telegram: {str(e)}")
+            await disconnect_client(client, f"The used phone number has been banned from Telegram: {str(e)}")
             return jsonify({"error": str(e)}), 403
         except PhoneNumberFloodError as e:
-            print(f"You asked for the code too many times: {str(e)}")
+            await disconnect_client(client, f"You asked for the code too many times: {str(e)}")
             return jsonify({"error": str(e)}), 429
         except PhoneNumberInvalidError as e:
-            print(f"phone number is invalid: {str(e)}")
+            await disconnect_client(client, f"phone number is invalid: {str(e)}")
             return jsonify({"error": str(e)}), 404
         except AuthRestartError as e:
             print(f"auth restart error: {str(e)}")
             await client.send_code_request(phone_number)
         except Exception as e:
-            print(f"Error in send_code(): {str(e)}")
+            await disconnect_client(client, f"Error in send_code(): {str(e)}")
             return jsonify({"error": str(e)}), 500
         
         print(f"sending auth code to {phone_number}")
@@ -182,11 +186,13 @@ async def send_code():
         if saved_client is None:
             status = await create_session(client, phone_number, phone_code_hash, user_id)
             if status == -1:
+                await disconnect_client(client, "Error creating session")
                 return jsonify({"message": "error creating session"}), 500
 
         if user_id is not None:
             status = await set_auth_status(user_id, "auth_code")
             if status == 1:
+                await disconnect_client(client, "Couldn't update auth_status")
                 return jsonify({"error": "couldn't update auth_status"}), 500
         
         return "ok", 200

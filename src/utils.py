@@ -28,3 +28,14 @@ async def connect_client(client, phone_number, user_id):
         await delete_session(phone_number, user_id)
         return -1
     return 1
+
+async def disconnect_client(client, message):
+    print(message)
+    try:
+        await client.disconnect()
+    except Exception as e:
+        print(f"Error in disconnect(): {str(e)}")
+        # TODO: should we really delete a session?
+        await delete_session(phone_number, user_id)
+        return -1
+    return 1

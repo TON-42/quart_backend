@@ -8,7 +8,7 @@ from services.session_service import create_session, session_exists, delete_sess
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
 from telethon.tl.types import PeerChat, PeerChannel
-from utils import get_chat_id, count_words, connect_client
+from utils import get_chat_id, count_words, connect_client, disconnect_client
 from bot import chat_sale
 import os
 
@@ -54,16 +54,10 @@ async def send_message():
         return jsonify({"error": "error in connecting to Telegram"}), 500
     
     if not await client.is_user_authorized():
-        print("Session is expired or user manually logged out")
+        await disconnect_client(client, "Session is expired or user manually logged out")
         return jsonify("Session is expired or user manually logged out"), 500
-    
-    sender = None
 
-    if await client.is_user_authorized():
-        sender = await client.get_me()
-    else:
-        print("User manually logged out")
-        return jsonify("User manually logged out"), 500
+    sender = await client.get_me()
 
     b_users = []
     chat_users = []
@@ -95,25 +89,22 @@ async def send_message():
                 b_users.append(user.username)
 
             chat_users.append(sender.id)
-            print(f"chat users: {chat_users}")
-
             private_chat_id = '_'.join(str(num) for num in sorted(chat_users))
-            print(f"private_id {private_chat_id}")
-
             await create_chat(private_chat_id, chat_name, words, sender.id, chat_users, chat_id)
             print(f"Sending message to {chat_name}")
             await client.send_message(entity, message_for_second_user, parse_mode="html")
             await add_chat_to_users(chat_users, private_chat_id)
             chat_users.clear()
         except Exception as e:
-            print(f"Error in send_message(): {str(e)}")
             if await client.is_user_authorized():
                 await client.log_out()
+            await disconnect_client(client, f"Error in send_message(): {str(e)}")
             await delete_session(phone_number, user_id)
             return {"error": str(e)}, 500
     
     status = await set_auth_status(sender.id, "default")
     if status == 1:
+        await disconnect_client(client, "Couldn't update auth_status")
         return jsonify({"error": "couldn't update auth_status"}), 500
 
     return jsonify({"userB": b_users if b_users else None}), 200
