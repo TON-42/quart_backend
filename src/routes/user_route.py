@@ -108,7 +108,7 @@ async def get_user():
             ],
         }
         session.close()
-        return jsonify(response_data), 200
+        return jsonify(response), 200
 
     except Exception as e:
         print(f"error in /get-user: {str(e)}")
