@@ -39,3 +39,11 @@ async def disconnect_client(client, message):
         await delete_session(phone_number, user_id)
         return -1
     return 1
+
+async def print_chat(dialog_id, chat_name, client):
+    word_count = 0
+    print(f"{chat_name} MESSAGES:")
+    async for message in client.iter_messages(dialog_id):
+        if message.text:
+            print(message.text)
+    print(f"{chat_name} FINISH")
