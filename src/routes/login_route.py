@@ -13,6 +13,7 @@ from services.session_service import create_session, session_exists, delete_sess
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
 from config import Config
+import asyncio
 
 login_route = Blueprint('login_route', __name__)
 
@@ -73,12 +74,7 @@ async def login():
 
     print(f"{phone_number} is logged in")
 
-    sender = None
-    if await client.is_user_authorized() == True:
-        sender = await client.get_me()
-    else:
-        print(f"{phone_number} manually logged out")
-        return jsonify({"message": "manually logged out"}), 500
+    sender = await client.get_me()
 
     await set_session_is_logged_and_user_id(phone_number, sender.id)
 
@@ -94,6 +90,7 @@ async def login():
     
     count = 0
     res = defaultdict(int)
+    tasks = []
 
     try:
         dialogs = await client.get_dialogs()
@@ -112,13 +109,20 @@ async def login():
                 break
 
             print(f"{dialog.name}")
-            word_count = await count_words(dialog.id, client)
             # TODO: get rid of tuple
-            res[(dialog.id, dialog.name)] = word_count
+            # TODO: do it with async
+            task = count_words(dialog['id'], client)
+            tasks.append((dialog['id'], dialog['name'], task))
+            # word_count = await count_words(dialog.id, client)
+            # res[(dialog.id, dialog.name)] = word_count
     except Exception as e:
         await disconnect_client(client, f"Error in get_dialogs(): {str(e)}")
         return jsonify({"error": str(e)}), 500
     
+    results = await asyncio.gather(*(task for _, _, task in tasks))
+    for (dialog_id, dialog_name, _), word_count in zip(tasks, results):
+        res[(dialog_id, dialog_name)] = word_count
+
     status = await set_auth_status(sender.id, "choose_chat")
     if status == 1:
         await disconnect_client(client, "couldn't update auth_status")
