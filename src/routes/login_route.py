@@ -109,10 +109,8 @@ async def login():
                 break
 
             print(f"{dialog.name}")
-            # TODO: get rid of tuple
-            # TODO: do it with async
-            task = count_words(dialog['id'], client)
-            tasks.append((dialog['id'], dialog['name'], task))
+            task = asyncio.create_task(count_words(dialog.id, client))
+            tasks.append((dialog.id, dialog.name, task))
             # word_count = await count_words(dialog.id, client)
             # res[(dialog.id, dialog.name)] = word_count
     except Exception as e:
