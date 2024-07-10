@@ -96,10 +96,10 @@ async def login():
         dialogs = await client.get_dialogs()
         for dialog in dialogs:
             if dialog.id < 0 or dialog.id == 777000 or dialog.entity.bot == True:
-                if dialog.entity.bot == False:
-                    print(f"Group detected: {dialog.name}")
-                else:
-                    continue
+                # if dialog.entity.bot == False:
+                #     print(f"Group detected: {dialog.name}")
+                # else:
+                continue
 
             private_chat_id = await get_chat_id(dialog.id, sender.id, client)
             if private_chat_id in chat_ids:
