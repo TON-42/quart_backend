@@ -173,6 +173,9 @@ async def add_user_to_agreed():
                 chat_status[chat_id] = "sold"
                 await chat_sale(chat.users)
                 print(f"chat {chat_id} is sold")
+                for user in chat.users:
+                    print(f"{user} received {chat.words} $WORD")
+                    user.words += chat.words
             session.commit()
 
         session.close()
