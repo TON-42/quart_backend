@@ -47,11 +47,16 @@ async def get_user():
                 .filter(User.id == user_id)
                 .first()
             )
+            
+            auth_code = False # we have to save auth_code before it is overwritten with default
+            if user.auth_status == "auth_code":
+                auth_code = True
+            
             session_chats = None
             session_chats = await manage_user_state(session, user, user_id)
             if (session_chats == "error"):
                 return jsonify({"error in looking for a session"}), 500
-
+            
         except Exception as e:
             session.close()
             print(f"error in fetching data from db: {str(e)}")
