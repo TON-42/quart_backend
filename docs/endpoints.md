@@ -79,7 +79,8 @@
       "id": 843373640,
       "name": "dantol",
       "registration_date": "Sat, 29 Jun 2024 20:49:31 GMT",
-      "words": 0
+      "words": 0,
+      "session_chats": "{\"(732337421, 'someone')\": 2003, \"(777000, 'Telegram')\": 2027, \"(7420379853, '')\": 72, \"(5892003906, 'Daniel Gomez')\": 265, \"(218947895, 'Papa')\": 2004, \"(-4280366185, 'Chatpay team')\": 292, \"(5456153403, 'Alex')\": 593, \"(1516593494, 'Flea-Novoselič')\": 2006, \"(414193066, 'asplavni(Anton 42)')\": 2001, \"(413082837, 'Denis')\": 2283, \"(7215050469, 'Islam')\": 99, \"(551473733, 'FISHA')\": 474, \"(549026264, 'Santa Claus')\": 2001, \"(-586347353, 'grup chat1')\": 2094, \"(-639914470, 'group chat2')\": 2009}",
     }
     ```
   - **400 Bad Request**: Returned if `userId` is missing from the request.
