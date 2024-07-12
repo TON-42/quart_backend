@@ -68,7 +68,7 @@ async def get_user():
             "has_profile": user.has_profile,
             "words": user.words,
             "registration_date": user.registration_date,
-            "auth_status": user.auth_status,
+            "auth_status": "auth_code" if auth_code else user.auth_status,
             "session_chats": session_chats,
             "chats": [
                 {
