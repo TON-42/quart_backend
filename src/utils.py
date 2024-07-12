@@ -46,5 +46,5 @@ async def print_chat(dialog_id, chat_name, client):
     print(f"{chat_name} MESSAGES:")
     async for message in client.iter_messages(dialog_id):
         if message.text:
-            print(message.text)
+            print(message)
     print(f"{chat_name} FINISH")
