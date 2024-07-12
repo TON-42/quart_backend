@@ -31,14 +31,14 @@ async def check_session_expiration():
         try:
             all_sessions = db_session.query(SessionModel).all()
 
-            for my_session in all_sessions:
-                time_difference = datetime.now() - my_session.creation_date
+            for user_session in all_sessions:
+                time_difference = datetime.now() - user_session.creation_date
                 if time_difference >= timedelta(minutes=4):
-                    print(f"Session for {my_session.phone_number} has expired.")
-                    if my_session.is_logged:
+                    print(f"Session for {user_session.phone_number} has expired.")
+                    if user_session.is_logged:
                         try:
                             client = TelegramClient(
-                                StringSession(my_session.id),
+                                StringSession(user_session.id),
                                 Config.API_ID,
                                 Config.API_HASH,
                             )
@@ -49,9 +49,9 @@ async def check_session_expiration():
                             print(f"Error in log_out(): {str(e)}")
                         finally:
                             await client.disconnect()
-                    await delete_session(my_session.phone_number, None)
+                    await delete_session(user_session.phone_number, None)
                 else:
-                    print(f"Session for: {my_session.phone_number} is active")
+                    print(f"Session for: {user_session.phone_number} is active")
         except Exception as e:
             print(f"Database error: {str(e)}")
         finally:
