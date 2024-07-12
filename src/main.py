@@ -11,7 +11,7 @@ import telebot
 from bot import bot
 from telebot import types
 from config import Config
-from models import Session
+from models import Session as SessionModel
 from services.session_service import delete_session
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
@@ -29,7 +29,7 @@ async def check_session_expiration():
     while True:
         session = DBSession()
         try:
-            all_sessions = session.query(Session).all()
+            all_sessions = session.query(SessionModel).all()
 
             for my_session in all_sessions:
                 time_difference = datetime.now() - my_session.creation_date
