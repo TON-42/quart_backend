@@ -96,6 +96,7 @@ async def login():
     try:
         dialogs = await client.get_dialogs()
         for dialog in dialogs:
+            entity = dialog.entity
             if not (isinstance(entity, Chat) or (isinstance(entity, User) and dialog.entity.bot == False)):
                 continue
 
