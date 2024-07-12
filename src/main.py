@@ -27,9 +27,9 @@ app.register_blueprint(chat_route)
 
 async def check_session_expiration():
     while True:
-        session = DBSession()
+        db_session = DBSession()
         try:
-            all_sessions = session.query(SessionModel).all()
+            all_sessions = db_session.query(SessionModel).all()
 
             for my_session in all_sessions:
                 time_difference = datetime.now() - my_session.creation_date
@@ -55,7 +55,7 @@ async def check_session_expiration():
         except Exception as e:
             print(f"Database error: {str(e)}")
         finally:
-            session.close()
+            db_session.close()
         # Wait for 1 minute before checking again
         await asyncio.sleep(60)
 
