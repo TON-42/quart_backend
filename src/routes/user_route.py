@@ -49,7 +49,7 @@ async def get_user():
             )
             session_chats = None
             message = await manage_user_state(session, user, session_chats)
-            if (message != "ok")
+            if (message != "ok"):
                 return jsonify({"error in looking for a session": message}), 500
 
         except Exception as e:
