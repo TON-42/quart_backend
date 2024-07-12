@@ -7,6 +7,7 @@ from models import Session as MySession
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
 from config import Config
+from utils import get_chat_id, count_words, connect_client
 
 async def create_user(user_id, username, profile):
     session = Session()
