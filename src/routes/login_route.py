@@ -95,7 +95,7 @@ async def login():
     try:
         dialogs = await client.get_dialogs()
         for dialog in dialogs:
-            print(f"{dialog.name}:{dialog.id}")
+            print(f"{dialog.name}:{dialog.id}:{dialog}")
             if dialog.id < 0 or dialog.id == 777000 or dialog.entity.bot == True:
                 # if dialog.entity.bot == False:
                 #     print(f"Group detected: {dialog.name}")

@@ -83,7 +83,7 @@ async def get_user_chats(sender_id, sender_name):
         session.close()
         return 1
 
-async def manage_user_state(session, user, chats):
+async def manage_user_state(session, user, user_id, chats):
     is_logged_in = False
     try:
         user_session = session.query(MySession).filter(MySession.user_id == str(user_id)).first()
