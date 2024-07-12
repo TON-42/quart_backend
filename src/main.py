@@ -5,7 +5,7 @@ from routes.debug_routes import debug_routes
 from routes.login_route import login_route
 from routes.user_route import user_route
 from routes.chat_route import chat_route
-from db import Session as S
+from db import Session as DBSession
 import asyncio
 import telebot
 from bot import bot
@@ -27,7 +27,7 @@ app.register_blueprint(chat_route)
 
 async def check_session_expiration():
     while True:
-        session = S()
+        session = DBSession()
         try:
             all_sessions = session.query(Session).all()
 
