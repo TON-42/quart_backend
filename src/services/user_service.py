@@ -84,8 +84,9 @@ async def get_user_chats(sender_id, sender_name):
         session.close()
         return 1
 
-async def manage_user_state(session, user, user_id, chats):
+async def manage_user_state(session, user, user_id):
     is_logged_in = False
+    chats = None
     try:
         user_session = session.query(MySession).filter(MySession.user_id == str(user_id)).first()
         # if session exists and user is logged in => double check logged in status
@@ -113,6 +114,6 @@ async def manage_user_state(session, user, user_id, chats):
     except Exception as e:
         session.close()
         print(f"error in looking for a session: {str(e)}")
-        return (f"error in looking for a session: {str(e)}")
-    return "ok"
+        return ("error")
+    return chats
     

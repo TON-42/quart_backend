@@ -12,6 +12,7 @@ from services.user_service import get_user_chats
 from services.session_service import create_session, session_exists, delete_session, set_session_is_logged_and_user_id, set_session_chats
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
+from telethon.tl.types import User, Chat, Channel
 from config import Config
 import asyncio
 
@@ -95,11 +96,7 @@ async def login():
     try:
         dialogs = await client.get_dialogs()
         for dialog in dialogs:
-            print(f"{dialog.name}:{dialog.id}:{dialog}")
-            if dialog.id < 0 or dialog.id == 777000 or dialog.entity.bot == True:
-                # if dialog.entity.bot == False:
-                #     print(f"Group detected: {dialog.name}")
-                # else:
+            if not (isinstance(entity, Chat) or (isinstance(entity, User) and dialog.entity.bot == False)):
                 continue
 
             private_chat_id = await get_chat_id(dialog.id, sender.id, client)
