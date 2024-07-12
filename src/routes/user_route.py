@@ -9,6 +9,7 @@ from utils import get_chat_id, count_words, connect_client
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
 from config import Config
+from services.user_service import manage_user_state
 
 user_route = Blueprint('user_route', __name__)
 
@@ -24,7 +25,6 @@ async def get_user():
         user_id = data.get("userId")
 
         if user_id is None:
-            # TODO: what if user entered from browser(maybe add tmp user_id)
             return jsonify({"error": "userId is missing"}), 400
         
         print(f"get-user: {username}")
@@ -47,35 +47,10 @@ async def get_user():
                 .filter(User.id == user_id)
                 .first()
             )
-            
-            if user is None:
-                session.close()
-                return jsonify({"error": "User not found"}), 404
-
-            is_logged_in = False
-            try:
-                user_session = session.query(MySession).filter(MySession.user_id == str(user_id)).first()
-                if user_session and user_session.is_logged:
-                    client = TelegramClient(StringSession(user_session.id), Config.API_ID, Config.API_HASH)
-                    if await connect_client(client, None, user_id) == -1:
-                        print("error in connecting to Telegram")
-                        return jsonify({"error": "error in connecting to Telegram"}), 500
-                    if await client.is_user_authorized():
-                        print(f"{username} is logged in")
-                        is_logged_in = True
-                    await client.disconnect()
-                if is_logged_in == False and user.auth_status != "default":
-                    print("auth_status => default")
-                    user.auth_status = "default"
-                    session.commit()
-                    if user.auth_status == "auth_code":
-                        user.auth_status = "auth_code"
-            except NoResultFound:
-                print(f"{username} session does not exist")
-            except Exception as e:
-                session.close()
-                print(f"error in looking for a session: {str(e)}")
-                return jsonify({"error in looking for a session": str(e)}), 500
+            session_chats = None
+            message = await manage_user_state(session, user, session_chats)
+            if (message != "ok")
+                return jsonify({"error in looking for a session": message}), 500
 
         except Exception as e:
             session.close()
@@ -89,6 +64,7 @@ async def get_user():
             "words": user.words,
             "registration_date": user.registration_date,
             "auth_status": user.auth_status,
+            "session_chats": session_chats,
             "chats": [
                 {
                     "id": chat.id,
@@ -114,18 +90,3 @@ async def get_user():
         print(f"error in /get-user: {str(e)}")
         return jsonify({"error": str(e)}), 500
     
-# @user_route.route("/is-active", methods=["POST"])
-# async def is_active():
-#     try:
-#         data = await request.get_json()
-#         user_id = data.get("userId")
-        
-#         if user_id is None:
-#             return jsonify({"error": "userId is missing"}), 400
-
-#         for phone_number, client_wrapper in user_clients.items():
-#             if user_id == client_wrapper.get_id():
-#                 return "ok", 200
-#         return "Not found", 404
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500

@@ -3,6 +3,10 @@ from models import User
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 from models import User, Chat, agreed_users_chats, users_chats
+from models import Session as MySession
+from telethon.sessions import StringSession
+from telethon.sync import TelegramClient
+from config import Config
 
 async def create_user(user_id, username, profile):
     session = Session()
@@ -78,3 +82,36 @@ async def get_user_chats(sender_id, sender_name):
         print(f"Error in get_user_chats(): {str(e)}")
         session.close()
         return 1
+
+async def manage_user_state(session, user, chats):
+    is_logged_in = False
+    try:
+        user_session = session.query(MySession).filter(MySession.user_id == str(user_id)).first()
+        # if session exists and user is logged in => double check logged in status
+        if user_session and user_session.is_logged:
+            client = TelegramClient(StringSession(user_session.id), Config.API_ID, Config.API_HASH)
+            if await connect_client(client, None, user_id) == -1:
+                print("error in connecting to Telegram")
+                return jsonify({"error": "error in connecting to Telegram"}), 500
+            # get session chats
+            chats = user_session.chats
+            if await client.is_user_authorized():
+                print(f"{username} is logged in")
+                is_logged_in = True
+            await client.disconnect()
+        # if user is not logged in => change status back to default
+        if is_logged_in == False and user.auth_status != "default":
+            print("auth_status => default")
+            user.auth_status = "default"
+            session.commit()
+            # change auth_code to default but return auth_code to show pin code once
+            if user.auth_status == "auth_code":
+                user.auth_status = "auth_code"
+    except NoResultFound:
+        print(f"{username} session does not exist")
+    except Exception as e:
+        session.close()
+        print(f"error in looking for a session: {str(e)}")
+        return (f"error in looking for a session: {str(e)}")
+    return "ok"
+    
