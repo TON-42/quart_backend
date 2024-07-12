@@ -97,7 +97,7 @@ async def manage_user_state(session, user, user_id, chats):
             # get session chats
             chats = user_session.chats
             if await client.is_user_authorized():
-                print(f"{username} is logged in")
+                print(f"{user.name} is logged in")
                 is_logged_in = True
             await client.disconnect()
         # if user is not logged in => change status back to default
@@ -109,7 +109,7 @@ async def manage_user_state(session, user, user_id, chats):
             if user.auth_status == "auth_code":
                 user.auth_status = "auth_code"
     except NoResultFound:
-        print(f"{username} session does not exist")
+        print(f"{user.name} session does not exist")
     except Exception as e:
         session.close()
         print(f"error in looking for a session: {str(e)}")
