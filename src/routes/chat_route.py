@@ -35,12 +35,12 @@ async def send_message():
     if not phone_number and not user_id:
         return jsonify("No phone_number and userId provided"), 400
 
-    message = data.get("message")
-    if not message:
-        message = "Hello! The owner of this chat wants to sell the data of this chat.\nPlease click the button below to accept the sale and proceed to the bot:"
+    message_raw = data.get("message")
+    if not message_raw:
+        message_raw = "Hello! The owner of this chat wants to sell the data of this chat.\nPlease click the button below to accept the sale and proceed to the bot:"
     else:
         message_for_second_user = (
-            message + "\n\n" "https://t.me/chatpayapp_bot/chatpayapp"
+            message_raw + "\n\n" "https://t.me/chatpayapp_bot/chatpayapp"
         )
 
     selected_chats = data.get("chats", {})
