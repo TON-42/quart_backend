@@ -42,7 +42,7 @@ async def login():
     password = data.get("password")
     if not auth_code:
         if not password:
-            return jsonify({"error": "No code provided"}), 400
+            return jsonify({"error": "No code or password provided"}), 400
 
     user_id = data.get("userId")
     phone_number = data.get("phone_number")
