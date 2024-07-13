@@ -50,12 +50,12 @@ async def send_message():
 
     print(f"received: {phone_number}, {user_id}, {selected_chats}")
 
-    saved_client = await get_db_session(phone_number, user_id)
-    if saved_client is None:
+    user_db_session = await get_db_session(phone_number, user_id)
+    if user_db_session is None:
         print("Session does not exist")
         return jsonify("Session does not exist"), 500
 
-    client = TelegramClient(StringSession(saved_client.id), API_ID, API_HASH)
+    client = TelegramClient(StringSession(user_db_session.id), API_ID, API_HASH)
 
     if await connect_client(client, phone_number, user_id) == -1:
         return jsonify({"error": "error in connecting to Telegram"}), 500

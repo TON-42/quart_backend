@@ -52,13 +52,13 @@ async def login():
 
     print(f"{phone_number}({user_id}) is trying to login with: {auth_code}({password})")
 
-    saved_client = await get_db_session(phone_number, user_id)
-    if saved_client is None:
+    user_db_session = await get_db_session(phone_number, user_id)
+    if user_db_session is None:
         print(f"{phone_number} session does not exist")
         return jsonify({"error": "session does not exist"}), 500
 
     client = TelegramClient(
-        StringSession(saved_client.id), Config.API_ID, Config.API_HASH
+        StringSession(user_db_session.id), Config.API_ID, Config.API_HASH
     )
 
     if await connect_client(client, phone_number, user_id) == -1:
@@ -71,9 +71,9 @@ async def login():
     try:
         if password is None:
             await client.sign_in(
-                phone=saved_client.phone_number,
+                phone=user_db_session.phone_number,
                 code=auth_code,
-                phone_code_hash=saved_client.phone_code_hash,
+                phone_code_hash=user_db_session.phone_code_hash,
             )
         else:
             print("Signing in with password")
@@ -217,7 +217,7 @@ async def send_code():
 
         print(f"sending auth code to {phone_number}")
 
-        if saved_client is None:
+        if user_db_session is None:
             status = await create_session(
                 client, phone_number, phone_code_hash, user_id
             )
