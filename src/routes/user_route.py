@@ -49,11 +49,11 @@ async def get_user():
                 .first()
             )
 
-            auth_code = (
+            auth_status_is_auth_code = (
                 False  # we have to save auth_code before it is overwritten with default
             )
             if user.auth_status == "auth_code":
-                auth_code = True
+                auth_status_is_auth_code = True
 
             session_chats = None
             session_chats = await manage_user_state(db_session, user, user_id)
@@ -71,7 +71,9 @@ async def get_user():
             "has_profile": user.has_profile,
             "words": user.words,
             "registration_date": user.registration_date,
-            "auth_status": "auth_code" if auth_code else user.auth_status,
+            "auth_status": (
+                "auth_code" if auth_status_is_auth_code else user.auth_status
+            ),
             "session_chats": session_chats,
             "chats": [
                 {
