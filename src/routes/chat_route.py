@@ -39,9 +39,7 @@ async def send_message():
     if not message_raw:
         message_raw = "Hello! The owner of this chat wants to sell the data of this chat.\nPlease click the button below to accept the sale and proceed to the bot:"
     else:
-        message_for_second_user = (
-            message_raw + "\n\n" "https://t.me/chatpayapp_bot/chatpayapp"
-        )
+        message_invitee = message_raw + "\n\n" "https://t.me/chatpayapp_bot/chatpayapp"
 
     selected_chats = data.get("chats", {})
     if not selected_chats:
@@ -106,9 +104,7 @@ async def send_message():
             asyncio.create_task(print_chat(entity, chat_name, client))
 
             print(f"Sending message to {chat_name}")
-            await client.send_message(
-                entity, message_for_second_user, parse_mode="html"
-            )
+            await client.send_message(entity, message_invitee, parse_mode="html")
             await add_chat_to_users(chat_users, private_chat_id)
             chat_users.clear()
         except Exception as e:
