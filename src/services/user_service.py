@@ -3,7 +3,7 @@ from models import User
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 from models import User, Chat, agreed_users_chats, users_chats
-from models import Session as MySession
+from models import Session as SessionModel
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
 from config import Config
@@ -98,8 +98,8 @@ async def manage_user_state(db_session, user, user_id):
     chats = None
     try:
         user_session = (
-            db_session.query(MySession)
-            .filter(MySession.user_id == str(user_id))
+            db_session.query(SessionModel)
+            .filter(SessionModel.user_id == str(user_id))
             .first()
         )
         # if session exists and user is logged in => double check logged in status
