@@ -26,7 +26,7 @@ async def create_session(client, number, phone_hash, userId):
         print(f"Error creating new session: {str(e)}")
         exit_code = 1
     finally:
-        session.close()
+        db_session.close()
         return exit_code
 
 
