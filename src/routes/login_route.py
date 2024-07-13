@@ -48,7 +48,7 @@ async def login():
     phone_number = data.get("phone_number")
     if not phone_number:
         if not user_id:
-            return jsonify({"error": "No phone_number or userId provided"}), 400
+            return jsonify({"error": "No phone_number or user_id provided"}), 400
 
     print(f"{phone_number}({user_id}) is trying to login with: {auth_code}({password})")
 

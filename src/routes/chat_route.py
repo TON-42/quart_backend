@@ -32,9 +32,8 @@ async def send_message():
 
     user_id = data.get("userId")
     phone_number = data.get("phone_number")
-    if not phone_number:
-        if not user_id:
-            return jsonify("No phone_number and userId provided"), 400
+    if not phone_number and not user_id:
+        return jsonify("No phone_number and userId provided"), 400
 
     message = data.get("message")
     if not message:
