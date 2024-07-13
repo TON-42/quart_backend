@@ -1,5 +1,6 @@
-from services.session_service import create_session, session_exists, delete_session
+from services.session_service import create_session, db_session_exists, delete_session
 import asyncio
+
 
 async def get_chat_id(dialog_id, sender_id, client):
     chat_users = []
@@ -7,8 +8,9 @@ async def get_chat_id(dialog_id, sender_id, client):
     for user in users:
         chat_users.append(user.id)
     chat_users.append(sender_id)
-    private_chat_id = '_'.join(str(num) for num in sorted(chat_users))
-    return (private_chat_id)
+    private_chat_id = "_".join(str(num) for num in sorted(chat_users))
+    return private_chat_id
+
 
 async def count_words(dialog_id, client):
     word_count = 0
@@ -20,6 +22,7 @@ async def count_words(dialog_id, client):
                 break
     return word_count
 
+
 async def connect_client(client, phone_number, user_id):
     try:
         await client.connect()
@@ -29,6 +32,7 @@ async def connect_client(client, phone_number, user_id):
         await delete_session(phone_number, user_id)
         return -1
     return 1
+
 
 async def disconnect_client(client, message):
     print(message)
@@ -40,6 +44,7 @@ async def disconnect_client(client, message):
         await delete_session(phone_number, user_id)
         return -1
     return 1
+
 
 async def print_chat(dialog_id, chat_name, client):
     word_count = 0

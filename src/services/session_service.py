@@ -30,8 +30,8 @@ async def create_session(client, number, phone_hash, userId):
         return exit_code
 
 
-async def session_exists(number, userId):
-    print(f"session_exists: {number}, user_id: {userId}")
+async def db_session_exists(number, userId):
+    print(f"db_session_exists: {number}, user_id: {userId}")
     db_session = DBSession()
     exit_code = 0
     try:
