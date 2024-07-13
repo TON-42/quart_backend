@@ -33,7 +33,10 @@ async def check_session_expiration():
 
             for user_session in all_sessions:
                 time_difference = datetime.now() - user_session.creation_date
-                if time_difference >= timedelta(minutes=4):
+                # if time_difference >= timedelta(minutes=4):
+                if time_difference >= timedelta(
+                    minutes=Config.SESSION_EXPIRATION_MINUTES
+                ):
                     print(f"Session for {user_session.phone_number} has expired.")
                     if user_session.is_logged:
                         try:
@@ -56,8 +59,8 @@ async def check_session_expiration():
             print(f"Database error: {str(e)}")
         finally:
             db_session.close()
-        # Wait for 1 minute before checking again
-        await asyncio.sleep(60)
+        # Wait for the specified interval before checking again
+        await asyncio.sleep(Config.CHECK_INTERVAL_SECONDS)
 
 
 @app.before_serving
