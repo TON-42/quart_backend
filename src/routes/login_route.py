@@ -177,8 +177,8 @@ async def send_code():
 
         # TODO: check how long ago we send previous code
         client = None
-        saved_client = await db_session_exists(phone_number, user_id)
-        if saved_client is None:
+        db_session_does_exist = await db_session_exists(phone_number, user_id)
+        if db_session_does_exist is None:
             client = TelegramClient(StringSession(), Config.API_ID, Config.API_HASH)
         else:
             client = TelegramClient(
