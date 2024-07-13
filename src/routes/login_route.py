@@ -20,7 +20,7 @@ from utils import get_chat_id, count_words, connect_client, disconnect_client
 from services.user_service import get_user_chats
 from services.session_service import (
     create_session,
-    db_session_exists,
+    get_db_session,
     delete_session,
     set_session_is_logged_and_user_id,
     set_session_chats,
@@ -52,7 +52,7 @@ async def login():
 
     print(f"{phone_number}({user_id}) is trying to login with: {auth_code}({password})")
 
-    saved_client = await db_session_exists(phone_number, user_id)
+    saved_client = await get_db_session(phone_number, user_id)
     if saved_client is None:
         print(f"{phone_number} session does not exist")
         return jsonify({"error": "session does not exist"}), 500
@@ -177,8 +177,8 @@ async def send_code():
 
         # TODO: check how long ago we send previous code
         client = None
-        db_session_does_exist = await db_session_exists(phone_number, user_id)
-        if db_session_does_exist is None:
+        saved_client = await get_db_session(phone_number, user_id)
+        if saved_client is None:
             client = TelegramClient(StringSession(), Config.API_ID, Config.API_HASH)
         else:
             client = TelegramClient(

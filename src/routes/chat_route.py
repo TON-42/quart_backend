@@ -4,7 +4,7 @@ from sqlalchemy.orm import joinedload
 from models import User, Chat, ChatStatus
 from services.user_service import create_user, set_auth_status
 from services.chat_service import create_chat, add_chat_to_users
-from services.session_service import create_session, db_session_exists, delete_session
+from services.session_service import create_session, get_db_session, delete_session
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
 from telethon.tl.types import PeerChat, PeerChannel
@@ -50,7 +50,7 @@ async def send_message():
 
     print(f"received: {phone_number}, {user_id}, {selected_chats}")
 
-    saved_client = await db_session_exists(phone_number, user_id)
+    saved_client = await get_db_session(phone_number, user_id)
     if saved_client is None:
         print("Session does not exist")
         return jsonify("Session does not exist"), 500

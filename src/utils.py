@@ -1,4 +1,4 @@
-from services.session_service import create_session, db_session_exists, delete_session
+from services.session_service import create_session, get_db_session, delete_session
 import asyncio
 
 
