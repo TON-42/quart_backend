@@ -65,8 +65,8 @@ async def send_message():
 
     sender = await client.get_me()
 
-    b_users = []
-    chat_users = []
+    chat_user_names = []
+    chat_user_ids = []
     for chat_details, words in selected_chats.items():
         try:
             # Parse chat_id and chat_name
@@ -91,13 +91,13 @@ async def send_message():
             users = await client.get_participants(chat_entity)
             for user in users:
                 await create_user(user.id, user.username, False)
-                chat_users.append(user.id)
-                b_users.append(user.username)
+                chat_user_ids.append(user.id)
+                chat_user_names.append(user.username)
 
-            chat_users.append(sender.id)
-            private_chat_id = "_".join(str(num) for num in sorted(chat_users))
+            chat_user_ids.append(sender.id)
+            private_chat_id = "_".join(str(num) for num in sorted(chat_user_ids))
             await create_chat(
-                private_chat_id, chat_name, words, sender.id, chat_users, chat_id
+                private_chat_id, chat_name, words, sender.id, chat_user_ids, chat_id
             )
 
             # Call print_chat asynchronously without waiting for it to complete
@@ -105,8 +105,8 @@ async def send_message():
 
             print(f"Sending message to {chat_name}")
             await client.send_message(chat_entity, message_invitee, parse_mode="html")
-            await add_chat_to_users(chat_users, private_chat_id)
-            chat_users.clear()
+            await add_chat_to_users(chat_user_ids, private_chat_id)
+            chat_user_ids.clear()
         except Exception as e:
             if await client.is_user_authorized():
                 await client.log_out()
@@ -118,7 +118,7 @@ async def send_message():
     if status == 1:
         await disconnect_client(client, "Couldn't update auth_status")
         return jsonify({"error": "couldn't update auth_status"}), 500
-    return jsonify({"userB": b_users if b_users else None}), 200
+    return jsonify({"user names": chat_user_names if chat_user_names else None}), 200
 
 
 @chat_route.route("/add-user-to-agreed", methods=["POST"])
