@@ -177,12 +177,12 @@ async def send_code():
 
         # TODO: check how long ago we send previous code
         client = None
-        saved_client = await get_db_session(phone_number, user_id)
-        if saved_client is None:
+        user_db_session = await get_db_session(phone_number, user_id)
+        if user_db_session is None:
             client = TelegramClient(StringSession(), Config.API_ID, Config.API_HASH)
         else:
             client = TelegramClient(
-                StringSession(saved_client.id), Config.API_ID, Config.API_HASH
+                StringSession(user_db_session.id), Config.API_ID, Config.API_HASH
             )
 
         if await connect_client(client, phone_number, user_id) == -1:
