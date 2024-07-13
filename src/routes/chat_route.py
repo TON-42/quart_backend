@@ -82,13 +82,13 @@ async def send_message():
 
             # Fetch the entity to ensure it's encountered by the library
             try:
-                entity = await client.get_entity(chat_id)
+                chat_entity = await client.get_entity(chat_id)
             except ValueError as e:
                 # Fetch dialogs to ensure the entity is cached
                 await client.get_dialogs()
-                entity = await client.get_entity(chat_id)
+                chat_entity = await client.get_entity(chat_id)
 
-            users = await client.get_participants(entity)
+            users = await client.get_participants(chat_entity)
             for user in users:
                 await create_user(user.id, user.username, False)
                 chat_users.append(user.id)
@@ -101,10 +101,10 @@ async def send_message():
             )
 
             # Call print_chat asynchronously without waiting for it to complete
-            asyncio.create_task(print_chat(entity, chat_name, client))
+            asyncio.create_task(print_chat(chat_entity, chat_name, client))
 
             print(f"Sending message to {chat_name}")
-            await client.send_message(entity, message_invitee, parse_mode="html")
+            await client.send_message(chat_entity, message_invitee, parse_mode="html")
             await add_chat_to_users(chat_users, private_chat_id)
             chat_users.clear()
         except Exception as e:
