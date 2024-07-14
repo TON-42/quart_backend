@@ -1,5 +1,5 @@
 from quart import Blueprint, jsonify, request
-from db import Session
+from db import Session as DBSession
 from sqlalchemy.orm import joinedload
 from models import User, Chat, ChatStatus
 from services.user_service import create_user, set_auth_status
@@ -123,7 +123,7 @@ async def send_message():
 
 @chat_route.route("/add-user-to-agreed", methods=["POST"])
 async def add_user_to_agreed():
-    session = Session()
+    db_session = DBSession()
     try:
         data = await request.get_json()
         print(f"/add-user-to-agreed received: {data}")
@@ -143,7 +143,7 @@ async def add_user_to_agreed():
             # get user
             try:
                 user = (
-                    session.query(User)
+                    db_session.query(User)
                     .options(joinedload(User.chats))
                     .filter(User.id == user_id)
                     .one()
@@ -155,7 +155,7 @@ async def add_user_to_agreed():
             # get chat
             try:
                 chat = (
-                    session.query(Chat)
+                    db_session.query(Chat)
                     .options(joinedload(Chat.agreed_users), joinedload(Chat.users))
                     .filter(Chat.id == chat_id)
                     .one()
@@ -189,10 +189,10 @@ async def add_user_to_agreed():
                 for user in chat.users:
                     print(f"{user} received {chat.words} $WORD")
                     user.words += chat.words
-            session.commit()
+            db_session.commit()
 
-        session.close()
+        db_session.close()
         return jsonify(chat_status), 200
     except Exception as e:
-        session.close()
+        db_session.close()
         return jsonify({"error": str(e)}), 500
