@@ -82,8 +82,33 @@ class Chat(Base):
         "User", secondary=agreed_users_chats, back_populates="agreed_chats"
     )
     users = relationship("User", secondary=users_chats, back_populates="chats")
+    full_text_data = relationship("ChatFullText", uselist=False, back_populates="chat")
+
+
+class ChatFullText(Base):
+    __tablename__ = "chat_full_texts"
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    chat_id = Column(String(255), ForeignKey("chats.id"))
     full_text = Column(Text, nullable=True)  # Field to store original chat text
-    sanitized_text = Column(Text, nullable=True)  # Field to store sanitized chat text
+    sanitized_text_presidio = Column(
+        Text, nullable=True
+    )  # Field to store sanitized chat text
+    annotated_text_presidio = Column(
+        Text, nullable=True
+    )  # Field to store annotated chat text
+    sanitized_text_chatgpt = Column(
+        Text, nullable=True
+    )  # Field to store sanitized chat text
+    annotated_text_chatgpt = Column(
+        Text, nullable=True
+    )  # Field to store annotated chat text
+    sanitized_text_local_llm = Column(
+        Text, nullable=True
+    )  # Field to store sanitized chat text
+    annotated_text_local_llm = Column(
+        Text, nullable=True
+    )  # Field to store annotated chat text
+    chat = relationship("Chat", back_populates="full_text_data")
 
 
 class Session(Base):
