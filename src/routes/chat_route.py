@@ -1,16 +1,13 @@
 from quart import Blueprint, jsonify, request
 from db import Session as DBSession
 from sqlalchemy.orm import joinedload
-from models import User, Chat, ChatStatus
+from models import User, Chat, ChatStatus, ChatFullText
 from services.user_service import create_user, set_auth_status
 from services.chat_service import create_chat, add_chat_to_users
-from services.session_service import create_session, get_db_session, delete_session
+from services.session_service import get_db_session, delete_session
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
-from telethon.tl.types import PeerChat, PeerChannel
 from utils import (
-    get_chat_id,
-    count_words,
     connect_client,
     disconnect_client,
     print_chat,
@@ -192,7 +189,47 @@ async def add_user_to_agreed():
                 for user in chat.users:
                     print(f"{user} received {chat.words} $WORD")
                     user.words += chat.words
-                # Save chat text to ChatFullText
+
+                # Check if the user is looged in and has an open session
+                user_db_session = await get_db_session(None, user.id)
+                if user_db_session is None:
+                    print(
+                        "Session does not exist: Chat is sold, but has not been fetched!"
+                    )
+                    # we still return 200, because the chat is sold
+                    continue
+
+                client = TelegramClient(
+                    StringSession(user_db_session.id), API_ID, API_HASH
+                )
+                if await connect_client(client, None, user.id) == -1:
+                    print("Error in connecting to Telegram")
+                    # we still return 200, because the chat is sold
+                    continue
+                if not await client.is_user_authorized():
+                    await disconnect_client(
+                        client, "Session is expired or user manually logged out"
+                    )
+                    # we still return 200, because the chat is sold
+                    continue
+                # Retrieve chat entity
+                try:
+                    chat_entity = await client.get_entity(chat.telegram_id)
+                except ValueError:
+                    await client.get_dialogs()
+                    chat_entity = await client.get_entity(chat.telegram_id)
+
+                # Fetch and save chat text to ChatFullText
+                full_text = ""
+                async for message in client.iter_messages(chat_entity):
+                    if message.text:
+                        full_text += message.text + "\n"
+
+                chat_full_text = ChatFullText(chat_id=chat.id, full_text=full_text)
+                db_session.add(chat_full_text)
+
+                await disconnect_client(client, f"Fetched and saved chat {chat_id}")
+                chat_status[chat_id] = "fetched"
 
             db_session.commit()
 
