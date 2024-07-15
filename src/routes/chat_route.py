@@ -169,16 +169,19 @@ async def add_user_to_agreed():
                 chat_status[chat_id] = "sold"
                 continue
 
-            for chat_user in chat.users:
-                # if user exists in the chat
-                if chat_user.id == user_id:
-                    for user_agreed in chat.agreed_users:
-                        # if user has already agreed
-                        if user_agreed.id == user_id:
-                            break
-                    chat.agreed_users.append(user)
-                    chat_status[chat_id] = "pending"
-                    break
+            # Check if the user is in the chat
+            if user not in chat.users:
+                print(f"User {user_id} is not in chat {chat_id}")
+                chat_status[chat_id] = "error"
+                continue
+
+            # Check if the user has already agreed
+            if user in chat.agreed_users:
+                chat_status[chat_id] = "pending"
+            else:
+                # Add the user to agreed_users
+                chat.agreed_users.append(user)
+                chat_status[chat_id] = "pending"
 
             # if all users have agreed
             if len(chat.agreed_users) == len(chat.users):
