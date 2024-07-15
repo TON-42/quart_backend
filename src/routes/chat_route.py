@@ -189,6 +189,8 @@ async def add_user_to_agreed():
                 for user in chat.users:
                     print(f"{user} received {chat.words} $WORD")
                     user.words += chat.words
+                # Save chat text to ChatFullText
+
             db_session.commit()
 
         db_session.close()

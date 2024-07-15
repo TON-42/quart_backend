@@ -2,13 +2,7 @@ from quart import Blueprint, jsonify, request
 from db import Session as DBSession
 from sqlalchemy.orm import joinedload
 from models import User, Chat
-from models import Session as MySession
 from services.user_service import create_user
-from sqlalchemy.orm.exc import NoResultFound
-from utils import get_chat_id, count_words, connect_client
-from telethon.sessions import StringSession
-from telethon.sync import TelegramClient
-from config import Config
 from services.user_service import manage_user_state
 
 user_route = Blueprint("user_route", __name__)
