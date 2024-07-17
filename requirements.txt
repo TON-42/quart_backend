@@ -47,3 +47,4 @@ httpx
 psycopg2-binary
 telebot
 aiohttp
+black

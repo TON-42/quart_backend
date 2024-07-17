@@ -1,6 +1,15 @@
 from quart import Blueprint, jsonify, request
 from db import Session
-from telethon.errors import SessionPasswordNeededError, PhoneNumberBannedError, PhoneNumberFloodError, PhoneNumberInvalidError, AuthRestartError, PhoneCodeExpiredError, PhoneCodeInvalidError, PhoneCodeEmptyError
+from telethon.errors import (
+    SessionPasswordNeededError,
+    PhoneNumberBannedError,
+    PhoneNumberFloodError,
+    PhoneNumberInvalidError,
+    AuthRestartError,
+    PhoneCodeExpiredError,
+    PhoneCodeInvalidError,
+    PhoneCodeEmptyError,
+)
 from collections import defaultdict
 from config import Config
 from services.user_service import set_has_profile, set_auth_status
@@ -9,16 +18,23 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 from utils import get_chat_id, count_words, connect_client, disconnect_client
 from services.user_service import get_user_chats
-from services.session_service import create_session, session_exists, delete_session, set_session_is_logged_and_user_id, set_session_chats
+from services.session_service import (
+    create_session,
+    session_exists,
+    delete_session,
+    set_session_is_logged_and_user_id,
+    set_session_chats,
+)
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
 from telethon.tl.types import User, Chat, Channel
 from config import Config
 import asyncio
 
-login_route = Blueprint('login_route', __name__)
+login_route = Blueprint("login_route", __name__)
 
-@login_route.route('/login', methods=['POST'])
+
+@login_route.route("/login", methods=["POST"])
 async def login():
     data = await request.get_json()
 
@@ -27,7 +43,7 @@ async def login():
     if not auth_code:
         if not password:
             return jsonify({"error": "No code provided"}), 400
-    
+
     user_id = data.get("userId")
     phone_number = data.get("phone_number")
     if not phone_number:
@@ -40,19 +56,25 @@ async def login():
     if saved_client is None:
         print(f"{phone_number} session does not exist")
         return jsonify({"error": "session does not exist"}), 500
-    
-    client = TelegramClient(StringSession(saved_client.id), Config.API_ID, Config.API_HASH)
+
+    client = TelegramClient(
+        StringSession(saved_client.id), Config.API_ID, Config.API_HASH
+    )
 
     if await connect_client(client, phone_number, user_id) == -1:
         return jsonify({"error": "error in connecting to Telegram"}), 500
-    
+
     if await client.is_user_authorized() == True:
         await disconnect_client(client, f"{phone_number} is already logged in")
         return jsonify({"message": "user is already logged in"}), 409
-    
+
     try:
         if password is None:
-            await client.sign_in(phone=saved_client.phone_number, code=auth_code, phone_code_hash=saved_client.phone_code_hash)
+            await client.sign_in(
+                phone=saved_client.phone_number,
+                code=auth_code,
+                phone_code_hash=saved_client.phone_code_hash,
+            )
         else:
             print("Signing in with password")
             await client.sign_in(password=password)
@@ -70,7 +92,9 @@ async def login():
         return jsonify({"error": "The phone number is invalid"}), 422
     except Exception as e:
         exception_type = type(e).__name__
-        await disconnect_client(client, f"Error in sign_in(): {exception_type} - {str(e)}")
+        await disconnect_client(
+            client, f"Error in sign_in(): {exception_type} - {str(e)}"
+        )
         return jsonify({"error": f"{exception_type}: {str(e)}"}), 500
 
     print(f"{phone_number} is logged in")
@@ -83,12 +107,12 @@ async def login():
     if chat_ids == 1:
         await disconnect_client(client, "Error while retrieving user's chats")
         return jsonify({"message": "error while retrieving user's chats"}), 500
-    
+
     status = await set_has_profile(sender.id, True)
     if status == 1:
         await disconnect_client(client, "Couldn't set has_profile to True")
         return jsonify({"error": "couldn't set has_profile to True"}), 500
-    
+
     count = 0
     res = defaultdict(int)
     tasks = []
@@ -97,14 +121,17 @@ async def login():
         dialogs = await client.get_dialogs()
         for dialog in dialogs:
             entity = dialog.entity
-            if not (isinstance(entity, Chat) or (isinstance(entity, User) and dialog.entity.bot == False)):
+            if not (
+                isinstance(entity, Chat)
+                or (isinstance(entity, User) and dialog.entity.bot == False)
+            ):
                 continue
 
             private_chat_id = await get_chat_id(dialog.id, sender.id, client)
             if private_chat_id in chat_ids:
                 print(f"Chat {dialog.name} is already sold")
                 continue
-    
+
             # TODO: think about the limit of chats
             count += 1
             if count > 15:
@@ -118,7 +145,7 @@ async def login():
     except Exception as e:
         await disconnect_client(client, f"Error in get_dialogs(): {str(e)}")
         return jsonify({"error": str(e)}), 500
-    
+
     results = await asyncio.gather(*(task for _, _, task in tasks))
     for (dialog_id, dialog_name, _), word_count in zip(tasks, results):
         res[(dialog_id, dialog_name)] = word_count
@@ -131,7 +158,7 @@ async def login():
     res_json_serializable = {str(key): value for key, value in res.items()}
 
     await set_session_chats(phone_number, str(res_json_serializable))
-    
+
     # Print the JSON-serializable dictionary
     print(res_json_serializable)
     return jsonify(res_json_serializable), 200
@@ -145,32 +172,38 @@ async def send_code():
         phone_number = data.get("phone_number")
         if phone_number is None:
             return jsonify({"error": "phone_number is missing"}), 400
-        
+
         user_id = data.get("userId")
-        
+
         # TODO: check how long ago we send previous code
         client = None
         saved_client = await session_exists(phone_number, user_id)
         if saved_client is None:
             client = TelegramClient(StringSession(), Config.API_ID, Config.API_HASH)
         else:
-            client = TelegramClient(StringSession(saved_client.id), Config.API_ID, Config.API_HASH)
+            client = TelegramClient(
+                StringSession(saved_client.id), Config.API_ID, Config.API_HASH
+            )
 
         if await connect_client(client, phone_number, user_id) == -1:
             return jsonify({"error": "error in connecting to Telegram"}), 500
-    
+
         if await client.is_user_authorized() == True:
             await disconnect_client(client, f"{phone_number} is already logged in")
             return jsonify({"message": "user is already logged in"}), 409
-        
+
         try:
             result = await client.send_code_request(phone_number)
             phone_code_hash = result.phone_code_hash
         except PhoneNumberBannedError as e:
-            await disconnect_client(client, f"The used phone number has been banned from Telegram: {str(e)}")
+            await disconnect_client(
+                client, f"The used phone number has been banned from Telegram: {str(e)}"
+            )
             return jsonify({"error": str(e)}), 403
         except PhoneNumberFloodError as e:
-            await disconnect_client(client, f"You asked for the code too many times: {str(e)}")
+            await disconnect_client(
+                client, f"You asked for the code too many times: {str(e)}"
+            )
             return jsonify({"error": str(e)}), 429
         except PhoneNumberInvalidError as e:
             await disconnect_client(client, f"phone number is invalid: {str(e)}")
@@ -181,11 +214,13 @@ async def send_code():
         except Exception as e:
             await disconnect_client(client, f"Error in send_code(): {str(e)}")
             return jsonify({"error": str(e)}), 500
-        
+
         print(f"sending auth code to {phone_number}")
 
         if saved_client is None:
-            status = await create_session(client, phone_number, phone_code_hash, user_id)
+            status = await create_session(
+                client, phone_number, phone_code_hash, user_id
+            )
             if status == -1:
                 await disconnect_client(client, "Error creating session")
                 return jsonify({"message": "error creating session"}), 500
@@ -195,7 +230,7 @@ async def send_code():
             if status == 1:
                 await disconnect_client(client, "Couldn't update auth_status")
                 return jsonify({"error": "couldn't update auth_status"}), 500
-        
+
         return "ok", 200
 
     except Exception as e:

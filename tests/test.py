@@ -11,8 +11,7 @@ def get_env(name, message):
     return input(message)
 
 
-
-BASE_TEMPLATE = '''
+BASE_TEMPLATE = """
 <!DOCTYPE html>
 <html>
     <head>
@@ -21,38 +20,38 @@ BASE_TEMPLATE = '''
     </head>
     <body>{{ content | safe }}</body>
 </html>
-'''
+"""
 
-PHONE_FORM = '''
+PHONE_FORM = """
 <form action='/' method='post'>
     Phone (international format): <input name='phone' type='text' placeholder='+34600000000'>
     <input type='submit'>
 </form>
-'''
+"""
 
-CODE_FORM = '''
+CODE_FORM = """
 <form action='/' method='post'>
     Telegram code: <input name='code' type='text' placeholder='70707'>
     <input type='submit'>
 </form>
-'''
+"""
 
-PASSWORD_FORM = '''
+PASSWORD_FORM = """
 <form action='/' method='post'>
     Telegram password: <input name='password' type='text' placeholder='your password'>
     <input type='submit'>
 </form>
-'''
+"""
 
 # Session name, API ID and hash to use; loaded from environmental variables
-SESSION = 'user'
+SESSION = "user"
 load_dotenv()
 API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")
 
 # Telethon client
 client = TelegramClient(SESSION, API_ID, API_HASH)
-client.parse_mode = 'html'  # <- Render things nicely
+client.parse_mode = "html"  # <- Render things nicely
 phone = None
 
 # Quart app
@@ -64,16 +63,14 @@ async def format_message(message):
     if message.photo:
         content = '<img src="data:image/png;base64,{}" alt="{}" />'.format(
             base64.b64encode(await message.download_media(bytes)).decode(),
-            message.raw_text
+            message.raw_text,
         )
     else:
         # client.parse_mode = 'html', so bold etc. will work!
-        content = (message.text or '(action message)').replace('\n', '<br>')
+        content = (message.text or "(action message)").replace("\n", "<br>")
 
-    return '<p><strong>{}</strong>: {}<sub>{}</sub></p>'.format(
-        utils.get_display_name(message.sender),
-        content,
-        message.date
+    return "<p><strong>{}</strong>: {}<sub>{}</sub></p>".format(
+        utils.get_display_name(message.sender), content, message.date
     )
 
 
@@ -91,37 +88,38 @@ async def cleanup():
     await client.disconnect()
 
 
-@app.route('/health', methods=['GET', 'POST'])
+@app.route("/health", methods=["GET", "POST"])
 async def health():
     return "ok", 200
 
-@app.route('/', methods=['GET', 'POST'])
+
+@app.route("/", methods=["GET", "POST"])
 async def root():
     # We want to update the global phone variable to remember it
     global phone
 
     # Check form parameters (phone/code)
     form = await request.form
-    if 'phone' in form:
-        phone = form['phone']
+    if "phone" in form:
+        phone = form["phone"]
         await client.send_code_request(phone)
 
-    if 'code' in form:
+    if "code" in form:
         try:
-            await client.sign_in(code=form['code'])
+            await client.sign_in(code=form["code"])
         except SessionPasswordNeededError:
             return await render_template_string(BASE_TEMPLATE, content=PASSWORD_FORM)
 
-    if 'password' in form:
-        await client.sign_in(password=form['password'])
+    if "password" in form:
+        await client.sign_in(password=form["password"])
 
     # If we're logged in, show them some messages from their first dialog
     if await client.is_user_authorized():
         # They are logged in, show them some messages from their first dialog
         dialog = (await client.get_dialogs())[0]
-        result = '<h1>{}</h1>'.format(dialog.title)
+        result = "<h1>{}</h1>".format(dialog.title)
         async for m in client.iter_messages(dialog, 10):
-            result += await(format_message(m))
+            result += await format_message(m)
 
         return await render_template_string(BASE_TEMPLATE, content=result)
 
@@ -139,5 +137,5 @@ async def root():
 # loops are different, it won't work.
 #
 # To keep things simple, be sure to not create multiple asyncio loops!
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(port=8080)

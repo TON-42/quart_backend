@@ -8,6 +8,7 @@ commands = "📝 /start - Start the bot\n❓ /faq - more information"
 
 bot = AsyncTeleBot(Config.TOKEN)
 
+
 async def global_message(users, message):
     for user in users:
         if user.id < 100:
@@ -19,20 +20,30 @@ async def global_message(users, message):
             print(f"error on {user.id}")
             continue
 
+
 async def chat_sale(users):
     markup = InlineKeyboardMarkup()
     markup.row_width = 2
-    markup.add(InlineKeyboardButton("Discord", url="https://discord.com/channels/1249074503007600731/"))
+    markup.add(
+        InlineKeyboardButton(
+            "Discord", url="https://discord.com/channels/1249074503007600731/"
+        )
+    )
     markup.add(InlineKeyboardButton("X", url="https://x.com/chatpay_app"))
     for user in users:
         if user.id < 100:
             continue
         print(f"sending to {user.name}")
         try:
-            await bot.send_message(user.id, f"Congratulations! 🎉\nEvery user has agreed to sell the chat\nYour $WORD is on the way!\nJoin the community on Discord and X and let your friends know about ChatPay 💬 = 💰", reply_markup=markup)
+            await bot.send_message(
+                user.id,
+                f"Congratulations! 🎉\nEvery user has agreed to sell the chat\nYour $WORD is on the way!\nJoin the community on Discord and X and let your friends know about ChatPay 💬 = 💰",
+                reply_markup=markup,
+            )
         except Exception:
             print(f"error on {user.id}")
             continue
+
 
 @bot.message_handler(commands=["start"])
 async def start(message):
@@ -58,9 +69,11 @@ async def start(message):
     print(f"chat-id: {message.chat.id}")
     await bot.send_photo(message.chat.id, image_url, caption, reply_markup=markup)
 
+
 @bot.message_handler(content_types=["text"])
 async def message_reply(message):
     await bot.send_message(message.chat.id, "List of avaliable commands:\n" + commands)
+
 
 # @bot.message_handler(commands=["faq"])
 # async def faq(message):

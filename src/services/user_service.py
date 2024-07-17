@@ -9,6 +9,7 @@ from telethon.sync import TelegramClient
 from config import Config
 from utils import get_chat_id, count_words, connect_client
 
+
 async def create_user(user_id, username, profile):
     session = Session()
     try:
@@ -17,14 +18,18 @@ async def create_user(user_id, username, profile):
         if username is None:
             username = "Unknown"
         new_user = User(
-            id=user_id, name=username, has_profile=profile, words=0, auth_status="default"
+            id=user_id,
+            name=username,
+            has_profile=profile,
+            words=0,
+            auth_status="default",
         )
         user_data = {
             "id": new_user.id,
             "name": new_user.name,
             "has_profile": new_user.has_profile,
             "words": new_user.words,
-            "auth_status": new_user.auth_status
+            "auth_status": new_user.auth_status,
         }
 
         print(f"new user created: {user_data}")
@@ -34,6 +39,7 @@ async def create_user(user_id, username, profile):
         print(f"Error creating a user: {str(e)}")
     finally:
         session.close()
+
 
 async def set_has_profile(user_id, has_profile):
     session = Session()
@@ -48,6 +54,7 @@ async def set_has_profile(user_id, has_profile):
     finally:
         session.close()
         return status
+
 
 async def set_auth_status(user_id, status):
     session = Session()
@@ -64,6 +71,7 @@ async def set_auth_status(user_id, status):
         session.close()
         return exit_code
 
+
 async def get_user_chats(sender_id, sender_name):
     session = Session()
     chat_ids = []
@@ -74,7 +82,7 @@ async def get_user_chats(sender_id, sender_name):
             .filter(User.id == sender_id)
             .first()
         )
-        
+
         chat_ids = [chat.id for chat in user.chats]
         print(f"User {sender_name} previously sold chats: {chat_ids}")
         session.close()
@@ -84,14 +92,19 @@ async def get_user_chats(sender_id, sender_name):
         session.close()
         return 1
 
+
 async def manage_user_state(session, user, user_id):
     is_logged_in = False
     chats = None
     try:
-        user_session = session.query(MySession).filter(MySession.user_id == str(user_id)).first()
+        user_session = (
+            session.query(MySession).filter(MySession.user_id == str(user_id)).first()
+        )
         # if session exists and user is logged in => double check logged in status
         if user_session and user_session.is_logged:
-            client = TelegramClient(StringSession(user_session.id), Config.API_ID, Config.API_HASH)
+            client = TelegramClient(
+                StringSession(user_session.id), Config.API_ID, Config.API_HASH
+            )
             if await connect_client(client, None, user_id) == -1:
                 print("error in connecting to Telegram")
                 return jsonify({"error": "error in connecting to Telegram"}), 500
@@ -114,6 +127,5 @@ async def manage_user_state(session, user, user_id):
     except Exception as e:
         session.close()
         print(f"error in looking for a session: {str(e)}")
-        return ("error")
+        return "error"
     return chats
-    
