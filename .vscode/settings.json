@@ -1,0 +1,25 @@
+{
+  "python.formatting.provider": "black",
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "editor.formatOnType": true,
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.wordBasedSuggestions": "off",
+    "editor.formatOnType": true,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    }
+  },
+  "black-formatter.importStrategy": "useBundled",
+  "black-formatter.path": [],
+  "black-formatter.showNotifications": "off",
+  "python.analysis.diagnosticSeverityOverrides": {},
+  "python.globalModuleInstallation": true,
+  "python.analysis.autoFormatStrings": false,
+  "python.analysis.autoImportCompletions": false,
+  "python.analysis.autoIndent": true,
+  "python.analysis.autoSearchPaths": true,
+  "black-formatter.args": ["--line-length", "88"]
+}

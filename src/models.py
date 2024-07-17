@@ -29,6 +29,7 @@ class ChatStatus(enum.Enum):
     sold = "sold"
     declined = "declined"
 
+
 # Association table for many-to-many relationship between users and chats
 users_chats = Table(
     "users_chats",
@@ -121,6 +122,7 @@ class Session(Base):
     is_logged = Column(Boolean, default=False, nullable=True)
     chats = Column(Text, nullable=True)
 
+
 class Session(Base):
     __tablename__ = "sessions"
     id = Column(Text, primary_key=True)
@@ -131,6 +133,7 @@ class Session(Base):
     send_code_date = Column(DateTime, default=datetime.utcnow, nullable=True)
     is_logged = Column(Boolean, default=False, nullable=True)
     chats = Column(Text, nullable=True)
+
 
 # Database URL from environment variable or fallback
 DATABASE_URL = os.getenv("DATABASE_URL")

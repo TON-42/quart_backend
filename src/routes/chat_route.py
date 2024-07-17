@@ -7,6 +7,14 @@ from services.chat_service import create_chat, add_chat_to_users
 from services.session_service import get_db_session, delete_session
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
+from telethon.tl.types import PeerChat, PeerChannel
+from utils import (
+    get_chat_id,
+    count_words,
+    connect_client,
+    disconnect_client,
+    print_chat,
+)
 from utils import (
     connect_client,
     disconnect_client,
@@ -22,6 +30,8 @@ API_HASH = os.getenv("API_HASH")
 
 chat_route = Blueprint("chat_route", __name__)
 
+chat_route = Blueprint("chat_route", __name__)
+
 
 @chat_route.route("/send-message", methods=["POST"])
 async def send_message():
@@ -29,6 +39,13 @@ async def send_message():
 
     user_id = data.get("userId")
     phone_number = data.get("phone_number")
+    if not phone_number:
+        if not user_id:
+            return jsonify("No phone_number and userId provided"), 400
+
+    message = data.get("message")
+    if not message:
+        message = "Hello! The owner of this chat wants to sell the data of this chat.\nPlease click the button below to accept the sale and proceed to the bot:"
     if not phone_number and not user_id:
         return jsonify("No phone_number and userId provided"), 400
 
@@ -36,6 +53,9 @@ async def send_message():
     if not message_raw:
         message_raw = "Hello! The owner of this chat wants to sell the data of this chat.\nPlease click the button below to accept the sale and proceed to the bot:"
     else:
+        message_for_second_user = (
+            message + "\n\n" "https://t.me/chatpayapp_bot/chatpayapp"
+        )
         message_invitee = message_raw + "\n\n" "https://t.me/chatpayapp_bot/chatpayapp"
 
     selected_chats = data.get("chats", {})
@@ -49,12 +69,17 @@ async def send_message():
         print("Session does not exist")
         return jsonify("Session does not exist"), 500
 
+    client = TelegramClient(StringSession(saved_client.id), API_ID, API_HASH)
+
     client = TelegramClient(StringSession(user_db_session.id), API_ID, API_HASH)
 
     if await connect_client(client, phone_number, user_id) == -1:
         return jsonify({"error": "error in connecting to Telegram"}), 500
 
     if not await client.is_user_authorized():
+        await disconnect_client(
+            client, "Session is expired or user manually logged out"
+        )
         await disconnect_client(
             client, "Session is expired or user manually logged out"
         )
@@ -91,6 +116,12 @@ async def send_message():
                 chat_user_ids.append(user.id)
                 chat_user_names.append(user.username)
 
+            chat_users.append(sender.id)
+            private_chat_id = "_".join(str(num) for num in sorted(chat_users))
+            await create_chat(
+                private_chat_id, chat_name, words, sender.id, chat_users, chat_id
+            )
+
             chat_user_ids.append(sender.id)
             private_chat_id = "_".join(str(num) for num in sorted(chat_user_ids))
             await create_chat(
@@ -101,6 +132,11 @@ async def send_message():
             asyncio.create_task(print_chat(chat_entity, chat_name, client))
 
             print(f"Sending message to {chat_name}")
+            await client.send_message(
+                entity, message_for_second_user, parse_mode="html"
+            )
+            await add_chat_to_users(chat_users, private_chat_id)
+            chat_users.clear()
             await client.send_message(chat_entity, message_invitee, parse_mode="html")
             await add_chat_to_users(chat_user_ids, private_chat_id)
             chat_user_ids.clear()
@@ -140,6 +176,12 @@ async def add_user_to_agreed():
             # get user
             try:
                 user = (
+                    session.query(User)
+                    .options(joinedload(User.chats))
+                    .filter(User.id == user_id)
+                    .one()
+                )
+                user = (
                     db_session.query(User)
                     .options(joinedload(User.chats))
                     .filter(User.id == user_id)
@@ -151,6 +193,12 @@ async def add_user_to_agreed():
 
             # get chat
             try:
+                chat = (
+                    session.query(Chat)
+                    .options(joinedload(Chat.agreed_users), joinedload(Chat.users))
+                    .filter(Chat.id == chat_id)
+                    .one()
+                )
                 chat = (
                     db_session.query(Chat)
                     .options(joinedload(Chat.agreed_users), joinedload(Chat.users))
@@ -166,6 +214,16 @@ async def add_user_to_agreed():
                 chat_status[chat_id] = "sold"
                 continue
 
+            for chat_user in chat.users:
+                # if user exists in the chat
+                if chat_user.id == user_id:
+                    for user_agreed in chat.agreed_users:
+                        # if user has already agreed
+                        if user_agreed.id == user_id:
+                            break
+                    chat.agreed_users.append(user)
+                    chat_status[chat_id] = "pending"
+                    break
             # Check if the user is in the chat
             if user not in chat.users:
                 print(f"User {user_id} is not in chat {chat_id}")

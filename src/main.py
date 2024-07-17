@@ -41,6 +41,11 @@ async def check_session_expiration():
                     if user_session.is_logged:
                         try:
                             client = TelegramClient(
+                                StringSession(my_session.id),
+                                Config.API_ID,
+                                Config.API_HASH,
+                            )
+                            client = TelegramClient(
                                 StringSession(user_session.id),
                                 Config.API_ID,
                                 Config.API_HASH,

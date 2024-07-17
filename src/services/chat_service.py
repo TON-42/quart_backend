@@ -3,7 +3,10 @@ from models import User, Chat, ChatStatus
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 
-async def create_chat(chat_id, chat_name, words_number, sender_id, chat_users, teleg_id):
+
+async def create_chat(
+    chat_id, chat_name, words_number, sender_id, chat_users, teleg_id
+):
     session = Session()
     status = 0
     try:
@@ -18,7 +21,7 @@ async def create_chat(chat_id, chat_name, words_number, sender_id, chat_users, t
             words=words_number,
             status=ChatStatus.pending,
             lead_id=sender_id,
-            telegram_id=teleg_id
+            telegram_id=teleg_id,
         )
 
         lead = session.query(User).filter(User.id == sender_id).one()
@@ -28,9 +31,7 @@ async def create_chat(chat_id, chat_name, words_number, sender_id, chat_users, t
         agreed_users = session.query(User).filter(User.id.in_(agreed_user_ids)).all()
         new_chat.agreed_users.extend(agreed_users)
 
-        all_users = (
-            session.query(User).filter(User.id.in_(chat_users)).all()
-        )
+        all_users = session.query(User).filter(User.id.in_(chat_users)).all()
         new_chat.users.extend(all_users)
 
         session.add(new_chat)
@@ -41,7 +42,8 @@ async def create_chat(chat_id, chat_name, words_number, sender_id, chat_users, t
     finally:
         session.close()
         return status
-    
+
+
 async def add_chat_to_users(users_id, chat_id):
     status = 0
     try:
