@@ -7,7 +7,9 @@ from routes.chat_route import chat_route
 from bot import bot
 from telebot import types
 from services.session_expiration import check_session_expiration
+from db import init_db
 
+init_db()
 
 app = Quart(__name__)
 app = cors(app, allow_origin="*")

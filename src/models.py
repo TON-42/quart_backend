@@ -6,21 +6,14 @@ from sqlalchemy import (
     ForeignKey,
     Table,
     Text,
-    create_engine,
     DateTime,
 )
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
-from dotenv import load_dotenv
 from datetime import datetime
+from db import Base
 import os
 import enum
-
-
-load_dotenv()
-
-Base = declarative_base()
 
 
 # Enum for chat status
@@ -121,26 +114,3 @@ class Session(Base):
     send_code_date = Column(DateTime, default=datetime.utcnow, nullable=True)
     is_logged = Column(Boolean, default=False, nullable=True)
     chats = Column(Text, nullable=True)
-
-
-# Database URL from environment variable or fallback
-DATABASE_URL = os.getenv("DATABASE_URL")
-print(f"DATABASE_URL: {DATABASE_URL}")  # Debugging line
-if DATABASE_URL is None:
-    raise ValueError("No DATABASE_URL found in environment variables")
-
-
-# Create engine and session in a function to avoid import-time side effects
-def get_engine():
-    return create_engine(DATABASE_URL)
-
-
-def get_session():
-    engine = get_engine()
-    return sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
-# Initialize database
-def init_db():
-    engine = get_engine()
-    Base.metadata.create_all(bind=engine)
