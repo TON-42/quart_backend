@@ -3,19 +3,21 @@ import asyncio
 from telebot.async_telebot import AsyncTeleBot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
-bot = AsyncTeleBot('5459758083:AAGEANF9VE42ygmyLB7MmAXqK40kQYb5wdM')
+bot = AsyncTeleBot("5459758083:AAGEANF9VE42ygmyLB7MmAXqK40kQYb5wdM")
 
 
 # Handle '/start' and '/help'
-@bot.message_handler(commands=['help', 'start'])
+@bot.message_handler(commands=["help", "start"])
 async def send_welcome(message):
-    text = 'Hi, I am EchoBot.\nJust write me something and I will repeat it!'
+    text = "Hi, I am EchoBot.\nJust write me something and I will repeat it!"
     await bot.reply_to(message, text)
 
 
 @bot.message_handler(func=lambda message: True)
 async def start(message):
-    image_url = 'https://magnumtravel-bucket.s3.amazonaws.com/static/images/bot-banner.png'
+    image_url = (
+        "https://magnumtravel-bucket.s3.amazonaws.com/static/images/bot-banner.png"
+    )
     caption = (
         "Welcome to ChatPay 💬\n\n"
         "1️⃣ Enter your phone number (don't forget your country code!). 📱\n\n"
@@ -31,7 +33,7 @@ async def start(message):
     webUrl = WebAppInfo("https://new-vite-frontend.vercel.app/")
     markup.add(InlineKeyboardButton("Launch", web_app=webUrl))
 
-    await bot.send_photo(message.chat.id, image_url, caption,  reply_markup=markup)
+    await bot.send_photo(message.chat.id, image_url, caption, reply_markup=markup)
 
 
 # # Handle all other messages with content_type 'text' (content_types defaults to ['text'])

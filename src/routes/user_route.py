@@ -11,7 +11,8 @@ from telethon.sync import TelegramClient
 from config import Config
 from services.user_service import manage_user_state
 
-user_route = Blueprint('user_route', __name__)
+user_route = Blueprint("user_route", __name__)
+
 
 @user_route.route("/get-user", methods=["POST"])
 async def get_user():
@@ -26,9 +27,9 @@ async def get_user():
 
         if user_id is None:
             return jsonify({"error": "userId is missing"}), 400
-        
+
         print(f"get-user: {username}")
-        
+
         try:
             await create_user(user_id, username, False)
         except Exception as e:
@@ -36,27 +37,29 @@ async def get_user():
             return jsonify({"error": str(e)}), 500
         try:
             session = Session()
-            
+
             user = (
                 session.query(User)
                 .options(
                     joinedload(User.chats).joinedload(Chat.users),
                     joinedload(User.chats).joinedload(Chat.lead),
-                    joinedload(User.chats).joinedload(Chat.agreed_users)
+                    joinedload(User.chats).joinedload(Chat.agreed_users),
                 )
                 .filter(User.id == user_id)
                 .first()
             )
-            
-            auth_code = False # we have to save auth_code before it is overwritten with default
+
+            auth_code = (
+                False  # we have to save auth_code before it is overwritten with default
+            )
             if user.auth_status == "auth_code":
                 auth_code = True
-            
+
             session_chats = None
             session_chats = await manage_user_state(session, user, user_id)
-            if (session_chats == "error"):
+            if session_chats == "error":
                 return jsonify({"error in looking for a session"}), 500
-            
+
         except Exception as e:
             session.close()
             print(f"error in fetching data from db: {str(e)}")
@@ -76,10 +79,11 @@ async def get_user():
                     "name": chat.name,
                     "words": chat.words,
                     "status": chat.status.name,
-                    "lead": {
-                        "id": chat.lead.id,
-                        "name": chat.lead.name
-                    } if chat.lead else None,
+                    "lead": (
+                        {"id": chat.lead.id, "name": chat.lead.name}
+                        if chat.lead
+                        else None
+                    ),
                     "agreed_users": [
                         agreed_user.id for agreed_user in chat.agreed_users
                     ],
@@ -94,4 +98,3 @@ async def get_user():
     except Exception as e:
         print(f"error in /get-user: {str(e)}")
         return jsonify({"error": str(e)}), 500
-    

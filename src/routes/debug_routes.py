@@ -10,7 +10,8 @@ import httpx
 from config import Config
 from bot import global_message
 
-debug_routes = Blueprint('debug_routes', __name__)
+debug_routes = Blueprint("debug_routes", __name__)
+
 
 @debug_routes.route("/send-global-message", methods=["POST"])
 async def send_global_message():
@@ -19,7 +20,7 @@ async def send_global_message():
     message = data.get("message")
     if not message:
         return jsonify({"error": "No message provided"}), 400
-    
+
     try:
         session = Session()
         users = session.query(User).options(joinedload(User.chats)).all()
@@ -31,18 +32,19 @@ async def send_global_message():
     await global_message(users, message)
     return "ok", 200
 
+
 @debug_routes.route("/get-users", methods=["GET"])
 async def get_users():
     try:
         # Create a session
         session = Session()
-        
+
         # Query all users
         users = session.query(User).options(joinedload(User.chats)).all()
 
         # Close the session
         session.close()
-        
+
         users_json = [
             {
                 "id": user.id,
@@ -51,13 +53,13 @@ async def get_users():
                 "words": user.words,
                 "chats": [chat.id for chat in user.chats],
                 "registration date": user.registration_date,
-                "auth_status": user.auth_status
+                "auth_status": user.auth_status,
             }
             for user in users
         ]
-        
+
         return jsonify(users_json)
-    
+
     except Exception as e:
         session.close()
         return jsonify({"error": str(e)}), 500
@@ -68,16 +70,17 @@ async def get_chats():
     try:
         # Create a session
         session = Session()
-        
+
         # Query all chats
-        chats = session.query(Chat).options(
-            joinedload(Chat.agreed_users),
-            joinedload(Chat.users)
-        ).all()
+        chats = (
+            session.query(Chat)
+            .options(joinedload(Chat.agreed_users), joinedload(Chat.users))
+            .all()
+        )
 
         # Close the session
         session.close()
-        
+
         chats_json = [
             {
                 "id": chat.id,
@@ -87,45 +90,47 @@ async def get_chats():
                 "lead": chat.lead_id,
                 "telegram_id": chat.telegram_id,
                 "agreed_users": [user.id for user in chat.agreed_users],
-                "users": [user.id for user in chat.users]
+                "users": [user.id for user in chat.users],
             }
             for chat in chats
         ]
-        
+
         return jsonify(chats_json)
-    
+
     except Exception as e:
         session.close()
         return jsonify({"error": str(e)}), 500
+
 
 @debug_routes.route("/get-sessions", methods=["GET"])
 async def get_sessions():
     try:
         # Create a session
         session = Session()
-        
+
         # Query all chats
         sessions = session.query(MySession).all()
 
         # Close the session
         session.close()
-        
+
         sessions_json = [
             {
                 "id": session.id,
                 "phone_number": session.phone_number,
-                "user_id": session.user_id,  
+                "user_id": session.user_id,
                 "created_at": session.creation_date,
-                "chats": session.chats 
+                "chats": session.chats,
             }
             for session in sessions
         ]
-        
+
         return jsonify(sessions_json)
-    
+
     except Exception as e:
         session.close()
         return jsonify({"error": str(e)}), 500
+
 
 @debug_routes.route("/delete-session", methods=["POST"])
 async def delete_one_session():
@@ -137,7 +142,7 @@ async def delete_one_session():
     try:
         # Create a session
         session = Session()
-        
+
         try:
             # Query the user by ID
             found_session = (
@@ -145,11 +150,11 @@ async def delete_one_session():
                 .filter(MySession.phone_number == phone_number)
                 .first()
             )
-            
+
             # Delete the session
             session.delete(found_session)
             session.commit()
-            
+
             response = {"message": f"Session has been deleted."}
             status_code = 200
 
@@ -169,19 +174,20 @@ async def delete_one_session():
 
     finally:
         session.close()
-        
+
     return jsonify(response), status_code
+
 
 @debug_routes.route("/delete-user", methods=["GET"])
 async def delete_user():
-    user_id = request.args.get('id', type=int)
-    
+    user_id = request.args.get("id", type=int)
+
     if not user_id:
         return jsonify({"error": "User ID is required"}), 400
     try:
         # Create a session
         session = Session()
-        
+
         try:
             # Query the user by ID
             user = (
@@ -190,15 +196,15 @@ async def delete_user():
                 .filter(User.id == user_id)
                 .first()
             )
-            
+
             # Delete all connected chats
             for chat in user.chats:
                 session.delete(chat)
-            
+
             # Delete the user
             session.delete(user)
             session.commit()
-            
+
             response = {"message": f"User has been deleted."}
             status_code = 200
 
@@ -218,28 +224,29 @@ async def delete_user():
 
     finally:
         session.close()
-        
+
     return jsonify(response), status_code
+
 
 @debug_routes.route("/delete-chat", methods=["GET"])
 async def delete_chat():
-    chat_id = request.args.get('id', type=int)
-    
+    chat_id = request.args.get("id", type=int)
+
     if not chat_id:
         return jsonify({"error": "chat ID is required"}), 400
 
     try:
         # Create a session
         session = Session()
-        
+
         try:
             # Query the user by ID
             chat = session.query(Chat).filter(Chat.id == chat_id).one()
-            
+
             # Delete the chat
             session.delete(chat)
             session.commit()
-            
+
             response = {"message": f"Chat has been deleted."}
             status_code = 200
 
@@ -259,24 +266,25 @@ async def delete_chat():
 
     finally:
         session.close()
-        
+
     return jsonify(response), status_code
+
 
 # @debug_routes.route("/delete-all-chats", methods=["GET"])
 # async def delete_chats():
 #     try:
 #         # Create a session
 #         session = Session()
-        
+
 #         try:
 #             session.query(agreed_users_chats).delete()
 #             session.query(users_chats).delete()
 #             session.query(Chat).delete()
 #             session.commit()
-            
+
 #             response = {"message": f"Chats have been deleted."}
 #             status_code = 200
-    
+
 #         except IntegrityError as e:
 #             session.rollback()
 #             response = {"error": f"Integrity error occurred: {str(e)}"}
@@ -289,7 +297,7 @@ async def delete_chat():
 
 #     finally:
 #         session.close()
-        
+
 #     return jsonify(response), status_code
 
 # @debug_routes.route("/delete-all-users", methods=["GET"])
@@ -297,16 +305,16 @@ async def delete_chat():
 #     try:
 #         # Create a session
 #         session = Session()
-        
+
 #         try:
 #             session.query(agreed_users_chats).delete()
 #             session.query(users_chats).delete()
 #             session.query(User).delete()
 #             session.commit()
-            
+
 #             response = {"message": f"Users have been deleted."}
 #             status_code = 200
-    
+
 #         except IntegrityError as e:
 #             session.rollback()
 #             response = {"error": f"Integrity error occurred: {str(e)}"}
@@ -319,7 +327,7 @@ async def delete_chat():
 
 #     finally:
 #         session.close()
-        
+
 #     return jsonify(response), status_code
 
 # ------------------ DEBUG routes ---------------------------
@@ -379,7 +387,7 @@ async def delete_chat():
 #         await client.get_dialogs()
 
 #         user_entity = await client.get_entity(int(user_id))
-        
+
 #         if user_entity.username:
 #             return user_entity.username
 #         else:
@@ -423,24 +431,24 @@ async def delete_chat():
 
 #         lead = session.query(User).filter(User.id == 32432524).one()
 #         new_chat.lead = lead
-        
+
 #         agreed_user_ids = [32432524]
 #         agreed_users = session.query(User).filter(User.id.in_(agreed_user_ids)).all()
 #         new_chat.agreed_users.extend(agreed_users)
 
 #         all_users = session.query(User).filter(User.id.in_([32432524, 32432525])).all()
-    #     new_chat.users.extend(all_users)
-    
-    #     session.add(new_chat)
-    #     session.commit()
-    # except Exception as e:
-    #     print(f"Error: {str(e)}")
-    #     return jsonify({f"Error: {str(e)}"}), 400
-    #     status = 1
-    # finally:
-    #     session.close()
-    #     return jsonify({"message": "OK"}), 200
-        # return status
+#     new_chat.users.extend(all_users)
+
+#     session.add(new_chat)
+#     session.commit()
+# except Exception as e:
+#     print(f"Error: {str(e)}")
+#     return jsonify({f"Error: {str(e)}"}), 400
+#     status = 1
+# finally:
+#     session.close()
+#     return jsonify({"message": "OK"}), 200
+# return status
 
 
 # -----------------------------------------------

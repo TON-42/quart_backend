@@ -24,6 +24,7 @@ app.register_blueprint(login_route)
 app.register_blueprint(user_route)
 app.register_blueprint(chat_route)
 
+
 async def check_session_expiry():
     while True:
         session = S()
@@ -36,7 +37,11 @@ async def check_session_expiry():
                     print(f"Session for {my_session.phone_number} has expired.")
                     if my_session.is_logged:
                         try:
-                            client = TelegramClient(StringSession(my_session.id), Config.API_ID, Config.API_HASH)
+                            client = TelegramClient(
+                                StringSession(my_session.id),
+                                Config.API_ID,
+                                Config.API_HASH,
+                            )
                             await client.connect()
                             if await client.is_user_authorized():
                                 await client.log_out()
@@ -54,23 +59,28 @@ async def check_session_expiry():
         # Wait for 1 minute before checking again
         await asyncio.sleep(60)
 
+
 @app.before_serving
 async def startup():
     app.add_background_task(check_session_expiry)
+
 
 @app.after_serving
 async def shutdown():
     for task in app.background_tasks:
         task.cancel()
 
+
 @app.route("/health", methods=["GET"])
 async def health():
     app.logger.info("Health check endpoint called")
     return "ok", 200
 
+
 @app.route("/hello", methods=["GET"])
 async def hello_world():
     return jsonify({"message": "Hello, World!"})
+
 
 @app.route("/webhook", methods=["POST"])
 async def webhook():
@@ -79,6 +89,7 @@ async def webhook():
         update = types.Update.de_json(data)
         await bot.process_new_updates([update])
     return "ok"
+
 
 if __name__ == "__main__":
     app.run(port=8080)
