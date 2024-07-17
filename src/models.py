@@ -123,18 +123,6 @@ class Session(Base):
     chats = Column(Text, nullable=True)
 
 
-class Session(Base):
-    __tablename__ = "sessions"
-    id = Column(Text, primary_key=True)
-    phone_number = Column(String(100), nullable=False)
-    user_id = Column(String(100), nullable=True)
-    phone_code_hash = Column(Text, nullable=True)
-    creation_date = Column(DateTime, default=datetime.utcnow, nullable=True)
-    send_code_date = Column(DateTime, default=datetime.utcnow, nullable=True)
-    is_logged = Column(Boolean, default=False, nullable=True)
-    chats = Column(Text, nullable=True)
-
-
 # Database URL from environment variable or fallback
 DATABASE_URL = os.getenv("DATABASE_URL")
 print(f"DATABASE_URL: {DATABASE_URL}")  # Debugging line
