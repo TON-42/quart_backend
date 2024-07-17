@@ -1,14 +1,11 @@
 from db import Session as DBSession
-from models import User
+from models import User, Chat, Session as SessionModel
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
-from models import User, Chat, agreed_users_chats, users_chats
-from models import Session as SessionModel
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
 from config import Config
-from utils import get_chat_id, count_words, connect_client
-
+from utils import connect_client
 
 
 async def create_user(user_id, username, profile):
@@ -63,7 +60,6 @@ async def set_has_profile(user_id, has_profile):
         return status
 
 
-
 async def set_auth_status(user_id, status):
     db_session = DBSession()
     exit_code = 0
@@ -80,7 +76,6 @@ async def set_auth_status(user_id, status):
         return exit_code
 
 
-
 async def get_user_chats(sender_id, sender_name):
     db_session = DBSession()
     chat_ids = []
@@ -92,7 +87,6 @@ async def get_user_chats(sender_id, sender_name):
             .first()
         )
 
-
         chat_ids = [chat.id for chat in user.chats]
         print(f"User {sender_name} previously sold chats: {chat_ids}")
         db_session.close()
@@ -102,8 +96,6 @@ async def get_user_chats(sender_id, sender_name):
         db_session.close()
         return 1
 
-
-async def manage_user_state(session, user, user_id):
 
 async def manage_user_state(db_session, user, user_id):
     is_logged_in = False
@@ -150,4 +142,3 @@ async def manage_user_state(db_session, user, user_id):
         return "error"
         return "error"
     return chats
-

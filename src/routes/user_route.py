@@ -24,9 +24,7 @@ async def get_user():
         if user_id is None:
             return jsonify({"error": "userId is missing"}), 400
 
-
         print(f"get-user: {username}")
-
 
         try:
             await create_user(user_id, username, False)
@@ -65,10 +63,9 @@ async def get_user():
             session_chats = None
             session_chats = await manage_user_state(session, user, user_id)
             if session_chats == "error":
-            session_chats = await manage_user_state(db_session, user, user_id)
-            if session_chats == "error":
-                return jsonify({"error in looking for a session"}), 500
-
+                session_chats = await manage_user_state(db_session, user, user_id)
+                if session_chats == "error":
+                    return jsonify({"error in looking for a session"}), 500
 
         except Exception as e:
             db_session.close()
@@ -115,4 +112,3 @@ async def get_user():
     except Exception as e:
         print(f"error in /get-user: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
