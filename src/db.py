@@ -17,7 +17,7 @@ def get_engine():
     return create_engine(DATABASE_URL)
 
 
-def get_session():
+def get_db_session():
     engine = get_engine()
     return sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

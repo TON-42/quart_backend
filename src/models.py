@@ -12,7 +12,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
 from datetime import datetime
 from db import Base
-import os
 import enum
 
 
