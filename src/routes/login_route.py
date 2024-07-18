@@ -1,5 +1,5 @@
 from quart import Blueprint, jsonify, request
-from db import get_db_session
+from db import get_sqlalchemy_session
 from telethon.errors import (
     SessionPasswordNeededError,
     PhoneNumberBannedError,
@@ -19,7 +19,7 @@ from sqlalchemy.orm import joinedload
 from utils import get_chat_id, count_words, connect_client, disconnect_client
 from services.session_service import (
     create_session,
-    get_db_session,
+    fetch_user_session,
     delete_session,
     set_session_is_logged_and_user_id,
     set_session_chats,
@@ -28,6 +28,9 @@ from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
 from telethon.tl.types import User, Chat, Channel
 import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 login_route = Blueprint("login_route", __name__)
 
@@ -48,9 +51,10 @@ async def login():
 
     print(f"{phone_number}({user_id}) is trying to login with: {auth_code}({password})")
 
-    user_db_session = await get_db_session(phone_number, user_id)
+    # user_db_session = await get_db_session(phone_number, user_id)
+    user_db_session = await fetch_user_session(phone_number, user_id)
     if user_db_session is None:
-        print(f"{phone_number} session does not exist")
+        logger.error(f"{phone_number} session does not exist")
         return jsonify({"error": "session does not exist"}), 500
 
     client = TelegramClient(
@@ -72,7 +76,7 @@ async def login():
                 phone_code_hash=user_db_session.phone_code_hash,
             )
         else:
-            print("Signing in with password")
+            logger.info("Signing in with password")
             await client.sign_in(password=password)
     except SessionPasswordNeededError:
         await disconnect_client(client, "two-steps verification is active")
@@ -93,7 +97,7 @@ async def login():
         )
         return jsonify({"error": f"{exception_type}: {str(e)}"}), 500
 
-    print(f"{phone_number} is logged in")
+    logger.info(f"{phone_number} is logged in")
 
     sender = await client.get_me()
 
@@ -125,19 +129,16 @@ async def login():
 
             private_chat_id = await get_chat_id(dialog.id, sender.id, client)
             if private_chat_id in chat_ids:
-                print(f"Chat {dialog.name} is already sold")
+                logger.info(f"Chat {dialog.name} is already sold")
                 continue
 
             # TODO: think about the limit of chats
             count += 1
             if count > 15:
                 break
-
-            print(f"{dialog.name}")
+            logger.info(f"{dialog.name}")
             task = asyncio.create_task(count_words(dialog.id, client))
             tasks.append((dialog.id, dialog.name, task))
-            # word_count = await count_words(dialog.id, client)
-            # res[(dialog.id, dialog.name)] = word_count
     except Exception as e:
         await disconnect_client(client, f"Error in get_dialogs(): {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -156,7 +157,7 @@ async def login():
     await set_session_chats(phone_number, str(res_json_serializable))
 
     # Print the JSON-serializable dictionary
-    print(res_json_serializable)
+    logger.info(res_json_serializable)
     return jsonify(res_json_serializable), 200
 
 
@@ -173,7 +174,7 @@ async def send_code():
 
         # TODO: check how long ago we send previous code
         client = None
-        user_db_session = await get_db_session(phone_number, user_id)
+        user_db_session = await fetch_user_session(phone_number, user_id)
         if user_db_session is None:
             client = TelegramClient(StringSession(), Config.API_ID, Config.API_HASH)
         else:
@@ -217,7 +218,7 @@ async def send_code():
             await disconnect_client(client, f"Error in send_code(): {str(e)}")
             return jsonify({"error": str(e)}), 500
 
-        print(f"sending auth code to {phone_number}")
+        logger.info(f"sending auth code to {phone_number}")
 
         if user_db_session is None:
             status = await create_session(
