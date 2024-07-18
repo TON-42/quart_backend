@@ -2,6 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 import os
+import logging
 
 load_dotenv()
 
@@ -17,7 +18,7 @@ def get_engine():
     return create_engine(DATABASE_URL)
 
 
-def get_db_session():
+def create_sessionmaker():
     engine = get_engine()
     return sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

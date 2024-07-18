@@ -1,5 +1,5 @@
 from quart import Blueprint, jsonify, request
-from db import Session
+from db import get_db_session
 from telethon.errors import (
     SessionPasswordNeededError,
     PhoneNumberBannedError,

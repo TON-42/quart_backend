@@ -4,7 +4,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import IntegrityError
 from models import User, Chat, agreed_users_chats, users_chats
 from models import Session as SessionModel
-from db import get_db_session
+from db import create_sessionmaker
 from bot import global_message
 
 debug_routes = Blueprint("debug_routes", __name__)
@@ -19,7 +19,7 @@ async def send_global_message():
         return jsonify({"error": "No message provided"}), 400
 
     try:
-        with get_db_session() as session:
+        with create_sessionmaker() as session:
             users = session.query(User).options(joinedload(User.chats)).all()
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -32,7 +32,7 @@ async def send_global_message():
 async def get_users():
     try:
         # Create a session
-        with get_db_session() as session:
+        with create_sessionmaker() as session:
             users = session.query(User).options(joinedload(User.chats)).all()
             users_json = [
                 {
@@ -55,7 +55,7 @@ async def get_users():
 @debug_routes.route("/get-chats", methods=["GET"])
 async def get_chats():
     try:
-        with get_db_session() as session:
+        with create_sessionmaker() as session:
             chats = (
                 session.query(Chat)
                 .options(joinedload(Chat.agreed_users), joinedload(Chat.users))
@@ -82,7 +82,7 @@ async def get_chats():
 @debug_routes.route("/get-sessions", methods=["GET"])
 async def get_sessions():
     try:
-        with get_db_session() as session:
+        with create_sessionmaker() as session:
             sessions = session.query(SessionModel).all()
             sessions_json = [
                 {
@@ -107,7 +107,7 @@ async def delete_one_session():
         return jsonify({"error": "phone_number is missing"}), 400
 
     try:
-        with get_db_session() as session:
+        with create_sessionmaker() as session:
             try:
                 found_session = (
                     session.query(MySession)
@@ -141,7 +141,7 @@ async def delete_user():
         return jsonify({"error": "User ID is required"}), 400
 
     try:
-        with get_db_session() as session:
+        with create_sessionmaker() as session:
             try:
                 user = (
                     session.query(User)
@@ -183,7 +183,7 @@ async def delete_chat():
         return jsonify({"error": "Chat ID is required"}), 400
 
     try:
-        with get_db_session() as session:
+        with create_sessionmaker() as session:
             try:
                 chat = session.query(Chat).filter(Chat.id == chat_id).one()
 
