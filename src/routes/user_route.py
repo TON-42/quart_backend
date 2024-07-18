@@ -1,11 +1,12 @@
 from quart import Blueprint, jsonify, request
-from db import Session as DBSession
+from db import get_sqlalchemy_session
 from sqlalchemy.orm import joinedload
 from models import User, Chat
 from services.user_service import create_user
 from services.user_service import manage_user_state
+import logging
 
-user_route = Blueprint("user_route", __name__)
+logger = logging.getLogger(__name__)
 
 user_route = Blueprint("user_route", __name__)
 
@@ -24,52 +25,39 @@ async def get_user():
         if user_id is None:
             return jsonify({"error": "userId is missing"}), 400
 
-        print(f"get-user: {username}")
+        logger.info(f"get-user: {username}")
 
         try:
             await create_user(user_id, username, False)
         except Exception as e:
-            print(f"Error creating user: {str(e)}")
+            logger.error(f"Error creating user: {str(e)}")
             return jsonify({"error": str(e)}), 500
+
         try:
-            session = Session()
-
-            db_session = DBSession()
-
-            user = (
-                db_session.query(User)
-                .options(
-                    joinedload(User.chats).joinedload(Chat.users),
-                    joinedload(User.chats).joinedload(Chat.lead),
-                    joinedload(User.chats).joinedload(Chat.agreed_users),
-                    joinedload(User.chats).joinedload(Chat.agreed_users),
+            async with get_sqlalchemy_session() as db_session:
+                user = (
+                    db_session.query(User)
+                    .options(
+                        joinedload(User.chats).joinedload(Chat.users),
+                        joinedload(User.chats).joinedload(Chat.lead),
+                        joinedload(User.chats).joinedload(Chat.agreed_users),
+                    )
+                    .filter(User.id == user_id)
+                    .first()
                 )
-                .filter(User.id == user_id)
-                .first()
-            )
 
-            auth_code = (
-                False  # we have to save auth_code before it is overwritten with default
-            )
+                auth_code = False  # we have to save auth_code before it is overwritten with default
+                auth_status_is_auth_code = False  # we have to save auth_code before it is overwritten with default
+                if user.auth_status == "auth_code":
+                    auth_code = True
+                    auth_status_is_auth_code = True
 
-            auth_status_is_auth_code = (
-                False  # we have to save auth_code before it is overwritten with default
-            )
-            if user.auth_status == "auth_code":
-                auth_code = True
-
-                auth_status_is_auth_code = True
-
-            session_chats = None
-            session_chats = await manage_user_state(session, user, user_id)
-            if session_chats == "error":
                 session_chats = await manage_user_state(db_session, user, user_id)
                 if session_chats == "error":
-                    return jsonify({"error in looking for a session"}), 500
+                    return jsonify({"error": "Error in looking for a session"}), 500
 
         except Exception as e:
-            db_session.close()
-            print(f"error in fetching data from db: {str(e)}")
+            logger.error(f"Error in fetching data from db: {str(e)}")
             return jsonify({"error": str(e)}), 500
 
         response = {
@@ -93,11 +81,6 @@ async def get_user():
                         if chat.lead
                         else None
                     ),
-                    "lead": (
-                        {"id": chat.lead.id, "name": chat.lead.name}
-                        if chat.lead
-                        else None
-                    ),
                     "agreed_users": [
                         agreed_user.id for agreed_user in chat.agreed_users
                     ],
@@ -106,9 +89,8 @@ async def get_user():
                 for chat in user.chats
             ],
         }
-        db_session.close()
         return jsonify(response), 200
 
     except Exception as e:
-        print(f"error in /get-user: {str(e)}")
+        logger.error(f"Error in /get-user: {str(e)}")
         return jsonify({"error": str(e)}), 500
