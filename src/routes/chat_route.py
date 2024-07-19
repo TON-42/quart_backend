@@ -7,10 +7,7 @@ from services.chat_service import create_chat, add_chat_to_users
 from services.session_service import fetch_user_session, delete_session
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
-from telethon.tl.types import PeerChat, PeerChannel
 from utils import (
-    get_chat_id,
-    count_words,
     connect_client,
     disconnect_client,
     print_chat,
