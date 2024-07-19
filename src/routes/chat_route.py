@@ -1,10 +1,10 @@
 from quart import Blueprint, jsonify, request
-from db import Session as DBSession
+from db import get_sqlalchemy_session
 from sqlalchemy.orm import joinedload
 from models import User, Chat, ChatStatus, ChatFullText
 from services.user_service import create_user, set_auth_status
 from services.chat_service import create_chat, add_chat_to_users
-from services.session_service import get_db_session, delete_session
+from services.session_service import fetch_user_session, delete_session
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
 from telethon.tl.types import PeerChat, PeerChannel
@@ -23,12 +23,13 @@ from utils import (
 from bot import chat_sale
 import os
 import asyncio
+import logging
 
 API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")
 
+logger = logging.getLogger(__name__)
 
-chat_route = Blueprint("chat_route", __name__)
 
 chat_route = Blueprint("chat_route", __name__)
 
@@ -53,23 +54,18 @@ async def send_message():
     if not message_raw:
         message_raw = "Hello! The owner of this chat wants to sell the data of this chat.\nPlease click the button below to accept the sale and proceed to the bot:"
     else:
-        message_for_second_user = (
-            message + "\n\n" "https://t.me/chatpayapp_bot/chatpayapp"
-        )
         message_invitee = message_raw + "\n\n" "https://t.me/chatpayapp_bot/chatpayapp"
 
     selected_chats = data.get("chats", {})
     if not selected_chats:
         return jsonify("No chats were sent"), 400
 
-    print(f"received: {phone_number}, {user_id}, {selected_chats}")
+    logger.info(f"received: {phone_number}, {user_id}, {selected_chats}")
 
-    user_db_session = await get_db_session(phone_number, user_id)
+    user_db_session = await fetch_user_session(phone_number, user_id)
     if user_db_session is None:
         print("Session does not exist")
         return jsonify("Session does not exist"), 500
-
-    client = TelegramClient(StringSession(saved_client.id), API_ID, API_HASH)
 
     client = TelegramClient(StringSession(user_db_session.id), API_ID, API_HASH)
 
@@ -97,7 +93,7 @@ async def send_message():
             chat_id = int(chat_id_str)
             chat_name = chat_name_str[:-1]
 
-            print(f"processing: (id: {chat_id}, name: {chat_name})")
+            logger.info(f"processing: (id: {chat_id}, name: {chat_name})")
             chat_id = chat_id or 123
             chat_name = chat_name or "Undefined"
             words = words or 123
@@ -116,7 +112,7 @@ async def send_message():
                 chat_user_ids.append(user.id)
                 chat_user_names.append(user.username)
 
-            chat_users.append(sender.id)
+            chat_user_ids.append(sender.id)
             private_chat_id = "_".join(str(num) for num in sorted(chat_users))
             await create_chat(
                 private_chat_id, chat_name, words, sender.id, chat_users, chat_id
@@ -131,13 +127,9 @@ async def send_message():
             # Call print_chat asynchronously without waiting for it to complete
             asyncio.create_task(print_chat(chat_entity, chat_name, client))
 
-            print(f"Sending message to {chat_name}")
-            await client.send_message(
-                entity, message_for_second_user, parse_mode="html"
-            )
-            await add_chat_to_users(chat_users, private_chat_id)
-            chat_users.clear()
+            logger.info(f"Sending message to {chat_name}")
             await client.send_message(chat_entity, message_invitee, parse_mode="html")
+
             await add_chat_to_users(chat_user_ids, private_chat_id)
             chat_user_ids.clear()
         except Exception as e:
@@ -156,143 +148,120 @@ async def send_message():
 
 @chat_route.route("/add-user-to-agreed", methods=["POST"])
 async def add_user_to_agreed():
-    db_session = DBSession()
-    try:
-        data = await request.get_json()
-        print(f"/add-user-to-agreed received: {data}")
-        if not isinstance(data, list):
-            return jsonify({"error": "Input data should be an array"}), 400
-        chat_status = {}
-        for entry in data:
-            user_id = entry.get("userId")
-            chat_id = entry.get("chatId")
+    async with get_sqlalchemy_session() as db_session:
+        try:
+            data = await request.get_json()
+            logger.info(f"/add-user-to-agreed received: {data}")
+            if not isinstance(data, list):
+                return jsonify({"error": "Input data should be an array"}), 400
+            chat_status = {}
+            for entry in data:
+                user_id = entry.get("userId")
+                chat_id = entry.get("chatId")
 
-            if user_id is None or chat_id is None:
+                if user_id is None or chat_id is None:
+                    chat_status[chat_id] = "error"
+                    continue
+
                 chat_status[chat_id] = "error"
-                continue
 
-            chat_status[chat_id] = "error"
+                # get user
+                try:
+                    user = (
+                        db_session.query(User)
+                        .options(joinedload(User.chats))
+                        .filter(User.id == user_id)
+                        .one()
+                    )
+                except Exception as e:
+                    logger.error(f"Error in retrieving user from db: {str(e)}")
+                    continue
 
-            # get user
-            try:
-                user = (
-                    session.query(User)
-                    .options(joinedload(User.chats))
-                    .filter(User.id == user_id)
-                    .one()
-                )
-                user = (
-                    db_session.query(User)
-                    .options(joinedload(User.chats))
-                    .filter(User.id == user_id)
-                    .one()
-                )
-            except Exception as e:
-                print(f"Error in retrieving user from db: {str(e)}")
-                continue
+                # get chat
+                try:
+                    chat = (
+                        db_session.query(Chat)
+                        .options(joinedload(Chat.agreed_users), joinedload(Chat.users))
+                        .filter(Chat.id == chat_id)
+                        .one()
+                    )
+                except Exception as e:
+                    logger.error(f"Error in retrieving chats from db: {str(e)}")
+                    continue
 
-            # get chat
-            try:
-                chat = (
-                    session.query(Chat)
-                    .options(joinedload(Chat.agreed_users), joinedload(Chat.users))
-                    .filter(Chat.id == chat_id)
-                    .one()
-                )
-                chat = (
-                    db_session.query(Chat)
-                    .options(joinedload(Chat.agreed_users), joinedload(Chat.users))
-                    .filter(Chat.id == chat_id)
-                    .one()
-                )
-            except Exception as e:
-                print(f"Error in retrieving chats from db: {str(e)}")
-                continue
+                # if chat is already sold
+                if chat.status == ChatStatus.sold:
+                    chat_status[chat_id] = "sold"
+                    continue
 
-            # if chat is already sold
-            if chat.status == ChatStatus.sold:
-                chat_status[chat_id] = "sold"
-                continue
+                # Check if the user is in the chat
+                if user not in chat.users:
+                    logger.error(f"User {user_id} is not in chat {chat_id}")
+                    chat_status[chat_id] = "error"
+                    continue
 
-            for chat_user in chat.users:
-                # if user exists in the chat
-                if chat_user.id == user_id:
-                    for user_agreed in chat.agreed_users:
-                        # if user has already agreed
-                        if user_agreed.id == user_id:
-                            break
+                # Check if the user has already agreed
+                if user in chat.agreed_users:
+                    chat_status[chat_id] = "pending"
+                else:
+                    # Add the user to agreed_users
                     chat.agreed_users.append(user)
                     chat_status[chat_id] = "pending"
-                    break
-            # Check if the user is in the chat
-            if user not in chat.users:
-                print(f"User {user_id} is not in chat {chat_id}")
-                chat_status[chat_id] = "error"
-                continue
 
-            # Check if the user has already agreed
-            if user in chat.agreed_users:
-                chat_status[chat_id] = "pending"
-            else:
-                # Add the user to agreed_users
-                chat.agreed_users.append(user)
-                chat_status[chat_id] = "pending"
+                # if all users have agreed
+                if len(chat.agreed_users) == len(chat.users):
+                    chat.status = ChatStatus.sold
+                    chat_status[chat_id] = "sold"
+                    await chat_sale(chat.users)
+                    logger.info(f"chat {chat_id} is sold")
+                    for user in chat.users:
+                        logger.info(f"{user} received {chat.words} $WORD")
+                        user.words += chat.words
 
-            # if all users have agreed
-            if len(chat.agreed_users) == len(chat.users):
-                chat.status = ChatStatus.sold
-                chat_status[chat_id] = "sold"
-                await chat_sale(chat.users)
-                print(f"chat {chat_id} is sold")
-                for user in chat.users:
-                    print(f"{user} received {chat.words} $WORD")
-                    user.words += chat.words
+                    # Check if the user is logged in and has an open session
+                    user_db_session = await fetch_user_session(None, user.id)
+                    if user_db_session is None:
+                        logger.error(
+                            "Session does not exist: Chat is sold, but has not been fetched!"
+                        )
+                        # we still return 200, because the chat is sold
+                        continue
 
-                # Check if the user is looged in and has an open session
-                user_db_session = await get_db_session(None, user.id)
-                if user_db_session is None:
-                    print(
-                        "Session does not exist: Chat is sold, but has not been fetched!"
+                    client = TelegramClient(
+                        StringSession(user_db_session.id), API_ID, API_HASH
                     )
-                    # we still return 200, because the chat is sold
-                    continue
+                    if await connect_client(client, None, user.id) == -1:
+                        logger.error("Error in connecting to Telegram")
+                        # we still return 200, because the chat is sold
+                        continue
+                    if not await client.is_user_authorized():
+                        await disconnect_client(
+                            client, "Session is expired or user manually logged out"
+                        )
+                        # we still return 200, because the chat is sold
+                        continue
+                    # Retrieve chat entity
+                    try:
+                        chat_entity = await client.get_entity(chat.telegram_id)
+                    except ValueError:
+                        await client.get_dialogs()
+                        chat_entity = await client.get_entity(chat.telegram_id)
 
-                client = TelegramClient(
-                    StringSession(user_db_session.id), API_ID, API_HASH
-                )
-                if await connect_client(client, None, user.id) == -1:
-                    print("Error in connecting to Telegram")
-                    # we still return 200, because the chat is sold
-                    continue
-                if not await client.is_user_authorized():
-                    await disconnect_client(
-                        client, "Session is expired or user manually logged out"
-                    )
-                    # we still return 200, because the chat is sold
-                    continue
-                # Retrieve chat entity
-                try:
-                    chat_entity = await client.get_entity(chat.telegram_id)
-                except ValueError:
-                    await client.get_dialogs()
-                    chat_entity = await client.get_entity(chat.telegram_id)
+                    # Fetch and save chat text to ChatFullText
+                    full_text = ""
+                    async for message in client.iter_messages(chat_entity):
+                        if message.text:
+                            full_text += message.text + "\n"
 
-                # Fetch and save chat text to ChatFullText
-                full_text = ""
-                async for message in client.iter_messages(chat_entity):
-                    if message.text:
-                        full_text += message.text + "\n"
+                    chat_full_text = ChatFullText(chat_id=chat.id, full_text=full_text)
+                    db_session.add(chat_full_text)
 
-                chat_full_text = ChatFullText(chat_id=chat.id, full_text=full_text)
-                db_session.add(chat_full_text)
+                    await disconnect_client(client, f"Fetched and saved chat {chat_id}")
+                    chat_status[chat_id] = "fetched"
 
-                await disconnect_client(client, f"Fetched and saved chat {chat_id}")
-                chat_status[chat_id] = "fetched"
+                db_session.commit()
 
-            db_session.commit()
-
-        db_session.close()
-        return jsonify(chat_status), 200
-    except Exception as e:
-        db_session.close()
-        return jsonify({"error": str(e)}), 500
+            return jsonify(chat_status), 200
+        except Exception as e:
+            logger.error(f"Error in /add-user-to-agreed: {str(e)}")
+            return jsonify({"error": str(e)}), 500
