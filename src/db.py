@@ -48,7 +48,7 @@ def init_db():
 
 # Context manager for database sessions
 @asynccontextmanager
-def get_sqlalchemy_session():
+async def get_sqlalchemy_session():
     Session = create_sessionmaker()
     session = Session()
     try:
