@@ -59,6 +59,12 @@ async def hello_world():
     return jsonify({"message": "Hello, World!"})
 
 
+@app.route("/", methods=["GET"])
+async def root():
+    logger.info("Root endpoint called")
+    return "Hello, Root!"
+
+
 @app.route("/webhook", methods=["POST"])
 async def webhook():
     if request.method == "POST":
