@@ -1,4 +1,4 @@
-from contextlib import contextmanager
+from contextlib import asynccontextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.exc import SQLAlchemyError
@@ -47,7 +47,7 @@ def init_db():
 
 
 # Context manager for database sessions
-@contextmanager
+@asynccontextmanager
 def get_sqlalchemy_session():
     Session = create_sessionmaker()
     session = Session()
