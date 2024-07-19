@@ -10,12 +10,15 @@ from telebot import types
 from services.session_expiration import check_session_expiration
 from db import init_db
 
-def setup_logging()
-    logging.basicConfig(level=logging.INFO, 
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers = [logging.FileHandler('app.log'), logging.StreamHandler()]
+
+def setup_logging():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[logging.FileHandler("app.log"), logging.StreamHandler()],
     )
-    
+
+
 setup_logging()
 logger = logging.getLogger(__name__)
 
