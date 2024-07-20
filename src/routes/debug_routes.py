@@ -20,8 +20,8 @@ async def send_global_message():
         return jsonify({"error": "No message provided"}), 400
 
     try:
-        with create_sessionmaker() as session:
-            users = session.query(User).options(joinedload(User.chats)).all()
+        async with get_sqlalchemy_session() as db_session:
+            users = db_session.query(User).options(joinedload(User.chats)).all()
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -53,12 +53,39 @@ async def get_users():
         return jsonify({"error": str(e)}), 500
 
 
+# @debug_routes.route("/get-chats", methods=["GET"])
+# async def get_chats():
+#     try:
+#         with create_sessionmaker() as session:
+#             chats = (
+#                 session.query(Chat)
+#                 .options(joinedload(Chat.agreed_users), joinedload(Chat.users))
+#                 .all()
+#             )
+#             chats_json = [
+#                 {
+#                     "id": chat.id,
+#                     "name": chat.name,
+#                     "words": chat.words,
+#                     "status": chat.status.name,  # Convert enum to string
+#                     "lead": chat.lead_id,
+#                     "telegram_id": chat.telegram_id,
+#                     "agreed_users": [user.id for user in chat.agreed_users],
+#                     "users": [user.id for user in chat.users],
+#                 }
+#                 for chat in chats
+#             ]
+#         return jsonify(chats_json)
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
+
+
 @debug_routes.route("/get-chats", methods=["GET"])
 async def get_chats():
     try:
-        with create_sessionmaker() as session:
+        async with get_sqlalchemy_session() as db_session:
             chats = (
-                session.query(Chat)
+                db_session.query(Chat)
                 .options(joinedload(Chat.agreed_users), joinedload(Chat.users))
                 .all()
             )
@@ -83,8 +110,8 @@ async def get_chats():
 @debug_routes.route("/get-sessions", methods=["GET"])
 async def get_sessions():
     try:
-        with create_sessionmaker() as session:
-            sessions = session.query(SessionModel).all()
+        async with get_sqlalchemy_session() as db_session:
+            sessions = db_session.query(SessionModel).all()
             sessions_json = [
                 {
                     "id": session.id,
@@ -108,23 +135,23 @@ async def delete_one_session():
         return jsonify({"error": "phone_number is missing"}), 400
 
     try:
-        with create_sessionmaker() as session:
+        async with get_sqlalchemy_session() as db_session:
             try:
                 found_session = (
-                    session.query(MySession)
-                    .filter(MySession.phone_number == phone_number)
+                    db_session.query(SessionModel)
+                    .filter(SessionModel.phone_number == phone_number)
                     .first()
                 )
                 if found_session:
-                    session.delete(found_session)
-                    session.commit()
+                    db_session.delete(found_session)
+                    db_session.commit()
                     response = {"message": "Session has been deleted."}
                     status_code = 200
                 else:
                     response = {"error": "No session found."}
                     status_code = 404
             except IntegrityError as e:
-                session.rollback()
+                db_session.rollback()
                 response = {"error": f"Integrity error occurred: {str(e)}"}
                 status_code = 500
     except Exception as e:
@@ -142,10 +169,10 @@ async def delete_user():
         return jsonify({"error": "User ID is required"}), 400
 
     try:
-        with create_sessionmaker() as session:
+        async with get_sqlalchemy_session() as db_session:
             try:
                 user = (
-                    session.query(User)
+                    db_session.query(User)
                     .options(joinedload(User.chats).joinedload(Chat.users))
                     .filter(User.id == user_id)
                     .first()
@@ -157,16 +184,16 @@ async def delete_user():
                 else:
                     # Delete all connected chats
                     for chat in user.chats:
-                        session.delete(chat)
+                        db_session.delete(chat)
 
                     # Delete the user
-                    session.delete(user)
-                    session.commit()
+                    db_session.delete(user)
+                    db_session.commit()
 
                     response = {"message": "User has been deleted."}
                     status_code = 200
             except IntegrityError as e:
-                session.rollback()
+                db_session.rollback()
                 response = {"error": f"Integrity error occurred: {str(e)}"}
                 status_code = 500
     except Exception as e:
@@ -184,17 +211,17 @@ async def delete_chat():
         return jsonify({"error": "Chat ID is required"}), 400
 
     try:
-        with create_sessionmaker() as session:
+        async with get_sqlalchemy_session() as db_session:
             try:
-                chat = session.query(Chat).filter(Chat.id == chat_id).one()
+                chat = db_session.query(Chat).filter(Chat.id == chat_id).one()
 
                 if not chat:
                     response = {"error": "No chat found."}
                     status_code = 404
                 else:
                     # Delete the chat
-                    session.delete(chat)
-                    session.commit()
+                    db_session.delete(chat)
+                    db_session.commit()
 
                     response = {"message": "Chat has been deleted."}
                     status_code = 200
@@ -202,7 +229,7 @@ async def delete_chat():
                 response = {"error": "No chat found."}
                 status_code = 404
             except IntegrityError as e:
-                session.rollback()
+                db_session.rollback()
                 response = {"error": f"Integrity error occurred: {str(e)}"}
                 status_code = 500
     except Exception as e:
