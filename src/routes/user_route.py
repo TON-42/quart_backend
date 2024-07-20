@@ -33,8 +33,8 @@ async def get_user():
             logger.error(f"Error creating user: {str(e)}")
             return jsonify({"error": str(e)}), 500
 
-        try:
-            async with get_sqlalchemy_session() as db_session:
+        async with get_sqlalchemy_session() as db_session:
+            try:
                 user = (
                     db_session.query(User)
                     .options(
@@ -87,63 +87,64 @@ async def get_user():
                 else:
                     print("Session is active!")
 
-        except Exception as e:
-            logger.error(f"Error in fetching data from db: {str(e)}")
-            return jsonify({"error": str(e)}), 500
-        print("just before response")
-        # Print statements before constructing the response
-        print(f"User: {user}")
-        print(f"User ID: {user.id}")
-        print(f"User Name: {user.name}")
-        print(f"User Has Profile: {user.has_profile}")
-        print(f"User Words: {user.words}")
-        print(f"User Registration Date: {user.registration_date}")
-        print(f"User Auth Status: {user.auth_status}")
-        print(f"Session Chats: {session_chats}")
-        for chat in user.chats:
-            print(f"Chat ID: {chat.id}")
-            print(f"Chat Name: {chat.name}")
-            print(f"Chat Words: {chat.words}")
-            print(f"Chat Status: {chat.status.name}")
-            if chat.lead:
-                print(f"Chat Lead ID: {chat.lead.id}")
-                print(f"Chat Lead Name: {chat.lead.name}")
-            for agreed_user in chat.agreed_users:
-                print(f"Agreed User ID: {agreed_user.id}")
-            for user in chat.users:
-                print(f"Chat User ID: {user.id}")
+                print("just before response")
+                # Print statements before constructing the response
+                print(f"User: {user}")
+                print(f"User ID: {user.id}")
+                print(f"User Name: {user.name}")
+                print(f"User Has Profile: {user.has_profile}")
+                print(f"User Words: {user.words}")
+                print(f"User Registration Date: {user.registration_date}")
+                print(f"User Auth Status: {user.auth_status}")
+                print(f"Session Chats: {session_chats}")
+                for chat in user.chats:
+                    print(f"Chat ID: {chat.id}")
+                    print(f"Chat Name: {chat.name}")
+                    print(f"Chat Words: {chat.words}")
+                    print(f"Chat Status: {chat.status.name}")
+                    if chat.lead:
+                        print(f"Chat Lead ID: {chat.lead.id}")
+                        print(f"Chat Lead Name: {chat.lead.name}")
+                    for agreed_user in chat.agreed_users:
+                        print(f"Agreed User ID: {agreed_user.id}")
+                    for user in chat.users:
+                        print(f"Chat User ID: {user.id}")
 
-        response = {
-            "id": user.id,
-            "name": user.name,
-            "has_profile": user.has_profile,
-            "words": user.words,
-            "registration_date": user.registration_date,
-            "auth_status": (
-                "auth_code" if auth_status_is_auth_code else user.auth_status
-            ),
-            "session_chats": session_chats,
-            "chats": [
-                {
-                    "id": chat.id,
-                    "name": chat.name,
-                    "words": chat.words,
-                    "status": chat.status.name,
-                    "lead": (
-                        {"id": chat.lead.id, "name": chat.lead.name}
-                        if chat.lead
-                        else None
+                response = {
+                    "id": user.id,
+                    "name": user.name,
+                    "has_profile": user.has_profile,
+                    "words": user.words,
+                    "registration_date": user.registration_date,
+                    "auth_status": (
+                        "auth_code" if auth_status_is_auth_code else user.auth_status
                     ),
-                    "agreed_users": [
-                        agreed_user.id for agreed_user in chat.agreed_users
+                    "session_chats": session_chats,
+                    "chats": [
+                        {
+                            "id": chat.id,
+                            "name": chat.name,
+                            "words": chat.words,
+                            "status": chat.status.name,
+                            "lead": (
+                                {"id": chat.lead.id, "name": chat.lead.name}
+                                if chat.lead
+                                else None
+                            ),
+                            "agreed_users": [
+                                agreed_user.id for agreed_user in chat.agreed_users
+                            ],
+                            "users": [user.id for user in chat.users],
+                        }
+                        for chat in user.chats
                     ],
-                    "users": [user.id for user in chat.users],
                 }
-                for chat in user.chats
-            ],
-        }
-        print(f"Response: {response}")
-        return jsonify(response), 200
+                print(f"Response: {response}")
+                return jsonify(response), 200
+
+            except Exception as e:
+                logger.error(f"Error in fetching data from db: {str(e)}")
+                return jsonify({"error": str(e)}), 500
 
     except Exception as e:
         logger.error(f"Error in /get-user: {str(e)}")
