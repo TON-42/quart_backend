@@ -4,7 +4,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import IntegrityError
 from models import User, Chat, agreed_users_chats, users_chats
 from models import Session as SessionModel
-from db import create_sessionmaker
+from db import create_sessionmaker, get_sqlalchemy_session
+
 from bot import global_message
 
 debug_routes = Blueprint("debug_routes", __name__)
@@ -31,9 +32,9 @@ async def send_global_message():
 @debug_routes.route("/get-users", methods=["GET"])
 async def get_users():
     try:
-        # Create a session
-        with create_sessionmaker() as session:
-            users = session.query(User).options(joinedload(User.chats)).all()
+        # Use the get_sqlalchemy_session context manager
+        async with get_sqlalchemy_session() as db_session:
+            users = db_session.query(User).options(joinedload(User.chats)).all()
             users_json = [
                 {
                     "id": user.id,
