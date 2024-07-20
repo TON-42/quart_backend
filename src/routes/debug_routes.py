@@ -53,33 +53,6 @@ async def get_users():
         return jsonify({"error": str(e)}), 500
 
 
-# @debug_routes.route("/get-chats", methods=["GET"])
-# async def get_chats():
-#     try:
-#         with create_sessionmaker() as session:
-#             chats = (
-#                 session.query(Chat)
-#                 .options(joinedload(Chat.agreed_users), joinedload(Chat.users))
-#                 .all()
-#             )
-#             chats_json = [
-#                 {
-#                     "id": chat.id,
-#                     "name": chat.name,
-#                     "words": chat.words,
-#                     "status": chat.status.name,  # Convert enum to string
-#                     "lead": chat.lead_id,
-#                     "telegram_id": chat.telegram_id,
-#                     "agreed_users": [user.id for user in chat.agreed_users],
-#                     "users": [user.id for user in chat.users],
-#                 }
-#                 for chat in chats
-#             ]
-#         return jsonify(chats_json)
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
-
 @debug_routes.route("/get-chats", methods=["GET"])
 async def get_chats():
     try:
