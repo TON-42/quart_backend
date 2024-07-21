@@ -60,3 +60,10 @@ async def get_sqlalchemy_session():
         raise
     finally:
         session.close()
+
+
+# Function to create a persistent database session
+def get_persistent_sqlalchemy_session():
+    Session = create_sessionmaker()
+    session = Session()
+    return session
