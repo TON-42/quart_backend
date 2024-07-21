@@ -1,4 +1,4 @@
-from db import get_sqlalchemy_session
+from db import get_sqlalchemy_session, get_persistent_sqlalchemy_session
 from models import User, Chat, Session, ChatStatus
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
@@ -11,24 +11,27 @@ logger = logging.getLogger(__name__)
 
 async def create_session(client, number, phone_hash, userId):
     session_id = client.session.save()
-    async with get_sqlalchemy_session() as db_session:
-        exit_code = 0
-        try:
-            if userId is None:
-                userId = "None"
-            new_session = Session(
-                id=session_id,
-                phone_number=number,
-                phone_code_hash=phone_hash,
-                user_id=userId,
-            )
-            db_session.add(new_session)
-            db_session.commit()
-            logger.info(f"Creating new session for {number}({userId})")
-        except Exception as e:
-            logger.error(f"Error creating new session: {str(e)}")
-            exit_code = 1
-        return exit_code
+    db_session = get_persistent_sqlalchemy_session()  # Use the persistent session
+    exit_code = 0
+    try:
+        if userId is None:
+            userId = "None"
+        new_session = Session(
+            id=session_id,
+            phone_number=number,
+            phone_code_hash=phone_hash,
+            user_id=userId,
+        )
+        db_session.add(new_session)
+        db_session.commit()
+        logger.info(f"Creating new session for {number}({userId})")
+    except Exception as e:
+        db_session.rollback()  # Rollback in case of an error
+        logger.error(f"Error creating new session: {str(e)}")
+        exit_code = 1
+    finally:
+        db_session.close()  # Explicitly close the session if everything is fine
+    return exit_code
 
 
 # async def get_db_session(number, userId):
@@ -60,29 +63,25 @@ async def create_session(client, number, phone_hash, userId):
 
 async def fetch_user_session(number, userId):
     logger.info(f"fetch_user_session: {number}, user_id: {userId}")
-    async with get_sqlalchemy_session() as db_session:
-        try:
-            if number is not None:
-                logger.info("Trying to find a session with phone number")
-                found_session = (
-                    db_session.query(Session)
-                    .filter(Session.phone_number == number)
-                    .one()
-                )
-            else:
-                logger.info("Trying to find a session with user_id")
-                found_session = (
-                    db_session.query(Session)
-                    .filter(Session.user_id == str(userId))
-                    .one()
-                )
-            return found_session
-        except NoResultFound:
-            logger.warning("Session not found")
-            return None
-        except Exception as e:
-            logger.error(f"Error while looking for a session: {str(e)}")
-            return None
+    db_session = get_persistent_sqlalchemy_session()
+    try:
+        if number is not None:
+            logger.info("Trying to find a session with phone number")
+            found_session = (
+                db_session.query(Session).filter(Session.phone_number == number).one()
+            )
+        else:
+            logger.info("Trying to find a session with user_id")
+            found_session = (
+                db_session.query(Session).filter(Session.user_id == str(userId)).one()
+            )
+        return found_session
+    except NoResultFound:
+        logger.warning("Session not found")
+        return None
+    except Exception as e:
+        logger.error(f"Error while looking for a session: {str(e)}")
+        return None
 
 
 async def delete_session(number, userId):
