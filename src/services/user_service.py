@@ -1,5 +1,5 @@
 # from db import Session as DBSession
-from db import get_sqlalchemy_session
+from db import get_sqlalchemy_session, get_persistent_sqlalchemy_session
 from models import User, Chat, Session as SessionModel
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
@@ -55,17 +55,18 @@ async def set_has_profile(user_id, has_profile):
 
 
 async def set_auth_status(user_id, status):
-    async with get_sqlalchemy_session() as db_session:
-        exit_code = 0
-        try:
-            user = db_session.query(User).filter(User.id == user_id).one()
-            user.auth_status = status
-            db_session.commit()
-            logger.info(f"auth_status => {user.auth_status}")
-        except Exception as e:
-            logger.error(f"Error updating auth_status: {str(e)}")
-            exit_code = 1
-        return exit_code
+    db_session = get_persistent_sqlalchemy_session()  # Use the persistent session
+    exit_code = 0
+    try:
+        user = db_session.query(User).filter(User.id == user_id).one()
+        user.auth_status = status
+        db_session.commit()
+        logger.info(f"auth_status => {user.auth_status}")
+    except Exception as e:
+        db_session.rollback()  # Rollback in case of an error
+        logger.error(f"Error updating auth_status: {str(e)}")
+        exit_code = 1
+    return exit_code
 
 
 async def get_user_chats(sender_id, sender_name):
