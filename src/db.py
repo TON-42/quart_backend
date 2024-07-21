@@ -30,7 +30,7 @@ def get_engine():
         raise
 
 
-def create_sessionmaker():
+def create_sqlalchemy_sessionmaker():
     engine = get_engine()
     return sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -49,7 +49,7 @@ def init_db():
 # Context manager for database sessions
 @asynccontextmanager
 async def get_sqlalchemy_session():
-    Session = create_sessionmaker()
+    Session = create_sqlalchemy_sessionmaker()
     session = Session()
     try:
         yield session
@@ -64,6 +64,6 @@ async def get_sqlalchemy_session():
 
 # Function to create a persistent database session
 def get_persistent_sqlalchemy_session():
-    Session = create_sessionmaker()
+    Session = create_sqlalchemy_sessionmaker()
     session = Session()
     return session

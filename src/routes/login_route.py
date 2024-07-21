@@ -18,7 +18,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 from utils import get_chat_id, count_words, connect_client, disconnect_client
 from services.session_service import (
-    create_session,
+    create_sqlalchemy_session,
     fetch_user_session,
     delete_session,
     set_session_is_logged_and_user_id,
@@ -221,7 +221,7 @@ async def send_code():
         logger.info(f"sending auth code to {phone_number}")
 
         if user_db_session is None:
-            status = await create_session(
+            status = await create_sqlalchemy_session(
                 client, phone_number, phone_code_hash, user_id
             )
             if status == -1:

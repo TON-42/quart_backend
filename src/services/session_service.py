@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-async def create_session(client, number, phone_hash, userId):
+async def create_sqlalchemy_session(client, number, phone_hash, userId):
     session_id = client.session.save()
     db_session = get_persistent_sqlalchemy_session()  # Use the persistent session
     exit_code = 0
