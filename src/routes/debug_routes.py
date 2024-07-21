@@ -4,7 +4,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import IntegrityError
 from models import User, Chat, agreed_users_chats, users_chats
 from models import Session as SessionModel
-from db import create_sqlalchemy_sessionmaker, get_sqlalchemy_session
+from db import create_sessionmaker, get_sqlalchemy_session
 
 from bot import global_message
 
