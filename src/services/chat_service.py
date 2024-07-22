@@ -1,4 +1,4 @@
-from db import get_sqlalchemy_session, get_persistent_sqlalchemy_session
+from db import get_persistent_sqlalchemy_session
 from models import User, Chat, ChatStatus
 from sqlalchemy.orm.exc import NoResultFound
 import logging
@@ -13,6 +13,7 @@ async def create_chat(
     db_session = get_persistent_sqlalchemy_session()
     status = 0
     try:
+        logger.info(f"Starting create_chat for {chat_name} with chat_id: {chat_id}")
         existing_chat = db_session.query(Chat).filter(Chat.id == chat_id).one()
         logger.info(f"Chat {chat_name} already exists")
     except NoResultFound:
@@ -27,14 +28,31 @@ async def create_chat(
         )
         lead = db_session.query(User).filter(User.id == sender_id).one()
         new_chat.lead = lead
+
         logger.info(f"Adding agreed users: {sender_id}")
         agreed_user_ids = [sender_id]
         agreed_users = db_session.query(User).filter(User.id.in_(agreed_user_ids)).all()
         new_chat.agreed_users.extend(agreed_users)
-        all_users = db_session.query(User).filter(User.id.in_(chat_users)).all()
+
+        # Log the type and content of chat_users
+        logger.info(f"Type of chat_users: {type(chat_users)}, Content: {chat_users}")
+
+        # Extract user IDs from the User objects
+        # chat_user_ids = [user.id for user in chat_users]
+        if all(isinstance(user, int) for user in chat_users):
+            chat_user_ids = chat_users
+        else:
+            chat_user_ids = [user.id for user in chat_users]
+        logger.info(f"Adding all chat users: {chat_user_ids}")
+        all_users = db_session.query(User).filter(User.id.in_(chat_user_ids)).all()
+        logger.info(f"All users fetched: {all_users}")
+
         new_chat.users.extend(all_users)
+
         db_session.add(new_chat)
         db_session.commit()
+        logger.info(f"Chat {chat_name} created successfully")
+
     except Exception as e:
         logger.error(f"Error in create_chat: {str(e)}")
         status = 1
@@ -51,6 +69,8 @@ async def add_chat_to_users(users_id, chat_id):
         logger.info(f"Adding chat:{chat_id} to users:{users_id}")
         chat = db_session.query(Chat).filter(Chat.id == chat_id).one()
         users = db_session.query(User).filter(User.id.in_(users_id)).all()
+        logger.info(f"Fetched users for adding chat: {users}")
+
         for user in users:
             if chat not in user.chats:
                 user.chats.append(chat)

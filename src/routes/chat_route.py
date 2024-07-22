@@ -65,9 +65,6 @@ async def send_message():
         await disconnect_client(
             client, "Session is expired or user manually logged out"
         )
-        await disconnect_client(
-            client, "Session is expired or user manually logged out"
-        )
         return jsonify("Session is expired or user manually logged out"), 500
 
     sender = await client.get_me()
@@ -102,17 +99,10 @@ async def send_message():
                 chat_user_names.append(user.username)
 
             chat_user_ids.append(sender.id)
-            private_chat_id = "_".join(str(num) for num in sorted(chat_users))
-            await create_chat(
-                private_chat_id, chat_name, words, sender.id, chat_users, chat_id
-            )
-
-            chat_user_ids.append(sender.id)
             private_chat_id = "_".join(str(num) for num in sorted(chat_user_ids))
             await create_chat(
                 private_chat_id, chat_name, words, sender.id, chat_user_ids, chat_id
             )
-
             # Call print_chat asynchronously without waiting for it to complete
             asyncio.create_task(print_chat(chat_entity, chat_name, client))
 
