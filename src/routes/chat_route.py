@@ -37,21 +37,13 @@ async def send_message():
 
     user_id = data.get("userId")
     phone_number = data.get("phone_number")
-    if not phone_number:
-        if not user_id:
-            return jsonify("No phone_number and userId provided"), 400
-
-    message = data.get("message")
-    if not message:
-        message = "Hello! The owner of this chat wants to sell the data of this chat.\nPlease click the button below to accept the sale and proceed to the bot:"
     if not phone_number and not user_id:
         return jsonify("No phone_number and userId provided"), 400
-
-    message_raw = data.get("message")
-    if not message_raw:
-        message_raw = "Hello! The owner of this chat wants to sell the data of this chat.\nPlease click the button below to accept the sale and proceed to the bot:"
-    else:
-        message_invitee = message_raw + "\n\n" "https://t.me/chatpayapp_bot/chatpayapp"
+    message = data.get(
+        "message",
+        "Hello! The owner of this chat wants to sell the data of this chat.\nPlease click the button below to accept the sale and proceed to the bot:",
+    )
+    message_invitee = message + "\n\nhttps://t.me/chatpayapp_bot/chatpayapp"
 
     selected_chats = data.get("chats", {})
     if not selected_chats:
@@ -61,7 +53,7 @@ async def send_message():
 
     user_db_session = await fetch_user_session(phone_number, user_id)
     if user_db_session is None:
-        print("Session does not exist")
+        logger.error("Session does not exist")
         return jsonify("Session does not exist"), 500
 
     client = TelegramClient(StringSession(user_db_session.id), API_ID, API_HASH)
@@ -103,8 +95,8 @@ async def send_message():
                 await client.get_dialogs()
                 chat_entity = await client.get_entity(chat_id)
 
-            users = await client.get_participants(chat_entity)
-            for user in users:
+            chat_users = await client.get_participants(chat_entity)
+            for user in chat_users:
                 await create_user(user.id, user.username, False)
                 chat_user_ids.append(user.id)
                 chat_user_names.append(user.username)
