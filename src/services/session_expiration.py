@@ -1,6 +1,6 @@
 # src/services/session_expiration.py
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from config import Config
 from db import get_persistent_sqlalchemy_session
 from models import Session as SessionModel
@@ -20,7 +20,17 @@ async def check_session_expiration():
             all_sessions = db_session.query(SessionModel).all()
 
             for user_session in all_sessions:
-                time_difference = datetime.now() - user_session.creation_date
+                # creation_time = user_session.creation_date
+                creation_time = user_session.creation_date.replace(tzinfo=timezone.utc)
+                # current_time = datetime.now()
+                current_time = datetime.now(timezone.utc)
+                time_difference = current_time - creation_time
+                logger.info(
+                    f"Checking session for {user_session.phone_number}: "
+                    f"Creation Time: {creation_time}, Current Time: {current_time}, "
+                    f"Time Difference: {time_difference}, Expiry Threshold: "
+                    f"{timedelta(minutes=Config.SESSION_EXPIRATION_MINUTES)}"
+                )
                 if time_difference >= timedelta(
                     minutes=Config.SESSION_EXPIRATION_MINUTES
                 ):
@@ -46,4 +56,5 @@ async def check_session_expiration():
             logger.error(f"Database error: {str(e)}")
         finally:
             db_session.close()
+        logger.info(f"Sleeping for {Config.CHECK_INTERVAL_SECONDS} seconds")
         await asyncio.sleep(Config.CHECK_INTERVAL_SECONDS)

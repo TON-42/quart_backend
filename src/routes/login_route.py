@@ -163,11 +163,14 @@ async def login():
 
 @login_route.route("/send-code", methods=["POST"])
 async def send_code():
+    logger.info("send-code endpoint called")
     try:
         data = await request.get_json()
+        logger.info(f"send-code: {data}")
 
         phone_number = data.get("phone_number")
         if phone_number is None:
+            logger.error("phone_number is missing")
             return jsonify({"error": "phone_number is missing"}), 400
 
         user_id = data.get("userId")
@@ -176,25 +179,37 @@ async def send_code():
         client = None
         user_db_session = await fetch_user_session(phone_number, user_id)
         if user_db_session is None:
+            logger.info(
+                f"No existing session for {phone_number}, creating new Telegram client, i.e. session"
+            )
             client = TelegramClient(StringSession(), Config.API_ID, Config.API_HASH)
         else:
+            logger.info(
+                f"Existing session found for {phone_number}, creating Telegram client with existing session"
+            )
             client = TelegramClient(
                 StringSession(user_db_session.id), Config.API_ID, Config.API_HASH
             )
 
         if await connect_client(client, phone_number, user_id) == -1:
+            logger.error("Error in connecting to Telegram")
             return jsonify({"error": "error in connecting to Telegram"}), 500
 
         if await client.is_user_authorized() == True:
             await disconnect_client(client, f"{phone_number} is already logged in")
+            logger.info(f"{phone_number} is already logged in")
             return jsonify({"message": "user is already logged in"}), 409
 
         try:
             result = await client.send_code_request(phone_number)
             phone_code_hash = result.phone_code_hash
+            logger.info(f"Auth code sent to {phone_number}")
         except PhoneNumberBannedError as e:
             await disconnect_client(
                 client, f"The used phone number has been banned from Telegram: {str(e)}"
+            )
+            logger.error(
+                f"The used phone number has been banned from Telegram: {str(e)}"
             )
             await disconnect_client(
                 client, f"The used phone number has been banned from Telegram: {str(e)}"
@@ -204,9 +219,11 @@ async def send_code():
             await disconnect_client(
                 client, f"You asked for the code too many times: {str(e)}"
             )
+            logger.error(f"You asked for the code too many times: {str(e)}")
             await disconnect_client(
                 client, f"You asked for the code too many times: {str(e)}"
             )
+            logger.error(f"You asked for the code too many times: {str(e)}")
             return jsonify({"error": str(e)}), 429
         except PhoneNumberInvalidError as e:
             await disconnect_client(client, f"phone number is invalid: {str(e)}")
@@ -216,6 +233,7 @@ async def send_code():
             await client.send_code_request(phone_number)
         except Exception as e:
             await disconnect_client(client, f"Error in send_code(): {str(e)}")
+            logger.error(f"Error in send_code(): {str(e)}")
             return jsonify({"error": str(e)}), 500
 
         logger.info(f"sending auth code to {phone_number}")
@@ -226,16 +244,20 @@ async def send_code():
             )
             if status == -1:
                 await disconnect_client(client, "Error creating session")
+                logger.error("Error creating session")
                 return jsonify({"message": "error creating session"}), 500
+            logger.info(f"Session created for {phone_number}")
 
+        # TODO: We get this error if the userId is wrong but the phone number is correct
         if user_id is not None:
             status = await set_auth_status(user_id, "auth_code")
             if status == 1:
                 await disconnect_client(client, "Couldn't update auth_status")
+                logger.error("Couldn't update auth_status")
                 return jsonify({"error": "couldn't update auth_status"}), 500
-
+        logger.info("send-code: ok")
         return "ok", 200
 
     except Exception as e:
-        print(f"Error in send-code: {str(e)}")
+        logger.error(f"Error in send-code: {str(e)}")
         return jsonify({"error": str(e)}), 500
