@@ -1,8 +1,19 @@
 import os
+import sys
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Ensure the `src` directory is in the Python path
+sys.path.insert(
+    0, os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "src"))
+)
+
 from alembic import context
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
-from dotenv import load_dotenv
+
 
 # Import your Base from the root directory models.py
 from models import Base
@@ -10,8 +21,6 @@ from models import Base
 # Debug: Print DATABASE_URL to ensure it's loaded correctly
 print("DATABASE_URL:", os.getenv("DATABASE_URL"))
 
-# Load environment variables from .env file
-load_dotenv()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -42,6 +51,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        version_table_schema="public",
     )
 
     with context.begin_transaction():
@@ -62,7 +72,11 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            version_table_schema="public",
+        )
 
         with context.begin_transaction():
             context.run_migrations()

@@ -48,3 +48,5 @@ psycopg2-binary
 telebot
 aiohttp
 black
+pytest
+pytest-asyncio

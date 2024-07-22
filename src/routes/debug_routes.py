@@ -3,11 +3,9 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import IntegrityError
 from models import User, Chat, agreed_users_chats, users_chats
-from models import Session as MySession
-from db import Session
-import requests
-import httpx
-from config import Config
+from models import Session as SessionModel
+from db import create_sessionmaker, get_sqlalchemy_session
+
 from bot import global_message
 
 debug_routes = Blueprint("debug_routes", __name__)
@@ -22,11 +20,9 @@ async def send_global_message():
         return jsonify({"error": "No message provided"}), 400
 
     try:
-        session = Session()
-        users = session.query(User).options(joinedload(User.chats)).all()
-        session.close()
+        async with get_sqlalchemy_session() as db_session:
+            users = db_session.query(User).options(joinedload(User.chats)).all()
     except Exception as e:
-        session.close()
         return jsonify({"error": str(e)}), 500
 
     await global_message(users, message)
@@ -36,144 +32,104 @@ async def send_global_message():
 @debug_routes.route("/get-users", methods=["GET"])
 async def get_users():
     try:
-        # Create a session
-        session = Session()
-
-        # Query all users
-        users = session.query(User).options(joinedload(User.chats)).all()
-
-        # Close the session
-        session.close()
-
-        users_json = [
-            {
-                "id": user.id,
-                "name": user.name,
-                "has_profile": user.has_profile,
-                "words": user.words,
-                "chats": [chat.id for chat in user.chats],
-                "registration date": user.registration_date,
-                "auth_status": user.auth_status,
-            }
-            for user in users
-        ]
-
-        return jsonify(users_json)
+        # Use the get_sqlalchemy_session context manager
+        async with get_sqlalchemy_session() as db_session:
+            users = db_session.query(User).options(joinedload(User.chats)).all()
+            users_json = [
+                {
+                    "id": user.id,
+                    "name": user.name,
+                    "has_profile": user.has_profile,
+                    "words": user.words,
+                    "chats": [chat.id for chat in user.chats],
+                    "registration date": user.registration_date,
+                    "auth_status": user.auth_status,
+                }
+                for user in users
+            ]
+            return jsonify(users_json)
 
     except Exception as e:
-        session.close()
         return jsonify({"error": str(e)}), 500
 
 
 @debug_routes.route("/get-chats", methods=["GET"])
 async def get_chats():
     try:
-        # Create a session
-        session = Session()
-
-        # Query all chats
-        chats = (
-            session.query(Chat)
-            .options(joinedload(Chat.agreed_users), joinedload(Chat.users))
-            .all()
-        )
-
-        # Close the session
-        session.close()
-
-        chats_json = [
-            {
-                "id": chat.id,
-                "name": chat.name,
-                "words": chat.words,
-                "status": chat.status.name,  # Convert enum to string
-                "lead": chat.lead_id,
-                "telegram_id": chat.telegram_id,
-                "agreed_users": [user.id for user in chat.agreed_users],
-                "users": [user.id for user in chat.users],
-            }
-            for chat in chats
-        ]
-
+        async with get_sqlalchemy_session() as db_session:
+            chats = (
+                db_session.query(Chat)
+                .options(joinedload(Chat.agreed_users), joinedload(Chat.users))
+                .all()
+            )
+            chats_json = [
+                {
+                    "id": chat.id,
+                    "name": chat.name,
+                    "words": chat.words,
+                    "status": chat.status.name,  # Convert enum to string
+                    "lead": chat.lead_id,
+                    "telegram_id": chat.telegram_id,
+                    "agreed_users": [user.id for user in chat.agreed_users],
+                    "users": [user.id for user in chat.users],
+                }
+                for chat in chats
+            ]
         return jsonify(chats_json)
-
     except Exception as e:
-        session.close()
         return jsonify({"error": str(e)}), 500
 
 
 @debug_routes.route("/get-sessions", methods=["GET"])
 async def get_sessions():
     try:
-        # Create a session
-        session = Session()
-
-        # Query all chats
-        sessions = session.query(MySession).all()
-
-        # Close the session
-        session.close()
-
-        sessions_json = [
-            {
-                "id": session.id,
-                "phone_number": session.phone_number,
-                "user_id": session.user_id,
-                "created_at": session.creation_date,
-                "chats": session.chats,
-            }
-            for session in sessions
-        ]
-
+        async with get_sqlalchemy_session() as db_session:
+            sessions = db_session.query(SessionModel).all()
+            sessions_json = [
+                {
+                    "id": session.id,
+                    "phone_number": session.phone_number,
+                    "user_id": session.user_id,
+                    "created_at": session.creation_date,
+                    "chats": session.chats,
+                }
+                for session in sessions
+            ]
         return jsonify(sessions_json)
-
     except Exception as e:
-        session.close()
         return jsonify({"error": str(e)}), 500
 
 
 @debug_routes.route("/delete-session", methods=["POST"])
 async def delete_one_session():
     data = await request.get_json()
-
     phone_number = data.get("phone_number")
     if phone_number is None:
         return jsonify({"error": "phone_number is missing"}), 400
+
     try:
-        # Create a session
-        session = Session()
-
-        try:
-            # Query the user by ID
-            found_session = (
-                session.query(MySession)
-                .filter(MySession.phone_number == phone_number)
-                .first()
-            )
-
-            # Delete the session
-            session.delete(found_session)
-            session.commit()
-
-            response = {"message": f"Session has been deleted."}
-            status_code = 200
-
-        except NoResultFound:
-            response = {"error": f"No session found."}
-            status_code = 404
-
-        except IntegrityError as e:
-            session.rollback()
-            response = {"error": f"Integrity error occurred: {str(e)}"}
-            status_code = 500
-
+        async with get_sqlalchemy_session() as db_session:
+            try:
+                found_session = (
+                    db_session.query(SessionModel)
+                    .filter(SessionModel.phone_number == phone_number)
+                    .first()
+                )
+                if found_session:
+                    db_session.delete(found_session)
+                    db_session.commit()
+                    response = {"message": "Session has been deleted."}
+                    status_code = 200
+                else:
+                    response = {"error": "No session found."}
+                    status_code = 404
+            except IntegrityError as e:
+                db_session.rollback()
+                response = {"error": f"Integrity error occurred: {str(e)}"}
+                status_code = 500
     except Exception as e:
-        session.rollback()
         response = {"error": f"An error occurred: {str(e)}"}
         status_code = 500
-
-    finally:
-        session.close()
 
     return jsonify(response), status_code
 
@@ -184,46 +140,38 @@ async def delete_user():
 
     if not user_id:
         return jsonify({"error": "User ID is required"}), 400
+
     try:
-        # Create a session
-        session = Session()
+        async with get_sqlalchemy_session() as db_session:
+            try:
+                user = (
+                    db_session.query(User)
+                    .options(joinedload(User.chats).joinedload(Chat.users))
+                    .filter(User.id == user_id)
+                    .first()
+                )
 
-        try:
-            # Query the user by ID
-            user = (
-                session.query(User)
-                .options(joinedload(User.chats).joinedload(Chat.users))
-                .filter(User.id == user_id)
-                .first()
-            )
+                if not user:
+                    response = {"error": "No user found."}
+                    status_code = 404
+                else:
+                    # Delete all connected chats
+                    for chat in user.chats:
+                        db_session.delete(chat)
 
-            # Delete all connected chats
-            for chat in user.chats:
-                session.delete(chat)
+                    # Delete the user
+                    db_session.delete(user)
+                    db_session.commit()
 
-            # Delete the user
-            session.delete(user)
-            session.commit()
-
-            response = {"message": f"User has been deleted."}
-            status_code = 200
-
-        except NoResultFound:
-            response = {"error": f"No user found."}
-            status_code = 404
-
-        except IntegrityError as e:
-            session.rollback()
-            response = {"error": f"Integrity error occurred: {str(e)}"}
-            status_code = 500
-
+                    response = {"message": "User has been deleted."}
+                    status_code = 200
+            except IntegrityError as e:
+                db_session.rollback()
+                response = {"error": f"Integrity error occurred: {str(e)}"}
+                status_code = 500
     except Exception as e:
-        session.rollback()
         response = {"error": f"An error occurred: {str(e)}"}
         status_code = 500
-
-    finally:
-        session.close()
 
     return jsonify(response), status_code
 
@@ -233,39 +181,33 @@ async def delete_chat():
     chat_id = request.args.get("id", type=int)
 
     if not chat_id:
-        return jsonify({"error": "chat ID is required"}), 400
+        return jsonify({"error": "Chat ID is required"}), 400
 
     try:
-        # Create a session
-        session = Session()
+        async with get_sqlalchemy_session() as db_session:
+            try:
+                chat = db_session.query(Chat).filter(Chat.id == chat_id).one()
 
-        try:
-            # Query the user by ID
-            chat = session.query(Chat).filter(Chat.id == chat_id).one()
+                if not chat:
+                    response = {"error": "No chat found."}
+                    status_code = 404
+                else:
+                    # Delete the chat
+                    db_session.delete(chat)
+                    db_session.commit()
 
-            # Delete the chat
-            session.delete(chat)
-            session.commit()
-
-            response = {"message": f"Chat has been deleted."}
-            status_code = 200
-
-        except NoResultFound:
-            response = {"error": f"No chat found."}
-            status_code = 404
-
-        except IntegrityError as e:
-            session.rollback()
-            response = {"error": f"Integrity error occurred: {str(e)}"}
-            status_code = 500
-
+                    response = {"message": "Chat has been deleted."}
+                    status_code = 200
+            except NoResultFound:
+                response = {"error": "No chat found."}
+                status_code = 404
+            except IntegrityError as e:
+                db_session.rollback()
+                response = {"error": f"Integrity error occurred: {str(e)}"}
+                status_code = 500
     except Exception as e:
-        session.rollback()
         response = {"error": f"An error occurred: {str(e)}"}
         status_code = 500
-
-    finally:
-        session.close()
 
     return jsonify(response), status_code
 
