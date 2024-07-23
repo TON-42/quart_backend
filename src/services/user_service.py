@@ -49,8 +49,8 @@ async def set_has_profile(user_id, has_profile):
         return status
 
 
-async def set_auth_status(user_id, status):
-    db_session = get_persistent_sqlalchemy_session()  # Use the persistent session
+async def set_auth_status(user_id, status, db_session=None):
+    # db_session = get_persistent_sqlalchemy_session()  # Use the persistent session
     exit_code = 0
     try:
         user = db_session.query(User).filter(User.id == user_id).one()

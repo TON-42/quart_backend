@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 async def create_sqlalchemy_session(client, number, phone_hash, userId):
     session_id = client.session.save()
-    db_session = get_persistent_sqlalchemy_session()  # Use the persistent session
+    db_session = get_persistent_sqlalchemy_session()
     exit_code = 0
     try:
         if userId is None:
@@ -28,7 +28,7 @@ async def create_sqlalchemy_session(client, number, phone_hash, userId):
     except Exception as e:
         db_session.rollback()  # Rollback in case of an error
         logger.error(f"Error creating new session: {str(e)}")
-        exit_code = 1
+        exit_code = -1
     finally:
         db_session.close()  # Explicitly close the session if everything is fine
     return exit_code
@@ -106,18 +106,17 @@ async def set_session_is_logged_and_user_id(number, sender_id):
             return False
 
 
-async def set_session_chats(number, all_chats):
-    async with get_sqlalchemy_session() as db_session:
-        try:
-            found_session = (
-                db_session.query(Session).filter(Session.phone_number == number).one()
-            )
-            found_session.chats = all_chats
-            db_session.commit()
-            return True
-        except NoResultFound:
-            logger.warning("Session not found in set_session_chats")
-            return False
-        except Exception as e:
-            logger.error(f"Error in set_session_chats(): {str(e)}")
-            return False
+async def set_session_chats(db_session, number, all_chats):
+    try:
+        found_session = (
+            db_session.query(Session).filter(Session.phone_number == number).one()
+        )
+        found_session.chats = all_chats
+        db_session.commit()
+        return True
+    except NoResultFound:
+        logger.warning("Session not found in set_session_chats")
+        return False
+    except Exception as e:
+        logger.error(f"Error in set_session_chats(): {str(e)}")
+        return False

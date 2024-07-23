@@ -22,6 +22,13 @@
   "python.analysis.autoIndent": true,
   "python.analysis.autoSearchPaths": true,
   "black-formatter.args": ["--line-length", "88"],
+  "python.languageServer": "Pylance",
+  "python.analysis.typeCheckingMode": "basic",
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": true,
+  "python.linting.flake8Enabled": true,
+  "python.linting.lintOnSave": true,
+  "python.linting.pylintArgs": ["--disable=C0114,C0115,C0116"],
   "workbench.colorCustomizations": {
     "activityBar.background": "#342554",
     "titleBar.activeBackground": "#493475",

@@ -21,9 +21,9 @@ from bot import chat_sale
 import os
 import asyncio
 import logging
+from config import Config
+from telethon.tl.types import User as TelegramUser, InputPeerUser, Entity
 
-API_ID = os.getenv("API_ID")
-API_HASH = os.getenv("API_HASH")
 
 logger = logging.getLogger(__name__)
 
@@ -51,78 +51,97 @@ async def send_message():
 
     logger.info(f"received: {phone_number}, {user_id}, {selected_chats}")
 
-    user_db_session = await fetch_user_session(phone_number, user_id)
-    if user_db_session is None:
-        logger.error("Session does not exist")
-        return jsonify("Session does not exist"), 500
+    async with get_sqlalchemy_session() as db_session:
+        user_db_session = await fetch_user_session(phone_number, user_id, db_session)
+        if user_db_session is None:
+            logger.error("Session does not exist")
+            return jsonify("Session does not exist"), 500
 
-    client = TelegramClient(StringSession(user_db_session.id), API_ID, API_HASH)
-
-    if await connect_client(client, phone_number, user_id) == -1:
-        return jsonify({"error": "error in connecting to Telegram"}), 500
-
-    if not await client.is_user_authorized():
-        await disconnect_client(
-            client, "Session is expired or user manually logged out"
+        client = TelegramClient(
+            StringSession(user_db_session.id), Config.API_ID, Config.API_HASH
         )
-        return jsonify("Session is expired or user manually logged out"), 500
 
-    sender = await client.get_me()
+        if await connect_client(client, phone_number, user_id) == -1:
+            return jsonify({"error": "error in connecting to Telegram"}), 500
 
-    chat_user_names = []
-    chat_user_ids = []
-    for chat_details, words in selected_chats.items():
-        try:
-            # Parse chat_id and chat_name
-            id_field = str(chat_details).strip("()")
-            chat_id_str, chat_name_str = id_field.split(", '", 1)
-            chat_id = int(chat_id_str)
-            chat_name = chat_name_str[:-1]
-
-            logger.info(f"processing: (id: {chat_id}, name: {chat_name})")
-            chat_id = chat_id or 123
-            chat_name = chat_name or "Undefined"
-            words = words or 123
-
-            # Fetch the entity to ensure it's encountered by the library
-            try:
-                chat_entity = await client.get_entity(chat_id)
-            except ValueError as e:
-                # Fetch dialogs to ensure the entity is cached
-                await client.get_dialogs()
-                chat_entity = await client.get_entity(chat_id)
-
-            chat_users = await client.get_participants(chat_entity)
-            for user in chat_users:
-                await create_user(user.id, user.username, False)
-                chat_user_ids.append(user.id)
-                chat_user_names.append(user.username)
-
-            chat_user_ids.append(sender.id)
-            private_chat_id = "_".join(str(num) for num in sorted(chat_user_ids))
-            await create_chat(
-                private_chat_id, chat_name, words, sender.id, chat_user_ids, chat_id
+        if not await client.is_user_authorized():
+            await disconnect_client(
+                client, "Session is expired or user manually logged out"
             )
-            # Call print_chat asynchronously without waiting for it to complete
-            asyncio.create_task(print_chat(chat_entity, chat_name, client))
+            return jsonify("Session is expired or user manually logged out"), 500
 
-            logger.info(f"Sending message to {chat_name}")
-            await client.send_message(chat_entity, message_invitee, parse_mode="html")
+        sender = await client.get_me()
+        if isinstance(sender, TelegramUser):
+            sender_id = sender.id
+        elif isinstance(sender, InputPeerUser):
+            sender_id = sender.user_id
+        else:
+            await disconnect_client(client, "Unknown type returned by get_me()")
+            return jsonify({"error": "Unknown type returned by get_me()"}), 500
 
-            await add_chat_to_users(chat_user_ids, private_chat_id)
-            chat_user_ids.clear()
-        except Exception as e:
-            if await client.is_user_authorized():
-                await client.log_out()
-            await disconnect_client(client, f"Error in send_message(): {str(e)}")
-            await delete_session(phone_number, user_id)
-            return {"error": str(e)}, 500
+        chat_user_names = []
+        chat_user_ids = []
+        for chat_details, words in selected_chats.items():
+            try:
+                # Parse chat_id and chat_name
+                id_field = str(chat_details).strip("()")
+                chat_id_str, chat_name_str = id_field.split(", '", 1)
+                chat_id = int(chat_id_str)
+                chat_name = chat_name_str[:-1]
 
-    status = await set_auth_status(sender.id, "default")
-    if status == 1:
-        await disconnect_client(client, "Couldn't update auth_status")
-        return jsonify({"error": "couldn't update auth_status"}), 500
-    return jsonify({"user names": chat_user_names if chat_user_names else None}), 200
+                logger.info(f"processing: (id: {chat_id}, name: {chat_name})")
+                chat_id = chat_id or 123
+                chat_name = chat_name or "Undefined"
+                words = words or 123
+
+                # Fetch the entity to ensure it's encountered by the library
+                try:
+                    chat_entity = await client.get_entity(chat_id)
+                    if isinstance(chat_entity, list):
+                        chat_entity = chat_entity[0]
+                except ValueError as e:
+                    # Fetch dialogs to ensure the entity is cached
+                    await client.get_dialogs()
+                    chat_entity = await client.get_entity(chat_id)
+                    if isinstance(chat_entity, list):
+                        chat_entity = chat_entity[0]
+
+                chat_users = await client.get_participants(chat_entity)
+                for user in chat_users:
+                    await create_user(user.id, user.username, False)
+                    chat_user_ids.append(user.id)
+                    chat_user_names.append(user.username)
+
+                chat_user_ids.append(sender_id)
+                private_chat_id = "_".join(str(num) for num in sorted(chat_user_ids))
+                await create_chat(
+                    private_chat_id, chat_name, words, sender_id, chat_user_ids, chat_id
+                )
+                # Call print_chat asynchronously without waiting for it to complete
+                asyncio.create_task(print_chat(chat_entity, chat_name, client))
+
+                logger.info(f"Sending message to {chat_name}")
+                await client.send_message(
+                    chat_entity, message_invitee, parse_mode="html"
+                )
+
+                await add_chat_to_users(chat_user_ids, private_chat_id)
+                chat_user_ids.clear()
+            except Exception as e:
+                if await client.is_user_authorized():
+                    await client.log_out()
+                await disconnect_client(client, f"Error in send_message(): {str(e)}")
+                await delete_session(phone_number, user_id)
+                return {"error": str(e)}, 500
+
+        status = await set_auth_status(sender_id, "default")
+        if status == 1:
+            await disconnect_client(client, "Couldn't update auth_status")
+            return jsonify({"error": "couldn't update auth_status"}), 500
+        return (
+            jsonify({"user names": chat_user_names if chat_user_names else None}),
+            200,
+        )
 
 
 @chat_route.route("/add-user-to-agreed", methods=["POST"])
