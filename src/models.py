@@ -1,6 +1,7 @@
 from sqlalchemy import (
     Column,
     BigInteger,
+    Integer,
     String,
     Boolean,
     ForeignKey,
@@ -67,7 +68,15 @@ class User(Base):
     agreed_chats = relationship(
         "Chat", secondary=agreed_users_chats, back_populates="agreed_users"
     )
+    quests = relationship("Quest", back_populates="user")
 
+class Quest(Base):
+    __tablename__ = "quests"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    data = Column(Text)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    user = relationship("User", back_populates="quests")
 
 class Chat(Base):
     __tablename__ = "chats"

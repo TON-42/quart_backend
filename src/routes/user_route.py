@@ -1,7 +1,7 @@
 from quart import Blueprint, jsonify, request
 from db import Session
 from sqlalchemy.orm import joinedload
-from models import User, Chat
+from models import User, Chat, Quest
 from models import Session as MySession
 from services.user_service import create_user
 from sqlalchemy.orm.exc import NoResultFound
@@ -15,26 +15,71 @@ user_route = Blueprint("user_route", __name__)
 
 @user_route.route("/quests", methods=["POST"])
 async def quests():
-    session = Session()
-    data = await request.get_json()
-    points = data.get("points", 0)
-    user_id = data.get("user_id")
-
     try:
-        user = (
-            session.query(User)
-            .options(joinedload(User.chats))
-            .filter(User.id == user_id)
-            .one()
-        )
+        session = Session()
+        data = await request.get_json()
+        points = data.get("points", 0)
+        user_id = data.get("user_id")
+        quest_data = data.get("data")
+        title = data.get("title")
+
+        try:
+            existing_quest = session.query(Quest).filter(Quest.user_id == user_id, Quest.name == title).one()
+            print(f"Quest {title} already exists")
+            return jsonify({"error": "Quest already exists"}), 400
+        except NoResultFound:
+            print(f"Creating new quest {title}")
+
+        try:
+            user = (
+                session.query(User)
+                .options(joinedload(User.chats))
+                .filter(User.id == user_id)
+                .one()
+            )
+            new_quest = Quest(
+                name=title,
+                data=quest_data,
+                user_id=user_id,
+            )
+        except Exception as e:
+            print(f"Error in retrieving user from db: {str(e)}")
+            return jsonify({"error": str(e)}), 500
+        
+        user.words += points
+        session.add(new_quest)
+        session.commit()
+        session.close()
+        return jsonify({"message": "ok"}), 200
     except Exception as e:
-        print(f"Error in retrieving user from db: {str(e)}")
+        print(f"Error in /quests: {str(e)}")
         return jsonify({"error": str(e)}), 500
-    
-    user.words += points
-    session.commit()
-    session.close()
-    return jsonify({"message": "ok"}), 200
+
+@user_route.route("/get-quests", methods=["GET"])
+async def get_quests():
+    try:
+        session = Session()
+
+        quests = session.query(Quest).all()
+
+        session.close()
+
+        quests_json = [
+            {
+                "id": quest.id,
+                "name": quest.name,
+                "user_id": quest.user_id,
+                "data": quest.data
+            }
+            for quest in quests
+        ]
+
+        return jsonify(quests_json)
+
+    except Exception as e:
+        session.close()
+        return jsonify({"error": str(e)}), 500
+
 
 @user_route.route("/get-user", methods=["POST"])
 async def get_user():

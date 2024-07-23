@@ -5,7 +5,7 @@ from sqlalchemy import engine_from_config, pool
 from dotenv import load_dotenv
 
 # Import your Base from the root directory models.py
-from models import Base
+# from models import Base
 
 # Debug: Print DATABASE_URL to ensure it's loaded correctly
 print("DATABASE_URL:", os.getenv("DATABASE_URL"))

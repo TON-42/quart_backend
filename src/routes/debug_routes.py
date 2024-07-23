@@ -40,7 +40,7 @@ async def get_users():
         session = Session()
 
         # Query all users
-        users = session.query(User).options(joinedload(User.chats)).all()
+        users = session.query(User).options(joinedload(User.chats), joinedload(User.quests)).all()
 
         # Close the session
         session.close()
@@ -54,6 +54,14 @@ async def get_users():
                 "chats": [chat.id for chat in user.chats],
                 "registration date": user.registration_date,
                 "auth_status": user.auth_status,
+                "quests": [
+                {
+                    "id": quest.id,
+                    "name": quest.name,
+                    "data": quest.data,
+                }
+                for quest in user.quests
+                ],
             }
             for user in users
         ]
