@@ -10,6 +10,7 @@ from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
 from config import Config
 from services.user_service import manage_user_state
+import json
 
 user_route = Blueprint("user_route", __name__)
 
@@ -20,7 +21,8 @@ async def quests():
         data = await request.get_json()
         points = data.get("points", 0)
         user_id = data.get("user_id")
-        quest_data = data.get("data")
+        json_quest_data = data.get("data")
+        quest_data= json.dumps(json_quest_data)
         title = data.get("title")
 
         try:
