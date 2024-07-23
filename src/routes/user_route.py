@@ -25,6 +25,18 @@ async def quests():
         quest_data= json.dumps(json_quest_data)
         title = data.get("title")
 
+        if title is None:
+            user = (
+                session.query(User)
+                .options(joinedload(User.chats))
+                .filter(User.id == user_id)
+                .one()
+            )
+            user.words += points
+            session.commit()
+            session.close()
+            return jsonify({"message": "ok"}), 200
+
         try:
             existing_quest = session.query(Quest).filter(Quest.user_id == user_id, Quest.name == title).one()
             print(f"Quest {title} already exists")
