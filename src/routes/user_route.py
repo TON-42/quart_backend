@@ -5,6 +5,7 @@ from models import User, Chat
 from services.user_service import create_user
 from services.user_service import manage_user_state
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
