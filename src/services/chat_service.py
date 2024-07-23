@@ -1,23 +1,20 @@
-from db import get_persistent_sqlalchemy_session
+from db import Session
 from models import User, Chat, ChatStatus
 from sqlalchemy.orm.exc import NoResultFound
-import logging
-
-logger = logging.getLogger(__name__)
+from sqlalchemy.orm import joinedload
 
 
 async def create_chat(
     chat_id, chat_name, words_number, sender_id, chat_users, teleg_id
 ):
-    # async with get_sqlalchemy_session() as db_session:
-    db_session = get_persistent_sqlalchemy_session()
+    session = Session()
     status = 0
     try:
-        logger.info(f"Starting create_chat for {chat_name} with chat_id: {chat_id}")
-        existing_chat = db_session.query(Chat).filter(Chat.id == chat_id).one()
-        logger.info(f"Chat {chat_name} already exists")
+        # Query the database to check if a chat with the provided ID exists
+        existing_chat = session.query(Chat).filter(Chat.id == chat_id).one()
+        print(f"Chat {chat_name} already exists")
     except NoResultFound:
-        logger.info(f"Creating {chat_name} chat")
+        print(f"Creating {chat_name} chat")
         new_chat = Chat(
             id=chat_id,
             name=chat_name,
@@ -26,62 +23,47 @@ async def create_chat(
             lead_id=sender_id,
             telegram_id=teleg_id,
         )
-        lead = db_session.query(User).filter(User.id == sender_id).one()
+
+        lead = session.query(User).filter(User.id == sender_id).one()
         new_chat.lead = lead
 
-        logger.info(f"Adding agreed users: {sender_id}")
         agreed_user_ids = [sender_id]
-        agreed_users = db_session.query(User).filter(User.id.in_(agreed_user_ids)).all()
+        agreed_users = session.query(User).filter(User.id.in_(agreed_user_ids)).all()
         new_chat.agreed_users.extend(agreed_users)
 
-        # Log the type and content of chat_users
-        logger.info(f"Type of chat_users: {type(chat_users)}, Content: {chat_users}")
-
-        # Extract user IDs from the User objects
-        # chat_user_ids = [user.id for user in chat_users]
-        if all(isinstance(user, int) for user in chat_users):
-            chat_user_ids = chat_users
-        else:
-            chat_user_ids = [user.id for user in chat_users]
-        logger.info(f"Adding all chat users: {chat_user_ids}")
-        all_users = db_session.query(User).filter(User.id.in_(chat_user_ids)).all()
-        logger.info(f"All users fetched: {all_users}")
-
+        all_users = session.query(User).filter(User.id.in_(chat_users)).all()
         new_chat.users.extend(all_users)
 
-        db_session.add(new_chat)
-        db_session.commit()
-        logger.info(f"Chat {chat_name} created successfully")
-
+        session.add(new_chat)
+        session.commit()
     except Exception as e:
-        logger.error(f"Error in create_chat: {str(e)}")
+        print(f"Error in create_chat: {str(e)}")
         status = 1
-        db_session.rollback()  # Rollback in case of an error
     finally:
-        db_session.close()
-    return status
+        session.close()
+        return status
 
 
 async def add_chat_to_users(users_id, chat_id):
-    db_session = get_persistent_sqlalchemy_session()
     status = 0
     try:
-        logger.info(f"Adding chat:{chat_id} to users:{users_id}")
-        chat = db_session.query(Chat).filter(Chat.id == chat_id).one()
-        users = db_session.query(User).filter(User.id.in_(users_id)).all()
-        logger.info(f"Fetched users for adding chat: {users}")
+        session = Session()
 
+        print(f"Adding chat:{chat_id} to users:{users_id}")
+        # get 1 chat
+        chat = session.query(Chat).filter(Chat.id == chat_id).one()
+        # get all related users
+        users = session.query(User).filter(User.id.in_(users_id)).all()
+
+        # add the chat to each user
         for user in users:
             if chat not in user.chats:
                 user.chats.append(chat)
-                logger.info(f"Added chat: {chat_id} to user: {user.id}")
-
-        db_session.commit()
-        logger.info(f"Chat {chat_id} added to users successfully")
+        session.commit()
     except Exception as e:
-        logger.error(f"Error: {str(e)}")
-        db_session.rollback()
+        print(f"Error: {str(e)}")
+        session.rollback()
         status = 1
     finally:
-        db_session.close()
-    return status
+        session.close()
+        return status

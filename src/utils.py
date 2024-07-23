@@ -1,4 +1,5 @@
-from services.session_service import delete_session
+from services.session_service import create_session, session_exists, delete_session
+import asyncio
 
 
 async def get_chat_id(dialog_id, sender_id, client):
@@ -46,6 +47,7 @@ async def disconnect_client(client, message):
 
 
 async def print_chat(dialog_id, chat_name, client):
+    word_count = 0
     print(f"{chat_name} MESSAGES:")
     async for message in client.iter_messages(dialog_id):
         if message.text:

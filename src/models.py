@@ -6,13 +6,21 @@ from sqlalchemy import (
     ForeignKey,
     Table,
     Text,
+    create_engine,
     DateTime,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.dialects.postgresql import ENUM
+from dotenv import load_dotenv
 from datetime import datetime
-from db import Base
+import os
 import enum
+
+
+load_dotenv()
+
+Base = declarative_base()
 
 
 # Enum for chat status
@@ -74,33 +82,6 @@ class Chat(Base):
         "User", secondary=agreed_users_chats, back_populates="agreed_chats"
     )
     users = relationship("User", secondary=users_chats, back_populates="chats")
-    full_text_data = relationship("ChatFullText", uselist=False, back_populates="chat")
-
-
-class ChatFullText(Base):
-    __tablename__ = "chat_full_texts"
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
-    chat_id = Column(String(255), ForeignKey("chats.id"))
-    full_text = Column(Text, nullable=True)  # Field to store original chat text
-    sanitized_text_presidio = Column(
-        Text, nullable=True
-    )  # Field to store sanitized chat text
-    annotated_text_presidio = Column(
-        Text, nullable=True
-    )  # Field to store annotated chat text
-    sanitized_text_chatgpt = Column(
-        Text, nullable=True
-    )  # Field to store sanitized chat text
-    annotated_text_chatgpt = Column(
-        Text, nullable=True
-    )  # Field to store annotated chat text
-    sanitized_text_local_llm = Column(
-        Text, nullable=True
-    )  # Field to store sanitized chat text
-    annotated_text_local_llm = Column(
-        Text, nullable=True
-    )  # Field to store annotated chat text
-    chat = relationship("Chat", back_populates="full_text_data")
 
 
 class Session(Base):
@@ -113,3 +94,26 @@ class Session(Base):
     send_code_date = Column(DateTime, default=datetime.utcnow, nullable=True)
     is_logged = Column(Boolean, default=False, nullable=True)
     chats = Column(Text, nullable=True)
+
+
+# Database URL from environment variable or fallback
+DATABASE_URL = os.getenv("DATABASE_URL")
+print(f"DATABASE_URL: {DATABASE_URL}")  # Debugging line
+if DATABASE_URL is None:
+    raise ValueError("No DATABASE_URL found in environment variables")
+
+
+# Create engine and session in a function to avoid import-time side effects
+def get_engine():
+    return create_engine(DATABASE_URL)
+
+
+def get_session():
+    engine = get_engine()
+    return sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+# Initialize database
+def init_db():
+    engine = get_engine()
+    Base.metadata.create_all(bind=engine)

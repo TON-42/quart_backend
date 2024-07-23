@@ -9,7 +9,7 @@
     "editor.formatOnType": true,
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
-      "source.organizeImports": "explicit"
+      "source.organizeImports": true
     }
   },
   "black-formatter.importStrategy": "useBundled",
@@ -21,10 +21,5 @@
   "python.analysis.autoImportCompletions": false,
   "python.analysis.autoIndent": true,
   "python.analysis.autoSearchPaths": true,
-  "black-formatter.args": ["--line-length", "88"],
-  "workbench.colorCustomizations": {
-    "activityBar.background": "#342554",
-    "titleBar.activeBackground": "#493475",
-    "titleBar.activeForeground": "#FAF9FD"
-  }
+  "black-formatter.args": ["--line-length", "88"]
 }
