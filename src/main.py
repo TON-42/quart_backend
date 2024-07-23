@@ -16,7 +16,7 @@ from services.session_service import delete_session
 from telethon.sessions import StringSession
 from telethon.sync import TelegramClient
 
-app = uart(__name__
+app = Quart(__name__)
 app = cors(app, allow_origin="*")
 
 app.register_blueprint(debug_routes)
