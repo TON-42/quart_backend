@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 async def create_user(user_id, username, profile):
     async with get_sqlalchemy_session() as db_session:
         try:
-            existing_user = db_session.query(User).filter(User.id == user_id).one()
+            db_session.query(User).filter(User.id == user_id).one()
+            logger.debug(f"User {username} already exists")
         except NoResultFound:
             if username is None:
                 username = "Unknown"
@@ -26,15 +27,9 @@ async def create_user(user_id, username, profile):
                 words=0,
                 auth_status="default",
             )
-            user_data = {
-                "id": new_user.id,
-                "name": new_user.name,
-                "has_profile": new_user.has_profile,
-                "words": new_user.words,
-                "auth_status": new_user.auth_status,
-            }
-
-            logger.info(f"New user created: {user_data}")
+            logger.info(
+                f"New user created: id={new_user.id}, name={new_user.name}, has_profile={new_user.has_profile}, words={new_user.words}, auth_status={new_user.auth_status}"
+            )
             db_session.add(new_user)
             db_session.commit()
         except Exception as e:
