@@ -34,11 +34,10 @@ async def create_sqlalchemy_session(client, number, phone_hash, userId):
     return exit_code
 
 
-async def fetch_user_session(phone_number, user_id):
+async def fetch_user_session(phone_number, user_id, db_session):
     logger.info(
         f"fetch_user_session - phone_number: {phone_number}, user_id: {user_id}"
     )
-    db_session = get_persistent_sqlalchemy_session()
     try:
         if phone_number is not None:
             logger.info("Trying to find a session with phone number")

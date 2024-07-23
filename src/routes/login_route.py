@@ -215,6 +215,7 @@ async def send_code():
                 client, f"The used phone number has been banned from Telegram: {str(e)}"
             )
             return jsonify({"error": str(e)}), 403
+
         except PhoneNumberFloodError as e:
             await disconnect_client(
                 client, f"You asked for the code too many times: {str(e)}"
@@ -225,12 +226,15 @@ async def send_code():
             )
             logger.error(f"You asked for the code too many times: {str(e)}")
             return jsonify({"error": str(e)}), 429
+
         except PhoneNumberInvalidError as e:
             await disconnect_client(client, f"phone number is invalid: {str(e)}")
             return jsonify({"error": str(e)}), 404
+
         except AuthRestartError as e:
             print(f"auth restart error: {str(e)}")
             await client.send_code_request(phone_number)
+
         except Exception as e:
             await disconnect_client(client, f"Error in send_code(): {str(e)}")
             logger.error(f"Error in send_code(): {str(e)}")
