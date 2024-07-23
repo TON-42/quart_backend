@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 init_db()
 
-app = Quart(__name__)
+app = uart(__name__
 app = cors(app, allow_origin="*")
 
 app.register_blueprint(debug_routes)
