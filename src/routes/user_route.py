@@ -30,11 +30,7 @@ async def get_user():
         logger.info(f"get-user: {username}")
         logger.info(f"get-user: {user_id}")
 
-        try:
-            await create_user(user_id, username, False)
-        except Exception as e:
-            logger.error(f"Error creating user: {str(e)}")
-            return jsonify({"error": str(e)}), 500
+        await create_user(user_id, username, False)
 
         async with get_sqlalchemy_session() as db_session:
             try:
