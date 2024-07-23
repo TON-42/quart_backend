@@ -34,33 +34,6 @@ async def create_sqlalchemy_session(client, number, phone_hash, userId):
     return exit_code
 
 
-# async def get_db_session(number, userId):
-#     print(f"get_db_session: {number}, user_id: {userId}")
-#     db_session = DBSession()
-#     exit_code = 0
-#     try:
-#         if number is not None:
-#             print("Trying to find a session with phone number")
-#             found_session = (
-#                 db_session.query(Session).filter(Session.phone_number == number).one()
-#             )
-#         else:
-#             print("Trying to find a session with user_id")
-#             found_session = (
-#                 db_session.query(Session).filter(Session.user_id == str(userId)).one()
-#             )
-#         db_session.close()
-#         return found_session
-#     except NoResultFound:
-#         print("session is not found :(")
-#         db_session.close()
-#         return None
-#     except Exception as e:
-#         print(f"Error while looking for a session: {str(e)}")
-#         db_session.close()
-#         return None
-
-
 async def fetch_user_session(phone_number, user_id):
     logger.info(
         f"fetch_user_session - phone_number: {phone_number}, user_id: {user_id}"
