@@ -9,6 +9,7 @@ from sqlalchemy import (
     Text,
     create_engine,
     DateTime,
+    JSON
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
@@ -75,7 +76,8 @@ class Quest(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=False)
     data = Column(Text)
-    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    data_json = Column(JSON)
+    user_id = Column(BigInteger, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     user = relationship("User", back_populates="quests")
 
 class Chat(Base):

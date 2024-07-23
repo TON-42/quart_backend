@@ -43,6 +43,7 @@ async def quests():
                 name=title,
                 data=quest_data,
                 user_id=user_id,
+                data_json=json_quest_data
             )
         except Exception as e:
             print(f"Error in retrieving user from db: {str(e)}")
