@@ -75,68 +75,65 @@ async def get_user():
         await create_user(user_id, username, False)
 
         async with get_sqlalchemy_session() as db_session:
-            try:
-                user = (
-                    db_session.query(User)
-                    .options(
-                        joinedload(User.chats).joinedload(Chat.users),
-                        joinedload(User.chats).joinedload(Chat.lead),
-                        joinedload(User.chats).joinedload(Chat.agreed_users),
-                    )
-                    .filter(User.id == user_id)
-                    .first()
+            user = (
+                db_session.query(User)
+                .options(
+                    joinedload(User.chats).joinedload(Chat.users),
+                    joinedload(User.chats).joinedload(Chat.lead),
+                    joinedload(User.chats).joinedload(Chat.agreed_users),
                 )
-                logger.debug(f"User loaded: {user}")
-                logger.debug(f"User id: {user.id if user else 'User not found'}")
-                logger.debug(f"User session: {db_session.is_active}")
-                logger.debug(f"User instance state: {db_session.is_modified(user)}")
+                .filter(User.id == user_id)
+                .first()
+            )
+            logger.debug(f"User loaded: {user}")
+            logger.debug(f"User id: {user.id if user else 'User not found'}")
+            logger.debug(f"User session: {db_session.is_active}")
+            logger.debug(f"User instance state: {db_session.is_modified(user)}")
 
-                auth_status_is_auth_code = False  # we have to save auth_code before it is overwritten with default
-                if user.auth_status == "auth_code":
-                    auth_status_is_auth_code = True
+            auth_status_is_auth_code = (
+                False  # we have to save auth_code before it is overwritten with default
+            )
+            if user.auth_status == "auth_code":
+                auth_status_is_auth_code = True
 
-                session_chats = await manage_user_state(db_session, user, user_id)
-                if session_chats == "error":
-                    return jsonify({"error": "Error in looking for a session"}), 500
+            session_chats = await manage_user_state(db_session, user, user_id)
+            if session_chats == "error":
+                return jsonify({"error": "Error in looking for a session"}), 500
 
-                if DEBUG_MODE:
-                    log_user_details(user, db_session, session_chats)
+            if DEBUG_MODE:
+                log_user_details(user, db_session, session_chats)
 
-                response = {
-                    "id": user.id,
-                    "name": user.name,
-                    "has_profile": user.has_profile,
-                    "words": user.words,
-                    "registration_date": user.registration_date,
-                    "auth_status": (
-                        "auth_code" if auth_status_is_auth_code else user.auth_status
-                    ),
-                    "session_chats": session_chats,
-                    "chats": [
-                        {
-                            "id": chat.id,
-                            "name": chat.name,
-                            "words": chat.words,
-                            "status": chat.status.name,
-                            "lead": (
-                                {"id": chat.lead.id, "name": chat.lead.name}
-                                if chat.lead
-                                else None
-                            ),
-                            "agreed_users": [
-                                agreed_user.id for agreed_user in chat.agreed_users
-                            ],
-                            "users": [user.id for user in chat.users],
-                        }
-                        for chat in user.chats
-                    ],
-                }
-                logger.info(f"Response: {response}")
-                return jsonify(response), 200
-
-            except Exception as e:
-                logger.error(f"Error in fetching data from db: {str(e)}")
-                return jsonify({"error": str(e)}), 500
+            response = {
+                "id": user.id,
+                "name": user.name,
+                "has_profile": user.has_profile,
+                "words": user.words,
+                "registration_date": user.registration_date,
+                "auth_status": (
+                    "auth_code" if auth_status_is_auth_code else user.auth_status
+                ),
+                "session_chats": session_chats,
+                "chats": [
+                    {
+                        "id": chat.id,
+                        "name": chat.name,
+                        "words": chat.words,
+                        "status": chat.status.name,
+                        "lead": (
+                            {"id": chat.lead.id, "name": chat.lead.name}
+                            if chat.lead
+                            else None
+                        ),
+                        "agreed_users": [
+                            agreed_user.id for agreed_user in chat.agreed_users
+                        ],
+                        "users": [user.id for user in chat.users],
+                    }
+                    for chat in user.chats
+                ],
+            }
+            logger.info(f"Response: {response}")
+            return jsonify(response), 200
 
     except Exception as e:
         logger.error(f"Error in /get-user: {str(e)}")
