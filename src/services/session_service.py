@@ -61,19 +61,23 @@ async def create_sqlalchemy_session(client, number, phone_hash, userId):
 #         return None
 
 
-async def fetch_user_session(number, userId):
-    logger.info(f"fetch_user_session: {number}, user_id: {userId}")
+async def fetch_user_session(phone_number, user_id):
+    logger.info(
+        f"fetch_user_session - phone_number: {phone_number}, user_id: {user_id}"
+    )
     db_session = get_persistent_sqlalchemy_session()
     try:
-        if number is not None:
+        if phone_number is not None:
             logger.info("Trying to find a session with phone number")
             found_session = (
-                db_session.query(Session).filter(Session.phone_number == number).one()
+                db_session.query(Session)
+                .filter(Session.phone_number == phone_number)
+                .one()
             )
         else:
             logger.info("Trying to find a session with user_id")
             found_session = (
-                db_session.query(Session).filter(Session.user_id == str(userId)).one()
+                db_session.query(Session).filter(Session.user_id == str(user_id)).one()
             )
         return found_session
     except NoResultFound:
