@@ -14,6 +14,48 @@ DEBUG_MODE = os.getenv("DEBUG_MODE") == "True"
 user_route = Blueprint("user_route", __name__)
 
 
+def log_user_details(user, db_session, session_chats):
+    logger.debug(
+        f"Session still active after manage_user_state: {db_session.is_active}"
+    )
+    logger.debug(f"User name: {user.name}")
+    logger.debug(f"User chats: {user.chats}")
+
+    for chat in user.chats:
+        logger.debug(f"Chat ID: {chat.id}, Chat name: {chat.name}")
+        logger.debug(f"Chat users: {[user.id for user in chat.users]}")
+        logger.debug(f"Chat lead: {chat.lead}")
+        logger.debug(
+            f"Chat agreed users: {[agreed_user.id for agreed_user in chat.agreed_users]}"
+        )
+
+    if not db_session.is_active:
+        logger.debug("Session is not active!")
+    else:
+        logger.debug("Session is active!")
+
+    logger.debug(f"User: {user}")
+    logger.debug(f"User ID: {user.id}")
+    logger.debug(f"User Name: {user.name}")
+    logger.debug(f"User Has Profile: {user.has_profile}")
+    logger.debug(f"User Words: {user.words}")
+    logger.debug(f"User Registration Date: {user.registration_date}")
+    logger.debug(f"User Auth Status: {user.auth_status}")
+    logger.debug(f"Session Chats: {session_chats}")
+    for chat in user.chats:
+        logger.debug(f"Chat ID: {chat.id}")
+        logger.debug(f"Chat Name: {chat.name}")
+        logger.debug(f"Chat Words: {chat.words}")
+        logger.debug(f"Chat Status: {chat.status.name}")
+        if chat.lead:
+            logger.debug(f"Chat Lead ID: {chat.lead.id}")
+            logger.debug(f"Chat Lead Name: {chat.lead.name}")
+        for agreed_user in chat.agreed_users:
+            logger.debug(f"Agreed User ID: {agreed_user.id}")
+        for user in chat.users:
+            logger.debug(f"Chat User ID: {user.id}")
+
+
 @user_route.route("/get-user", methods=["POST"])
 async def get_user():
     try:
@@ -57,45 +99,8 @@ async def get_user():
                 if session_chats == "error":
                     return jsonify({"error": "Error in looking for a session"}), 500
 
-                logger.debug(
-                    f"Session still active after manage_user_state: {db_session.is_active}"
-                )
-                logger.debug(f"User name: {user.name}")
-                logger.debug(f"User chats: {user.chats}")
-
-                for chat in user.chats:
-                    logger.debug(f"Chat ID: {chat.id}, Chat name: {chat.name}")
-                    logger.debug(f"Chat users: {[user.id for user in chat.users]}")
-                    logger.debug(f"Chat lead: {chat.lead}")
-                    logger.debug(
-                        f"Chat agreed users: {[agreed_user.id for agreed_user in chat.agreed_users]}"
-                    )
-
-                if not db_session.is_active:
-                    logger.debug("Session is not active!")
-                else:
-                    logger.debug("Session is active!")
-
-                logger.debug(f"User: {user}")
-                logger.debug(f"User ID: {user.id}")
-                logger.debug(f"User Name: {user.name}")
-                logger.debug(f"User Has Profile: {user.has_profile}")
-                logger.debug(f"User Words: {user.words}")
-                logger.debug(f"User Registration Date: {user.registration_date}")
-                logger.debug(f"User Auth Status: {user.auth_status}")
-                logger.debug(f"Session Chats: {session_chats}")
-                for chat in user.chats:
-                    logger.debug(f"Chat ID: {chat.id}")
-                    logger.debug(f"Chat Name: {chat.name}")
-                    logger.debug(f"Chat Words: {chat.words}")
-                    logger.debug(f"Chat Status: {chat.status.name}")
-                    if chat.lead:
-                        logger.debug(f"Chat Lead ID: {chat.lead.id}")
-                        logger.debug(f"Chat Lead Name: {chat.lead.name}")
-                    for agreed_user in chat.agreed_users:
-                        logger.debug(f"Agreed User ID: {agreed_user.id}")
-                    for user in chat.users:
-                        logger.debug(f"Chat User ID: {user.id}")
+                if DEBUG_MODE:
+                    log_user_details(user, db_session, session_chats)
 
                 response = {
                     "id": user.id,
