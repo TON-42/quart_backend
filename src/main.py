@@ -1,4 +1,5 @@
 import logging
+import os
 from quart import Quart, jsonify, request
 from quart_cors import cors
 from routes.debug_routes import debug_routes
@@ -9,11 +10,18 @@ from bot import bot
 from telebot import types
 from services.session_expiration import check_session_expiration
 from db import init_db
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Read DEBUG_MODE from environment variable
+DEBUG_MODE = os.getenv("DEBUG_MODE") == "True"
 
 
 def setup_logging():
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging.DEBUG if DEBUG_MODE else logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[logging.FileHandler("app.log"), logging.StreamHandler()],
     )
