@@ -13,6 +13,28 @@ from services.user_service import manage_user_state
 
 user_route = Blueprint("user_route", __name__)
 
+@user_route.route("/quests", methods=["POST"])
+async def quests():
+    session = Session()
+    data = await request.get_json()
+    points = data.get("points", 0)
+    user_id = data.get("user_id")
+
+    try:
+        user = (
+            session.query(User)
+            .options(joinedload(User.chats))
+            .filter(User.id == user_id)
+            .one()
+        )
+    except Exception as e:
+        print(f"Error in retrieving user from db: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    
+    user.words += points
+    session.commit()
+    session.close()
+    return jsonify({"message": "ok"}), 200
 
 @user_route.route("/get-user", methods=["POST"])
 async def get_user():
