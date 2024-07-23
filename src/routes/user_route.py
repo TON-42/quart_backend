@@ -72,7 +72,7 @@ async def get_quests():
                 "id": quest.id,
                 "name": quest.name,
                 "user_id": quest.user_id,
-                "data": quest.data
+                "data": quest.data,
                 "data_json": quest.data_json
             }
             for quest in quests
