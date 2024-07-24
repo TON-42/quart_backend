@@ -137,7 +137,7 @@ async def login():
                 ):
                     continue
 
-                private_chat_id = await get_chat_id(dialog.id, sender.id, client)
+                private_chat_id = await get_chat_id(dialog.id, sender_id, client)
                 if private_chat_id in chat_ids:
                     logger.info(f"Chat {dialog.name} is already sold")
                     continue
