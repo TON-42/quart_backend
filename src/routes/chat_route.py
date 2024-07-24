@@ -1,28 +1,24 @@
 from quart import Blueprint, jsonify, request
-from db import get_sqlalchemy_session
 from sqlalchemy.orm import joinedload
+from telethon.sessions import StringSession
+from telethon.sync import TelegramClient
+from telethon.tl.types import User as TelegramUser, InputPeerUser
+from db import get_sqlalchemy_session
 from models import User, Chat, ChatStatus, ChatFullText
 from services.user_service import create_user, set_auth_status
 from services.chat_service import create_chat, add_chat_to_users
 from services.session_service import fetch_user_session, delete_session
-from telethon.sessions import StringSession
-from telethon.sync import TelegramClient
-from utils import (
-    connect_client,
-    disconnect_client,
-    print_chat,
-)
 from utils import (
     connect_client,
     disconnect_client,
     print_chat,
 )
 from bot import chat_sale
-import os
 import asyncio
 import logging
 from config import Config
-from telethon.tl.types import User as TelegramUser, InputPeerUser, Entity
+
+from models import ChatStatus
 
 
 logger = logging.getLogger(__name__)
@@ -188,6 +184,13 @@ async def add_user_to_agreed():
                     continue
 
                 # if chat is already sold
+                print(f"Type of chat.status: {type(chat.status)}")
+                print(f"Value of chat.status: {chat.status}")
+                print(f"Type of ChatStatus.sold: {type(ChatStatus.sold)}")
+                print(f"Value of ChatStatus.sold: {ChatStatus.sold}")
+                print(f"Type of ChatStatus.sold.value: {type(ChatStatus.sold.value)}")
+                print(f"Value of ChatStatus.sold.value: {ChatStatus.sold.value}")
+
                 if chat.status == ChatStatus.sold:
                     chat_status[chat_id] = "sold"
                     continue
@@ -208,6 +211,8 @@ async def add_user_to_agreed():
 
                 # if all users have agreed
                 if len(chat.agreed_users) == len(chat.users):
+                    # chat.status = cast(ChatStatus, ChatStatus.sold)
+                    # assert isinstance(chat.status, ChatStatus)
                     chat.status = ChatStatus.sold
                     chat_status[chat_id] = "sold"
                     await chat_sale(chat.users)
@@ -217,7 +222,9 @@ async def add_user_to_agreed():
                         user.words += chat.words
 
                     # Check if the user is logged in and has an open session
-                    user_db_session = await fetch_user_session(None, user.id)
+                    user_db_session = await fetch_user_session(
+                        None, user.id, db_session
+                    )
                     if user_db_session is None:
                         logger.error(
                             "Session does not exist: Chat is sold, but has not been fetched!"
@@ -226,7 +233,9 @@ async def add_user_to_agreed():
                         continue
 
                     client = TelegramClient(
-                        StringSession(user_db_session.id), API_ID, API_HASH
+                        StringSession(user_db_session.id),
+                        Config.API_ID,
+                        Config.API_HASH,
                     )
                     if await connect_client(client, None, user.id) == -1:
                         logger.error("Error in connecting to Telegram")
@@ -240,10 +249,14 @@ async def add_user_to_agreed():
                         continue
                     # Retrieve chat entity
                     try:
-                        chat_entity = await client.get_entity(chat.telegram_id)
+                        chat_entity = await client.get_entity(chat.telegram_id.value)
+                        if isinstance(chat_entity, list):
+                            chat_entity = chat_entity[0]
                     except ValueError:
                         await client.get_dialogs()
-                        chat_entity = await client.get_entity(chat.telegram_id)
+                        chat_entity = await client.get_entity(chat.telegram_id.value)
+                        if isinstance(chat_entity, list):
+                            chat_entity = chat_entity[0]
 
                     # Fetch and save chat text to ChatFullText
                     full_text = ""

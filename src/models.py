@@ -7,12 +7,14 @@ from sqlalchemy import (
     Table,
     Text,
     DateTime,
+    Enum,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import ENUM
 from datetime import datetime
 from db import Base
 import enum
+from typing import TypeAlias
 
 
 # Enum for chat status
@@ -61,13 +63,20 @@ class User(Base):
     )
 
 
+# EnumColumn: TypeAlias = Column[Enum[ChatStatus]]
+
+
 class Chat(Base):
     __tablename__ = "chats"
     id = Column(String(255), primary_key=True)
     telegram_id = Column(BigInteger, nullable=True, default=0)
     name = Column(String(100), nullable=False)
     words = Column(BigInteger, default=0)
-    status = Column(ENUM(ChatStatus), nullable=False)
+    # status = Column(ENUM(ChatStatus), nullable=False)
+    # status = Column(Enum(ChatStatus), nullable=False)
+    # status: Mapped[ChatStatus] = Column(Enum(ChatStatus), nullable=False)
+    # status: Mapped[ChatStatus] = mapped_column(Enum(ChatStatus), nullable=False)
+    status: Mapped[ChatStatus] = mapped_column(ENUM(ChatStatus), nullable=False)
     lead_id = Column(BigInteger, ForeignKey("users.id"))
     lead = relationship("User", foreign_keys=[lead_id])
     agreed_users = relationship(
