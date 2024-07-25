@@ -50,3 +50,5 @@ aiohttp
 black
 pytest
 pytest-asyncio
+pylint==2.10.2
+flake8==3.9.2

@@ -5,17 +5,20 @@ Main application module for Quart server setup and route handling.
 import logging
 from quart import Quart, jsonify, request
 from quart_cors import cors
+from telebot import types
 from routes.debug_routes import debug_routes
 from routes.login_route import login_route
 from routes.user_route import user_route
 from routes.chat_route import chat_route
 from bot import bot
-from telebot import types
 from services.session_expiration import check_session_expiration
 from db import init_db
 
 
 def setup_logging():
+    """
+    Set up logging for the application.
+    """
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
