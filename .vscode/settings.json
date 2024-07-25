@@ -1,5 +1,4 @@
 {
-  "python.formatting.provider": "black",
   "editor.formatOnSave": true,
   "editor.formatOnSaveMode": "file",
   "editor.formatOnType": true,
@@ -14,7 +13,7 @@
   },
   "black-formatter.importStrategy": "useBundled",
   "black-formatter.path": [],
-  "black-formatter.showNotifications": "off",
+  "black-formatter.showNotification": "off",
   "python.analysis.diagnosticSeverityOverrides": {},
   "python.globalModuleInstallation": true,
   "python.analysis.autoFormatStrings": false,
