@@ -25,7 +25,6 @@ if not DATABASE_URL:
 Base = declarative_base()
 
 
-# Create engine and session in a function to avoid import-time side effects
 def get_engine():
     """
     Creates and returns a SQLAlchemy engine using the DATABASE_URL from the environment.
@@ -45,7 +44,6 @@ def create_sessionmaker():
     return sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-# Initialize the database (create tables)
 def init_db():
     """
     Initializes the database by creating all defined tables.
@@ -59,7 +57,6 @@ def init_db():
         raise
 
 
-# Context manager for database sessions
 @asynccontextmanager
 async def get_sqlalchemy_session():
     """
@@ -78,7 +75,6 @@ async def get_sqlalchemy_session():
         session.close()
 
 
-# Function to create a persistent database session
 def get_persistent_sqlalchemy_session():
     """
     Creates and returns a persistent SQLAlchemy session.
