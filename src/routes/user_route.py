@@ -1,10 +1,14 @@
+"""
+Routes for user related operations
+"""
+
+import logging
+from sqlalchemy.orm import joinedload
 from quart import Blueprint, jsonify, request
 from db import get_sqlalchemy_session
-from sqlalchemy.orm import joinedload
 from models import User, Chat
 from services.user_service import create_user
 from services.user_service import manage_user_state
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +17,10 @@ user_route = Blueprint("user_route", __name__)
 
 @user_route.route("/get-user", methods=["POST"])
 async def get_user():
+    """
+    Get user details
+    """
     try:
-        # Check if request is JSON
         if not request.is_json:
             return jsonify({"error": "Request data must be JSON"}), 400
 
@@ -25,7 +31,8 @@ async def get_user():
         if user_id is None:
             return jsonify({"error": "userId is missing"}), 400
 
-        logger.info(f"get-user: {username}")
+        logger.info("username: %s", username)
+        logger.info("user id: %s", user_id)
 
         try:
             await create_user(user_id, username, False)
