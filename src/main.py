@@ -2,12 +2,11 @@
 Main application module for Quart server setup and route handling.
 """
 
-import os
 import logging
 from quart import Quart, jsonify, request
 from quart_cors import cors
 from telebot import types
-from dotenv import load_dotenv
+from config import Config
 from routes.debug_routes import debug_routes
 from routes.login_route import login_route
 from routes.user_route import user_route
@@ -16,19 +15,13 @@ from bot import bot
 from services.session_expiration import check_session_expiration
 from db import init_db
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Read DEBUG_MODE from environment variable
-DEBUG_MODE = os.getenv("DEBUG_MODE") == "True"
-
 
 def setup_logging():
     """
     Set up logging for the application.
     """
     logging.basicConfig(
-        level=logging.DEBUG if DEBUG_MODE else logging.INFO,
+        level=logging.DEBUG if Config.DEBUG_MODE else logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[logging.FileHandler("app.log"), logging.StreamHandler()],
     )
@@ -37,6 +30,10 @@ def setup_logging():
 setup_logging()
 logger = logging.getLogger(__name__)
 
+# Log the configuration values
+Config.log_config()
+
+# Initialize the database
 init_db()
 
 app = Quart(__name__)
