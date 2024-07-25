@@ -1,3 +1,7 @@
+"""
+Main application module for Quart server setup and route handling.
+"""
+
 import logging
 from quart import Quart, jsonify, request
 from quart_cors import cors
