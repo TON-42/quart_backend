@@ -3,7 +3,10 @@ This module loads configuration from environment variables.
 """
 
 import os
+import logging
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 
 class Config:
@@ -33,17 +36,23 @@ class Config:
     CHECK_INTERVAL_SECONDS = int(os.getenv("CHECK_INTERVAL_SECONDS", "60"))
 
     # Debug prints
-    print(f"API_ID: {API_ID}")
-    print(f"API_HASH: {API_HASH}")
-    print(f"TOKEN: {TOKEN}")
-    print(f"JWT_SECRET_KEY: {JWT_SECRET_KEY}")
-    print(f"API_USERNAME: {API_USERNAME}")
-    print(f"API_PASSWORD: {API_PASSWORD}")
-    print(f"POSTGRES_USER: {POSTGRES_USER}")
-    print(f"POSTGRES_PASSWORD: {POSTGRES_PASSWORD}")
-    print(f"POSTGRES_DB: {POSTGRES_DB}")
-    print(f"POSTGRES_PORT: {POSTGRES_PORT}")
-    print(f"POSTGRES_HOST: {POSTGRES_HOST}")
-    print(f"DATABASE_URL: {DATABASE_URL}")
-    print(f"SESSION_EXPIRATION_MINUTES: {SESSION_EXPIRATION_MINUTES}")
-    print(f"CHECK_INTERVAL_SECONDS: {CHECK_INTERVAL_SECONDS}")
+
+    if not DATABASE_URL:
+        logger.error("No DATABASE_URL found in environment variables")
+        raise ValueError("No DATABASE_URL found in environment variables")
+
+    # Debug logs
+    logger.info("API_ID: %s", API_ID)
+    logger.info("API_HASH: %s", API_HASH)
+    logger.info("TOKEN: %s", TOKEN)
+    logger.info("JWT_SECRET_KEY: %s", JWT_SECRET_KEY)
+    logger.info("API_USERNAME: %s", API_USERNAME)
+    logger.info("API_PASSWORD: %s", API_PASSWORD)
+    logger.info("POSTGRES_USER: %s", POSTGRES_USER)
+    logger.info("POSTGRES_PASSWORD: %s", POSTGRES_PASSWORD)
+    logger.info("POSTGRES_DB: %s", POSTGRES_DB)
+    logger.info("POSTGRES_PORT: %d", POSTGRES_PORT)
+    logger.info("POSTGRES_HOST: %s", POSTGRES_HOST)
+    logger.info("DATABASE_URL: %s", DATABASE_URL)
+    logger.info("SESSION_EXPIRATION_MINUTES: %d", SESSION_EXPIRATION_MINUTES)
+    logger.info("CHECK_INTERVAL_SECONDS: %d", CHECK_INTERVAL_SECONDS)
