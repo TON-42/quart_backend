@@ -39,12 +39,18 @@ app.register_blueprint(chat_route)
 
 @app.before_serving
 async def startup():
+    """
+    Startup tasks to be executed before the server starts serving requests.
+    """
     app.add_background_task(check_session_expiration)
     logger.info("App started")
 
 
 @app.after_serving
 async def shutdown():
+    """
+    Shutdown tasks to be executed after the server stops serving requests.
+    """
     for task in app.background_tasks:
         task.cancel()
     logger.info("App stopped")
@@ -52,6 +58,9 @@ async def shutdown():
 
 @app.route("/health", methods=["GET"])
 async def health():
+    """
+    Health check endpoint to verify if the server is running.
+    """
     app.logger.info("Health check endpoint called")
     logger.info("Health check endpoint called")
     return "ok", 200
@@ -59,23 +68,33 @@ async def health():
 
 @app.route("/hello", methods=["GET"])
 async def hello_world():
+    """
+    Simple Hello World endpoint.
+    """
     logger.info("Hello world endpoint called")
     return jsonify({"message": "Hello, World!"})
 
 
 @app.route("/", methods=["GET"])
 async def root():
+    """
+    Root endpoint.
+    """
     logger.info("Root endpoint called")
     return "Hello, Root!"
 
 
 @app.route("/webhook", methods=["POST"])
 async def webhook():
+    """
+    Webhook endpoint to receive updates from the bot.
+    """
     if request.method == "POST":
         logger.info("Webhook received")
         data = await request.get_json()
         update = types.Update.de_json(data)
-        await bot.process_new_updates([update])
+        if update is not None:
+            await bot.process_new_updates([update])
     return "ok"
 
 
