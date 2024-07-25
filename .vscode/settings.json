@@ -14,7 +14,7 @@
   },
   "black-formatter.importStrategy": "useBundled",
   "black-formatter.path": [],
-  "black-formatter.showNotifications": "off",
+  "black-formatter.showNotification": "off",
   "python.analysis.diagnosticSeverityOverrides": {},
   "python.globalModuleInstallation": true,
   "python.analysis.autoFormatStrings": false,
@@ -22,9 +22,19 @@
   "python.analysis.autoIndent": true,
   "python.analysis.autoSearchPaths": true,
   "black-formatter.args": ["--line-length", "88"],
-  "workbench.colorCustomizations": {
-    "activityBar.background": "#342554",
-    "titleBar.activeBackground": "#493475",
-    "titleBar.activeForeground": "#FAF9FD"
+  "python.languageServer": "Pylance",
+  "python.analysis.typeCheckingMode": "basic",
+  "flake8.args": ["--max-line-length=88"],
+  "flake8.importStrategy": "useBundled",
+  "flake8.showNotification": "off",
+  "flake8.ignorePatterns": [],
+  "flake8.enabled": true,
+  "flake8.severity": {
+    "convention": "Information",
+    "error": "Error",
+    "fatal": "Error",
+    "refactor": "Hint",
+    "warning": "Warning",
+    "info": "Information"
   }
 }
