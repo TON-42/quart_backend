@@ -1,29 +1,35 @@
 """
-
+Functions to handle the bot commands and messages.
 """
 
-from telebot.async_telebot import AsyncTeleBot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+from telebot.async_telebot import AsyncTeleBot  # type: ignore
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo  # type: ignore
 from config import Config
 
-commands = "📝 /start - Start the bot\n❓ /faq - more information"
+COMMANDS = "📝 /start - Start the bot\n" "❓ /faq - More information"
 
 bot = AsyncTeleBot(Config.TOKEN)
 
 
 async def global_message(users, message):
+    """
+    Send a message to all users in the database.
+    """
     for user in users:
         if user.id < 100:
             continue
         print(f"sending to {user.name}")
         try:
             await bot.send_message(user.id, message)
-        except Exception:
-            print(f"error on {user.id}")
+        except Exception as e:
+            print(f"error on {user.id}: {e}")
             continue
 
 
 async def chat_sale(users):
+    """
+    Send a message when a chat is sold.
+    """
     markup = InlineKeyboardMarkup()
     markup.row_width = 2
     markup.add(
@@ -39,16 +45,19 @@ async def chat_sale(users):
         try:
             await bot.send_message(
                 user.id,
-                f"Congratulations! 🎉\nEvery user has agreed to sell the chat\nYour $WORD is on the way!\nJoin the community on Discord and X and let your friends know about ChatPay 💬 = 💰",
+                "Congratulations! 🎉\nEvery user has agreed to sell the chat\nYour $WORD is on the way!\nJoin the community on Discord and X and let your friends know about ChatPay 💬 = 💰",
                 reply_markup=markup,
             )
-        except Exception:
-            print(f"error on {user.id}")
+        except Exception as e:
+            print(f"error on {user.id}: {e}")
             continue
 
 
-@bot.message_handler(commands=["start"])
+@bot.message_handler(COMMANDS=["start"])
 async def start(message):
+    """
+    Start command to send a welcome message to the user.
+    """
     image_url = (
         "https://magnumtravel-bucket.s3.amazonaws.com/static/images/bot-banner.png"
     )
@@ -64,8 +73,8 @@ async def start(message):
 
     markup = InlineKeyboardMarkup()
     markup.row_width = 2
-    webUrl = WebAppInfo("https://new-vite-frontend.vercel.app/")
-    markup.add(InlineKeyboardButton("Let's go", web_app=webUrl))
+    web_url = WebAppInfo("https://new-vite-frontend.vercel.app/")
+    markup.add(InlineKeyboardButton("Let's go", web_app=web_url))
     markup.add(InlineKeyboardButton("Follow us", url="https://x.com/chatpay_app"))
 
     print(f"chat-id: {message.chat.id}")
@@ -74,4 +83,7 @@ async def start(message):
 
 @bot.message_handler(content_types=["text"])
 async def message_reply(message):
-    await bot.send_message(message.chat.id, "List of avaliable commands:\n" + commands)
+    """
+    Reply to the user with a list of available commands.
+    """
+    await bot.send_message(message.chat.id, f"List of available commands:\n{COMMANDS}")
