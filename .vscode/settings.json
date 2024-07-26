@@ -41,10 +41,9 @@
     "warning": "Warning",
     "info": "Information"
   },
-  "pylint.args": ["--disable=C0111"], // Disable missing docstring warnings
-  "pylint.importStrategy": "fromEnvironment", // Use pylint from the environment
-  "pylint.lintOnChange": true, // Lint as you type
-  "pylint.path": ["pylint"],
+  //   "pylint.importStrategy": "fromEnvironment", // Use pylint from the environment
+  //   "pylint.path": ["pylint"],
+  "python.linting.mypyArgs": ["--ignore-missing-imports", "--disallow-untyped-defs"],
   "mypy.importStrategy": "useBundled",
   "mypy.showNotification": "off",
   "mypy.severity": {

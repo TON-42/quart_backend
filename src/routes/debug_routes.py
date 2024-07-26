@@ -7,7 +7,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from models import User, Chat
 from models import Session as SessionModel
-from db import create_sessionmaker, get_sqlalchemy_session
+from db import get_sqlalchemy_session
 from bot import global_message
 
 debug_routes = Blueprint("debug_routes", __name__)
