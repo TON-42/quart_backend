@@ -2,6 +2,7 @@
 Routes for user related operations
 """
 
+import os
 import logging
 from sqlalchemy.orm import joinedload
 from quart import Blueprint, jsonify, request
@@ -12,7 +13,53 @@ from services.user_service import manage_user_state
 
 logger = logging.getLogger(__name__)
 
+DEBUG_MODE = os.getenv("DEBUG_MODE") == "True"
+
 user_route = Blueprint("user_route", __name__)
+
+
+def log_user_details(user, db_session, session_chats):
+    """
+    Get user details
+    """
+    logger.debug(
+        "Session still active after manage_user_state: %s", db_session.is_active
+    )
+    logger.debug("User name: %s", user.name)
+    logger.debug("User chats: %s", user.chats)
+    for chat in user.chats:
+        logger.debug("chat id: %s, chat name: %s", chat.id, chat.name)
+        logger.debug("chat users: %s", [user.id for user in chat.users])
+        logger.debug("chat lead: %s", chat.lead)
+        logger.debug(
+            "chat agreed users: %s",
+            [agreed_user.id for agreed_user in chat.agreed_users],
+        )
+    if not db_session.is_active:
+        logger.debug("Session is not active!")
+    else:
+        logger.debug("Session is active!")
+
+    logger.debug("User: %s", user)
+    logger.debug("User ID: %s", user.id)
+    logger.debug("User Name: %s", user.name)
+    logger.debug("User Has Profile: %s", user.has_profile)
+    logger.debug("User Words: %s", user.words)
+    logger.debug("User Registration Date: %s", user.registration_date)
+    logger.debug("User Auth Status: %s", user.auth_status)
+    logger.debug("Session Chats: %s", session_chats)
+    for chat in user.chats:
+        logger.debug("Chat ID: %s", chat.id)
+        logger.debug("Chat Name: %s", chat.name)
+        logger.debug("Chat Words: %s", chat.words)
+        logger.debug("Chat Status: %s", chat.status.name)
+        if chat.lead:
+            logger.debug("Chat Lead ID: %s", chat.lead.id)
+            logger.debug("Chat Lead Name: %s", chat.lead.name)
+        for agreed_user in chat.agreed_users:
+            logger.debug("Agreed User ID: %s", agreed_user.id)
+        for user in chat.users:
+            logger.debug("Chat User ID: %s", user.id)
 
 
 @user_route.route("/get-user", methods=["POST"])
@@ -48,70 +95,23 @@ async def get_user():
                     .filter(User.id == user_id)
                     .first()
                 )
+                logger.debug("User loaded: %s", user)
+                logger.debug("User id: %s", user.id if user else "User not found")
+                logger.debug("User session: %s", db_session.is_active)
+                logger.debug("User instance state: %s", db_session.is_modified(user))
+                if user is None:
+                    return jsonify({"error": "User not found"}), 404
 
-                # Print statement to check if user is loaded and session status
-                print(f"User loaded: {user}")
-                print(f"User id: {user.id if user else 'User not found'}")
-                print(f"User session: {db_session.is_active}")
-
-                # Check if user instance is still in session
-                print(f"User instance state: {db_session.is_modified(user)}")
-
-                auth_code = False  # we have to save auth_code before it is overwritten with default
-                auth_status_is_auth_code = False  # we have to save auth_code before it is overwritten with default
-                if user.auth_status == "auth_code":
-                    auth_code = True
+                auth_status_is_auth_code = False
+                if user.auth_status.bool_op == "auth_code":
                     auth_status_is_auth_code = True
 
                 session_chats = await manage_user_state(db_session, user, user_id)
                 if session_chats == "error":
                     return jsonify({"error": "Error in looking for a session"}), 500
 
-                # Print statement to check if session is still active after manage_user_state
-                print(
-                    f"Session still active after manage_user_state: {db_session.is_active}"
-                )
-                # Attempt to access an attribute to see if it's still attached
-                print(f"User name: {user.name}")
-                print(f"User chats: {user.chats}")
-
-                # Additional print statements
-                for chat in user.chats:
-                    print(f"Chat ID: {chat.id}, Chat name: {chat.name}")
-                    print(f"Chat users: {[user.id for user in chat.users]}")
-                    print(f"Chat lead: {chat.lead}")
-                    print(
-                        f"Chat agreed users: {[agreed_user.id for agreed_user in chat.agreed_users]}"
-                    )
-
-                # Additional checks
-                if not db_session.is_active:
-                    print("Session is not active!")
-                else:
-                    print("Session is active!")
-
-                print("just before response")
-                # Print statements before constructing the response
-                print(f"User: {user}")
-                print(f"User ID: {user.id}")
-                print(f"User Name: {user.name}")
-                print(f"User Has Profile: {user.has_profile}")
-                print(f"User Words: {user.words}")
-                print(f"User Registration Date: {user.registration_date}")
-                print(f"User Auth Status: {user.auth_status}")
-                print(f"Session Chats: {session_chats}")
-                for chat in user.chats:
-                    print(f"Chat ID: {chat.id}")
-                    print(f"Chat Name: {chat.name}")
-                    print(f"Chat Words: {chat.words}")
-                    print(f"Chat Status: {chat.status.name}")
-                    if chat.lead:
-                        print(f"Chat Lead ID: {chat.lead.id}")
-                        print(f"Chat Lead Name: {chat.lead.name}")
-                    for agreed_user in chat.agreed_users:
-                        print(f"Agreed User ID: {agreed_user.id}")
-                    for user in chat.users:
-                        print(f"Chat User ID: {user.id}")
+                if DEBUG_MODE:
+                    log_user_details(user, db_session, session_chats)
 
                 response = {
                     "id": user.id,
@@ -146,9 +146,9 @@ async def get_user():
                 return jsonify(response), 200
 
             except Exception as e:
-                logger.error(f"Error in fetching data from db: {str(e)}")
+                logger.error("Error in fetching data from db: %s", str(e))
                 return jsonify({"error": str(e)}), 500
 
     except Exception as e:
-        logger.error(f"Error in /get-user: {str(e)}")
+        logger.error("Error in /get-user: %s", str(e))
         return jsonify({"error": str(e)}), 500
