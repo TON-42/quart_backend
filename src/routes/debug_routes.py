@@ -1,11 +1,13 @@
+"""
+This module contains routes for debugging purposes.
+"""
+
 from quart import Blueprint, jsonify, request
 from sqlalchemy.orm import joinedload
-from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.exc import IntegrityError
-from models import User, Chat, agreed_users_chats, users_chats
+from sqlalchemy.exc import IntegrityError, NoResultFound
+from models import User, Chat
 from models import Session as SessionModel
 from db import create_sessionmaker, get_sqlalchemy_session
-
 from bot import global_message
 
 debug_routes = Blueprint("debug_routes", __name__)
@@ -13,6 +15,9 @@ debug_routes = Blueprint("debug_routes", __name__)
 
 @debug_routes.route("/send-global-message", methods=["POST"])
 async def send_global_message():
+    """
+    Send a global message to all users
+    """
     data = await request.get_json()
 
     message = data.get("message")
@@ -31,6 +36,9 @@ async def send_global_message():
 
 @debug_routes.route("/get-users", methods=["GET"])
 async def get_users():
+    """
+    Get all users from the database
+    """
     try:
         # Use the get_sqlalchemy_session context manager
         async with get_sqlalchemy_session() as db_session:
@@ -55,6 +63,9 @@ async def get_users():
 
 @debug_routes.route("/get-chats", methods=["GET"])
 async def get_chats():
+    """
+    Get all chats from the database
+    """
     try:
         async with get_sqlalchemy_session() as db_session:
             chats = (
@@ -82,6 +93,9 @@ async def get_chats():
 
 @debug_routes.route("/get-sessions", methods=["GET"])
 async def get_sessions():
+    """
+    Get all sessions from the database
+    """
     try:
         async with get_sqlalchemy_session() as db_session:
             sessions = db_session.query(SessionModel).all()
@@ -102,6 +116,9 @@ async def get_sessions():
 
 @debug_routes.route("/delete-session", methods=["POST"])
 async def delete_one_session():
+    """
+    Delete a session from the database
+    """
     data = await request.get_json()
     phone_number = data.get("phone_number")
     if phone_number is None:
@@ -136,6 +153,9 @@ async def delete_one_session():
 
 @debug_routes.route("/delete-user", methods=["GET"])
 async def delete_user():
+    """
+    Delete a user from the database
+    """
     user_id = request.args.get("id", type=int)
 
     if not user_id:
@@ -178,6 +198,9 @@ async def delete_user():
 
 @debug_routes.route("/delete-chat", methods=["GET"])
 async def delete_chat():
+    """
+    Delete a chat from the database
+    """
     chat_id = request.args.get("id", type=int)
 
     if not chat_id:

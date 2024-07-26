@@ -1,5 +1,5 @@
 """
-Routes for user related operations
+Routes for user related operations. Actually just one: the get_user route.
 """
 
 import os

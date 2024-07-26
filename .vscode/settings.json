@@ -24,6 +24,10 @@
   "black-formatter.args": ["--line-length", "88"],
   "python.languageServer": "Pylance",
   "python.analysis.typeCheckingMode": "basic",
+  "python.linting.enabled": true, // Enable linting in general
+  "python.linting.pylintEnabled": true,
+  "python.linting.flake8Enabled": true,
+  "python.linting.mypyEnabled": true,
   "flake8.args": ["--max-line-length=88"],
   "flake8.importStrategy": "useBundled",
   "flake8.showNotification": "off",
@@ -36,10 +40,21 @@
     "refactor": "Hint",
     "warning": "Warning",
     "info": "Information"
-},
-"workbench.colorCustomizations": {
-	"activityBar.background": "#102C1D",
-	"titleBar.activeBackground": "#173E28",
-	"titleBar.activeForeground": "#F7FCFA"
-}
+  },
+  "pylint.args": ["--disable=C0111"], // Disable missing docstring warnings
+  "pylint.importStrategy": "fromEnvironment", // Use pylint from the environment
+  "pylint.lintOnChange": true, // Lint as you type
+  "pylint.path": ["pylint"],
+  "mypy.importStrategy": "useBundled",
+  "mypy.showNotification": "off",
+  "mypy.severity": {
+    "note": "Information",
+    "warning": "Warning",
+    "error": "Error"
+  },
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#102C1D",
+    "titleBar.activeBackground": "#173E28",
+    "titleBar.activeForeground": "#F7FCFA"
+  }
 }
