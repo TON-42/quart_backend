@@ -101,9 +101,7 @@ async def get_user():
             if user is None:
                 return jsonify({"error": "User not found"}), 404
 
-            auth_status_is_auth_code = False
-            if user.auth_status.bool_op == "auth_code":
-                auth_status_is_auth_code = True
+            auth_status_is_auth_code = bool(user.auth_status == "auth_code")
 
             session_chats = await manage_user_state(db_session, user, user_id)
             if session_chats == "error":
