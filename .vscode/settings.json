@@ -35,10 +35,5 @@
     "refactor": "Hint",
     "warning": "Warning",
     "info": "Information"
-  },
-  "workbench.colorCustomizations": {
-    "activityBar.background": "#342554",
-    "titleBar.activeBackground": "#493475",
-    "titleBar.activeForeground": "#FAF9FD"
   }
 }

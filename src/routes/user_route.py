@@ -15,6 +15,9 @@ user_route = Blueprint("user_route", __name__)
 
 
 def log_user_details(user, db_session, session_chats):
+    """
+    Get user details
+    """
     logger.debug(
         f"Session still active after manage_user_state: {db_session.is_active}"
     )
