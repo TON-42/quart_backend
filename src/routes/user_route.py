@@ -18,7 +18,7 @@ user_route = Blueprint("user_route", __name__)
 @user_route.route("/get-user", methods=["POST"])
 async def get_user():
     """
-    Get user details
+    Get user data from the database
     """
     try:
         if not request.is_json:
@@ -34,11 +34,7 @@ async def get_user():
         logger.info("username: %s", username)
         logger.info("user id: %s", user_id)
 
-        try:
-            await create_user(user_id, username, False)
-        except Exception as e:
-            logger.error(f"Error creating user: {str(e)}")
-            return jsonify({"error": str(e)}), 500
+        await create_user(user_id, username, False)
 
         async with get_sqlalchemy_session() as db_session:
             try:
