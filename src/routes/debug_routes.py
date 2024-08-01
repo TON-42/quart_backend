@@ -13,6 +13,47 @@ from bot import global_message
 debug_routes = Blueprint("debug_routes", __name__)
 
 
+@debug_routes.route("/leaderboard", methods=["POST"])
+async def leaderboard():
+    try:
+        data = await request.get_json()
+        current_user_id = data.get("user_id")
+        # Create a session
+        session = Session()
+
+        # Query all users
+        users = session.query(User).all()
+
+        # Close the session
+        session.close()
+
+        # Sort users by points
+        users_sorted = sorted(users, key=lambda user: user.words, reverse=True)
+        
+        users_json = [
+            {
+                "name": user.name,
+                "points": user.words,
+            }
+            for user in users_sorted
+        ]
+
+        if current_user_id is not None:
+            current_user_position = next((index for index, user in enumerate(users_sorted) if user.id == current_user_id), -1) + 1
+        else:
+            current_user_position = None
+
+        response = {
+            "leaderboard": users_json,
+            "current_user_position": current_user_position
+        }
+
+        return jsonify(response)
+
+    except Exception as e:
+        session.close()
+        return jsonify({"error": str(e)}), 500
+
 @debug_routes.route("/send-global-message", methods=["POST"])
 async def send_global_message():
     data = await request.get_json()
